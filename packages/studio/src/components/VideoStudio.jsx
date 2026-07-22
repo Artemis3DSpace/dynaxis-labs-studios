@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { generateVideo, generateI2V, processV2V, uploadFile } from "../muapi.js";
 import {
   t2vModels,
@@ -17,6 +17,15 @@ import {
   getModesForModel,
   getMaxImagesForI2VModel,
 } from "../models.js";
+import CharacterPicker from "./character/CharacterPicker.jsx";
+import CharacterReferencePicker from "./character/CharacterReferencePicker.jsx";
+import {
+  selectCharacterReferences,
+  publishCharacterGenerationContext,
+  clearCharacterGenerationContext,
+  buildVisualDescription,
+} from "../../../../lib/dynaxis/characters/consumer.js";
+import { getVideoImageCapability } from "../../../../lib/dynaxis/characters/video-capabilities.js";
 
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 
@@ -476,6 +485,12 @@ export default function VideoStudio({
   const [videoUploading, setVideoUploading] = useState(false);
   const [uploadedVideoName, setUploadedVideoName] = useState(null);
 
+  // ── Character reuse (Phase 5C) ──
+  const [character, setCharacter] = useState(null);
+  const [characterContext, setCharacterContext] = useState(null);
+  const [selectedCharRefIds, setSelectedCharRefIds] = useState([]);
+  const [characterNotice, setCharacterNotice] = useState(null);
+
   // ── generation / canvas ──
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
@@ -541,6 +556,28 @@ export default function VideoStudio({
     () => getCurrentModels().find((m) => m.id === selectedModel),
     [getCurrentModels, selectedModel],
   );
+
+  // ── Character reuse (Phase 5C) ──────────────────────────────────────────
+  // Clear window provenance when the Studio unmounts so unrelated generations
+  // are never mis-attributed to a Character.
+  useEffect(() => () => clearCharacterGenerationContext(), []);
+
+  const handleCharacterContext = useCallback((resolved) => {
+    setCharacterContext(resolved);
+    if (!resolved) {
+      setCharacter(null);
+      setSelectedCharRefIds([]);
+      setCharacterNotice(null);
+      clearCharacterGenerationContext();
+      return;
+    }
+    setCharacter(resolved.character);
+    // Pre-select the primary/identity reference by default.
+    const auto = selectCharacterReferences(resolved.visual?.allAssets || [], {
+      maxImages: 1,
+    });
+    setSelectedCharRefIds(auto.assetIds);
+  }, []);
 
   const isMotionControlSelection = useCallback(
     (modelId, isV2v) => {
@@ -1103,12 +1140,43 @@ export default function VideoStudio({
     const isExtendMode = currentModel?.requiresRequestId;
     const trimmedPrompt = prompt.trim();
 
+    // ── Character reuse (Phase 5C): resolve visual context + references ──
+    const capability = getVideoImageCapability(currentModel, {
+      imageMode,
+      v2vMode,
+    });
+    let charRefSelection = null;
+    let effectivePrompt = trimmedPrompt;
+    if (characterContext) {
+      const visual =
+        characterContext.visual?.visualDescription ||
+        buildVisualDescription(
+          characterContext.character,
+          characterContext.revision,
+        );
+      if (visual) {
+        effectivePrompt = trimmedPrompt ? `${trimmedPrompt}. ${visual}` : visual;
+      }
+      if (capability.supportsImageReference) {
+        charRefSelection = selectCharacterReferences(
+          characterContext.visual?.allAssets || [],
+          {
+            maxImages: capability.maxImages || 1,
+            selectedAssetIds: selectedCharRefIds.length
+              ? selectedCharRefIds
+              : null,
+          },
+        );
+      }
+    }
+    const charUrls = charRefSelection?.urls || [];
+
     if (v2vMode) {
       if (!uploadedVideoUrl) {
         alert("Please upload a video first.");
         return;
       }
-      if (currentModel?.imageField && !uploadedImageUrl) {
+      if (currentModel?.imageField && !uploadedImageUrl && charUrls.length === 0) {
         alert("Please upload a reference image for motion control.");
         return;
       }
@@ -1126,12 +1194,12 @@ export default function VideoStudio({
     } else if (imageMode) {
       const maxImgs = getMaxImagesForI2VModel(selectedModel);
       if (maxImgs > 2) {
-        if (uploadedImageUrls.length === 0) {
+        if (uploadedImageUrls.length === 0 && charUrls.length === 0) {
           alert("Please upload at least one reference image first.");
           return;
         }
       } else {
-        if (!uploadedImageUrl) {
+        if (!uploadedImageUrl && charUrls.length === 0) {
           alert("Please upload a start frame image first.");
           return;
         }
@@ -1151,6 +1219,19 @@ export default function VideoStudio({
     try {
       let res;
 
+      // Record Character provenance for this generation (reference-based).
+      if (characterContext?.provenance) {
+        publishCharacterGenerationContext({
+          characterId: characterContext.provenance.characterId,
+          characterRevisionId: characterContext.provenance.characterRevisionId,
+          referenceAssetIds:
+            charRefSelection?.assetIds ||
+            characterContext.provenance.referenceAssetIds,
+        });
+      } else {
+        clearCharacterGenerationContext();
+      }
+
       if (v2vMode) {
         // V2V: dedicated processV2V handles single-input tools (e.g. watermark
         // remover) and motion-control models (which take video + image + prompt)
@@ -1158,11 +1239,11 @@ export default function VideoStudio({
           model: selectedModel,
           video_url: uploadedVideoUrl,
         };
-        if (currentModel?.imageField && uploadedImageUrl) {
-          v2vParams.image_url = uploadedImageUrl;
+        if (currentModel?.imageField && (uploadedImageUrl || charUrls[0])) {
+          v2vParams.image_url = uploadedImageUrl || charUrls[0];
         }
-        if (currentModel?.hasPrompt && trimmedPrompt) {
-          v2vParams.prompt = trimmedPrompt;
+        if (currentModel?.hasPrompt && effectivePrompt) {
+          v2vParams.prompt = effectivePrompt;
         }
         res = await processV2V(apiKey, v2vParams);
         if (!res?.url) throw new Error("No video URL returned by API");
@@ -1190,11 +1271,13 @@ export default function VideoStudio({
         const maxImgs = getMaxImagesForI2VModel(selectedModel);
         const i2vParams = { model: selectedModel };
         if (maxImgs > 2) {
-          i2vParams.images_list = uploadedImageUrls;
+          i2vParams.images_list = uploadedImageUrls.length
+            ? uploadedImageUrls
+            : charUrls;
         } else {
-          i2vParams.image_url = uploadedImageUrl;
+          i2vParams.image_url = uploadedImageUrl || charUrls[0];
         }
-        if (trimmedPrompt) i2vParams.prompt = trimmedPrompt;
+        if (effectivePrompt) i2vParams.prompt = effectivePrompt;
         i2vParams.aspect_ratio = selectedAr;
         const i2vModel = i2vModels.find((m) => m.id === selectedModel);
         if (uploadedEndImageUrl && i2vModel?.lastImageField) {
@@ -1240,7 +1323,7 @@ export default function VideoStudio({
       } else {
         // T2V (including extend mode)
         const params = { model: selectedModel };
-        if (trimmedPrompt) params.prompt = trimmedPrompt;
+        if (effectivePrompt) params.prompt = effectivePrompt;
 
         if (isExtendMode) {
           params.request_id = lastGenerationId;
@@ -1248,6 +1331,8 @@ export default function VideoStudio({
           // images map to @image2…@image9 and videos map to @video1…@video3 in the prompt
           if (uploadedImageUrls.length > 0) {
             params.images_list = uploadedImageUrls;
+          } else if (charUrls.length > 0) {
+            params.images_list = charUrls;
           }
           if (uploadedVideoUrl) {
             params.videos_list = [uploadedVideoUrl];
@@ -1326,6 +1411,8 @@ export default function VideoStudio({
     addToLocalHistory,
     showVideoInCanvas,
     onGenerationComplete,
+    characterContext,
+    selectedCharRefIds,
   ]);
 
   // ── reset to prompt bar ───────────────────────────────────────────────────
@@ -1369,6 +1456,13 @@ export default function VideoStudio({
     canvasModel === "seedance-v2.0-t2v" || canvasModel === "seedance-v2.0-i2v";
   const currentModelObj = getCurrentModel();
   const isExtendMode = currentModelObj?.requiresRequestId;
+
+  // Character reuse: does the active model/mode accept reference images?
+  const videoCapability = getVideoImageCapability(currentModelObj, {
+    imageMode,
+    v2vMode,
+  });
+  const characterAssets = characterContext?.visual?.allAssets || [];
 
   const promptPlaceholder = v2vMode
     ? currentModelObj?.imageField
@@ -1821,6 +1915,43 @@ export default function VideoStudio({
                     )}
                   </button>
                 </div>
+              )}
+            </div>
+
+            {/* ── Character reuse (Phase 5C): optional identity source ── */}
+            <div className="flex flex-col gap-2 px-1 pb-1 border-b border-white/[0.03] mb-1">
+              <div className="flex items-start gap-3 flex-wrap">
+                <div className="min-w-[190px] flex-1">
+                  <CharacterPicker
+                    apiKey={apiKey}
+                    value={character}
+                    onChange={setCharacter}
+                    onContextResolved={handleCharacterContext}
+                    consumer="video-studio"
+                    maxImages={videoCapability.maxImages || 1}
+                    compact
+                  />
+                </div>
+                {character && videoCapability.supportsImageReference && characterAssets.length > 0 && (
+                  <div className="flex-1 min-w-[200px]">
+                    <CharacterReferencePicker
+                      assets={characterAssets}
+                      selectedAssetIds={selectedCharRefIds}
+                      onChange={setSelectedCharRefIds}
+                      maxImages={videoCapability.maxImages || 1}
+                    />
+                  </div>
+                )}
+              </div>
+              {character && !videoCapability.supportsImageReference && (
+                <p className="text-[10px] text-amber-300/70 leading-relaxed">
+                  {videoCapability.unsupportedReason} The Character’s visual description will still guide this generation.
+                </p>
+              )}
+              {character && videoCapability.supportsImageReference && (
+                <p className="text-[10px] text-white/30 leading-relaxed">
+                  Reference-based continuity: {selectedCharRefIds.length || 0}/{videoCapability.maxImages || 1} Character reference{(videoCapability.maxImages || 1) === 1 ? "" : "s"} feed this video. Uploaded images take priority.
+                </p>
               )}
             </div>
 

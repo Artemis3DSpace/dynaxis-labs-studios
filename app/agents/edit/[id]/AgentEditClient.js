@@ -4,22 +4,13 @@ import { EditAgentPage } from "ai-agent";
 import "ai-agent/dist/tailwind.css";
 import { useCallback, useEffect, useRef } from "react";
 import axios from "axios";
-
-const STORAGE_KEY = "muapi_key";
+import { resolveClientApiKey } from "@/lib/dynaxis/session";
 
 export default function AgentEditClient({ userData }) {
   const interceptorRef = useRef(null);
 
   useEffect(() => {
-    const getKey = () => {
-      if (typeof window === "undefined") return null;
-      const fromStorage = localStorage.getItem(STORAGE_KEY);
-      if (fromStorage) return fromStorage;
-      const match = document.cookie.match(/muapi_key=([^;]+)/);
-      return match ? match[1] : null;
-    };
-
-    const apiKey = getKey();
+    const apiKey = resolveClientApiKey();
     if (!apiKey) return;
 
     interceptorRef.current = axios.interceptors.request.use((config) => {
@@ -54,9 +45,8 @@ export default function AgentEditClient({ userData }) {
   );
 
   return (
-    <EditAgentPage
-      useUser={useUser}
-      usedIn="studio"
-    />
+    <div className="h-full w-full">
+      <EditAgentPage useUser={useUser} usedIn="muapiapp" />
+    </div>
   );
 }

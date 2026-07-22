@@ -1,0 +1,19 @@
+import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { resolveDesignComponentSetVariant } from '@/lib/dynaxis/services/component-sets.js';
+
+export async function POST(request) {
+  return withPlatformAuth(request, async ({ ownerRef }) => {
+    try {
+      const body = await request.json();
+      const componentSetId = body?.componentSetId;
+      const result = await resolveDesignComponentSetVariant(
+        ownerRef,
+        componentSetId,
+        body?.combination || {}
+      );
+      return jsonOk(result);
+    } catch (err) {
+      return jsonError(err);
+    }
+  });
+}

@@ -5,7 +5,7 @@ import "ai-agent/dist/tailwind.css";
 import { useCallback, useEffect, useRef } from "react";
 import axios from "axios";
 
-const STORAGE_KEY = "muapi_key";
+import { resolveClientApiKey } from '@/lib/dynaxis/session';
 
 /**
  * AgentChatClient — mirrors muapiapp's AgentClient.js.
@@ -15,6 +15,7 @@ const STORAGE_KEY = "muapi_key";
  * IMPORTANT: StandaloneShell is NOT in the tree on /agents/* pages, so we
  * must set up our own axios interceptor here to inject the API key into
  * all requests made by the AiAgent library.
+ * Credential resolution: lib/dynaxis/session.js (localStorage first, then cookie).
  */
 export default function AgentChatClient({ agentDetails, initialHistory, userData }) {
   const interceptorRef = useRef(null);
@@ -26,15 +27,7 @@ export default function AgentChatClient({ agentDetails, initialHistory, userData
   });
 
   useEffect(() => {
-    const getKey = () => {
-      if (typeof window === "undefined") return null;
-      const fromStorage = localStorage.getItem(STORAGE_KEY);
-      if (fromStorage) return fromStorage;
-      const match = document.cookie.match(/muapi_key=([^;]+)/);
-      return match ? match[1] : null;
-    };
-
-    const apiKey = getKey();
+    const apiKey = resolveClientApiKey();
     if (!apiKey) return;
 
     interceptorRef.current = axios.interceptors.request.use((config) => {

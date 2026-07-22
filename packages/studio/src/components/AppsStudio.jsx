@@ -8,7 +8,10 @@ import {
   FaGithub, FaExternalLinkAlt, FaDollarSign, FaRocket, FaCreditCard 
 } from "react-icons/fa";
 import { registerAppInterest, getAppInterests } from '../muapi.js';
+import { filterCatalogueTemplates } from '../catalogue-dedupe.js';
 import toast, { Toaster } from 'react-hot-toast';
+
+export { filterCatalogueTemplates } from '../catalogue-dedupe.js';
 
 const templateApps = [
   {
@@ -129,10 +132,17 @@ const dummyAppsData = [
   { thumbnail: "https://cdn.muapi.ai/apps/Lumea_Residence.webp", name: "Lumea Residence", description: "Smart home property management and tenant portal.", icon: FaHome, category: "Real Estate" }
 ];
 
-export default function AppsStudio({ apiKey }) {
+/**
+ * Hide external catalogue cards superseded by an integrated Dynaxis Mini App
+ * (same upstream repo or explicit replacesCatalogueRepos marker).
+ */
+export default function AppsStudio({ apiKey, integratedModules = [], onOpenIntegrated }) {
   const [selectedApp, setSelectedApp] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [requestedApps, setRequestedApps] = useState([]);
+
+  const visibleTemplateApps = filterCatalogueTemplates(templateApps, integratedModules);
+  const visibleInterestApps = filterCatalogueTemplates(dummyAppsData, integratedModules);
 
   useEffect(() => {
     if (apiKey) {
@@ -263,16 +273,61 @@ export default function AppsStudio({ apiKey }) {
         <div className="text-center space-y-6 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#22d3ee]/10 border border-[#22d3ee]/20 rounded-full">
             <FaDollarSign className="text-[#22d3ee] text-xs" />
-            <span className="text-[10px] font-black text-[#22d3ee] uppercase tracking-widest">Revenue-Ready Templates</span>
+            <span className="text-[10px] font-black text-[#22d3ee] uppercase tracking-widest">External Template Catalogue</span>
           </div>
           <h1 className="text-5xl font-black text-white tracking-tighter leading-[0.9]">
-            LAUNCH AN AI APP.<br />START EARNING TODAY.
+            APPS CATALOGUE
           </h1>
           <p className="text-white/40 text-sm font-medium leading-relaxed max-w-xl mx-auto">
-            Each template is a fully-functional, Stripe-integrated AI SaaS you can deploy in minutes.
-            Charge your users, keep the revenue — muapi handles the AI infrastructure.
+            Browse external open-source AI app templates and hosted demos. These are not installed
+            Dynaxis modules. First-party Mini Apps use the Dynaxis module framework and appear
+            separately when integrated. MuAPI remains the generation backend for templates that use it.
           </p>
         </div>
+
+        {Array.isArray(integratedModules) && integratedModules.length > 0 && (
+          <div className="w-full space-y-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-[11px] font-black uppercase tracking-widest text-white/35">
+                Dynaxis modules
+              </h2>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400/80 border border-emerald-400/20 px-1.5 py-0.5 rounded">
+                Integrated
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+              {integratedModules.map((mod) => (
+                <div
+                  key={mod.id}
+                  className="bg-[#0a0a0a] border border-white/5 rounded-lg p-5 flex flex-col gap-3 hover:border-white/10 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-[14px] font-bold text-white leading-tight">{mod.name}</h3>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#22d3ee]/90 border border-[#22d3ee]/20 px-1.5 py-0.5 rounded shrink-0">
+                      {mod.status || 'integrated'}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-white/45 leading-relaxed flex-1">
+                    {mod.description}
+                  </p>
+                  {mod.availability && !mod.availability.usable && (
+                    <p className="text-[11px] text-amber-400/80">
+                      Unavailable: {(mod.availability.reasons || []).join('; ') || 'requirements not met'}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={mod.availability && !mod.availability.usable}
+                    onClick={() => onOpenIntegrated && onOpenIntegrated(mod.id)}
+                    className="mt-auto h-9 rounded-md bg-[#22d3ee]/15 text-[#22d3ee] text-[11px] font-bold uppercase tracking-wider hover:bg-[#22d3ee]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Open module
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Monetization Steps */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -309,17 +364,21 @@ export default function AppsStudio({ apiKey }) {
           ))}
         </div>
 
-        {/* Apps Grid */}
+        {/* Apps Grid — integrated Mini Apps suppress matching external template cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full pt-8">
-          {templateApps.map((app, index) => renderAppCard(app, false, index))}
-          {dummyAppsData.map((app, index) => renderAppCard(app, true, index + templateApps.length))}
+          {visibleTemplateApps.map((app, index) => renderAppCard(app, false, index))}
+          {visibleInterestApps.map((app, index) =>
+            renderAppCard(app, true, index + visibleTemplateApps.length)
+          )}
         </div>
 
         {/* Footer Accent */}
         <div className="pt-24 pb-12 flex flex-col items-center gap-4">
           <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/5">
             <span className="block w-1.5 h-1.5 rounded-full bg-[#22d3ee] animate-pulse" />
-            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Muapi Ecosystem — More templates coming soon</span>
+            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">
+              Catalogue remains external — Dynaxis Mini App framework is active for integrated modules
+            </span>
           </div>
         </div>
       </div>
@@ -334,10 +393,20 @@ export default function AppsStudio({ apiKey }) {
                 <selectedApp.icon />
               </div>
               <h2 className="text-2xl font-black text-white uppercase tracking-tight">
-                Deploy {selectedApp.name}
+                {selectedApp.isTemplate ? `Deploy ${selectedApp.name}` : `Request access — ${selectedApp.name}`}
               </h2>
               <p className="text-sm font-medium text-white/40 leading-relaxed px-4">
-                Enter your details and we&apos;ll send you the <b>{selectedApp.name}</b> template along with setup instructions so you can deploy and start earning immediately.
+                {selectedApp.isTemplate ? (
+                  <>
+                    We&apos;ll send details for the external <b>{selectedApp.name}</b> template so you can
+                    deploy it separately. This does not install an internal Dynaxis module.
+                  </>
+                ) : (
+                  <>
+                    <b>{selectedApp.name}</b> is a catalogue placeholder — not an installed Dynaxis app.
+                    Register interest and we&apos;ll follow up when a template or module path is available.
+                  </>
+                )}
               </p>
             </div>
 
@@ -347,7 +416,7 @@ export default function AppsStudio({ apiKey }) {
                 disabled={isRequesting}
                 className="w-full py-4 bg-[#22d3ee] text-black rounded-md text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#22d3ee]/90 transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
-                {isRequesting ? 'Sending Details...' : 'Get Template'}
+                {isRequesting ? 'Sending…' : (selectedApp.isTemplate ? 'Get Template' : 'Register Interest')}
               </button>
               <button 
                 onClick={() => setSelectedApp(null)}

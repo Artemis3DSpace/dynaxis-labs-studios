@@ -1,0 +1,90 @@
+/**
+ * Dynaxis Mini App — Campaign Studio (production).
+ * Brand-led multi-format creative sets. Canvas/publishing deferred.
+ */
+
+export const campaignStudioMiniAppManifest = {
+  id: 'dynaxis.campaign-studio',
+  name: 'Campaign Studio',
+  description:
+    'Create Brand-led Campaigns with four concepts, platform format specs, structured copy, and image deliverables. Campaigns belong to a Project and pin Brand (and optional Product/Character) revisions for reproducible provenance.',
+  version: '1.0.0',
+  category: 'marketing',
+  icon: 'megaphone',
+  status: 'integrated',
+  moduleType: 'capability',
+  viewId: 'mini-dynaxis-campaign-studio',
+  route: '/studio/apps/dynaxis.campaign-studio',
+  entryKey: 'dynaxis.campaign-studio',
+  permissions: [
+    'project:read',
+    'assets:read',
+    'assets:write',
+    'generation:create',
+    'generation:read',
+    'jobs:create',
+    'jobs:read',
+    'models:use',
+    'brands:read',
+    'products:read',
+    'characters:read',
+    'campaigns:read',
+    'campaigns:write',
+    'templates:read',
+  ],
+  requiredCapabilities: [
+    'projects',
+    'assets',
+    'generations',
+    'jobs',
+    'muapi',
+    'database',
+    'brands',
+    'products',
+    'characters',
+    'campaigns',
+    'templates',
+  ],
+  assetInputs: [
+    {
+      type: 'image',
+      role: 'campaign_reference',
+      required: false,
+      minCount: 0,
+      maxCount: 8,
+      description: 'Optional campaign creative / source references',
+    },
+  ],
+  assetOutputs: ['image'],
+  modelCapabilities: ['llm', 'image', 'nano-banana-pro', 'nano-banana-2-edit'],
+  requiresProjectContext: true,
+  requiresGenerationAccess: true,
+  requiresAssetWrite: true,
+  requiresExternalNetwork: false,
+  attribution: {
+    upstreamName: 'Open Pomelli',
+    upstreamRepo: 'https://github.com/SamurAIGPT/Open-Pomelli',
+    license: 'MIT',
+    notes:
+      'Campaign goals, four-concept generation, and platform format specs adapted from Open Pomelli. SQLite/Prisma, canvas editor, publishing, and standalone shell discarded. Persistence and Generations/Jobs are Dynaxis-native.',
+  },
+  replacesCatalogueRepos: [],
+  featureFlags: {
+    fourConcepts: true,
+    multiFormatDeliverables: true,
+    brandRevisionPinned: true,
+    noCanvas: true,
+    noPublishing: true,
+  },
+  capabilitySummary: {
+    does: 'Create Brand-led Campaigns with concepts, format deliverables, structured copy, and image Assets',
+    inputs: [
+      'campaign brief',
+      'brand revision',
+      'optional products/characters',
+      'format selections',
+    ],
+    outputs: ['campaign', 'concepts', 'deliverables', 'image assets'],
+    modality: 'multimodal',
+  },
+};

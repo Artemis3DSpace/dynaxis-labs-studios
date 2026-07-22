@@ -39,25 +39,185 @@ async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000)
     throw new Error('Generation timed out after polling.');
 }
 
-async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60) {
-    const url = `${BASE_URL}/api/v1/${endpoint}`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': key },
-        body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        const errText = await response.text();
-        notifyAuthRequired(response.status, errText);
-        throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
+/**
+ * Dynaxis Phase 3 lifecycle tracking (best-effort).
+ * Persists Generation → Job → Asset via /api/dynaxis when platform DB is configured.
+ * Never blocks MuAPI execution if platform APIs are unavailable (503 / network).
+ */
+async function dynaxisLifecycleFetch(path, key, body) {
+    if (typeof window === 'undefined' || !key) return null;
+    try {
+        const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': key },
+            body: JSON.stringify(body),
+        });
+        if (res.status === 503) return null;
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
     }
-    const submitData = await response.json();
-    const requestId = submitData.request_id || submitData.id;
-    if (!requestId) return submitData;
-    if (onRequestId) onRequestId(requestId);
-    const result = await pollForResult(requestId, key, maxAttempts);
-    const outputUrl = result.outputs?.[0] || result.url || result.output?.url;
-    return { ...result, url: outputUrl };
+}
+
+function readDynaxisContext() {
+    if (typeof window === 'undefined') {
+        return {
+            projectId: null,
+            featureId: null,
+            assetHint: null,
+            characterId: null,
+            characterRevisionId: null,
+            referenceAssetIds: null,
+            productId: null,
+            productRevisionId: null,
+            productReferenceAssetIds: null,
+            brandId: null,
+            brandRevisionId: null,
+            brandLogoAssetId: null,
+            campaignId: null,
+            campaignRevisionId: null,
+            generationMetadata: null,
+        };
+    }
+    return {
+        projectId: window.__dynaxisProjectId || null,
+        featureId: window.__dynaxisFeatureId || null,
+        assetHint: window.__dynaxisAssetHint || null,
+        characterId: window.__dynaxisCharacterId || null,
+        characterRevisionId: window.__dynaxisCharacterRevisionId || null,
+        referenceAssetIds: window.__dynaxisCharacterReferenceAssetIds || null,
+        productId: window.__dynaxisProductId || null,
+        productRevisionId: window.__dynaxisProductRevisionId || null,
+        productReferenceAssetIds: window.__dynaxisProductReferenceAssetIds || null,
+        brandId: window.__dynaxisBrandId || null,
+        brandRevisionId: window.__dynaxisBrandRevisionId || null,
+        brandLogoAssetId: window.__dynaxisBrandLogoAssetId || null,
+        campaignId: window.__dynaxisCampaignId || null,
+        campaignRevisionId: window.__dynaxisCampaignRevisionId || null,
+        generationMetadata: window.__dynaxisGenerationMetadata || null,
+    };
+}
+
+async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60, options = {}) {
+    const trackLifecycle = options.trackLifecycle !== false;
+    const ctx = readDynaxisContext();
+    let generationId = null;
+    let jobId = null;
+
+    if (trackLifecycle) {
+        const tracking = await dynaxisLifecycleFetch('/api/dynaxis/lifecycle/start', key, {
+            projectId: ctx.projectId,
+            featureId: ctx.featureId,
+            model: payload?.model || endpoint,
+            prompt: typeof payload?.prompt === 'string' ? payload.prompt : null,
+            endpoint,
+            parameters: payload && typeof payload === 'object' ? { ...payload, prompt: undefined } : {},
+            assetHint: ctx.assetHint,
+            characterId: ctx.characterId || options.characterId || null,
+            characterRevisionId: ctx.characterRevisionId || options.characterRevisionId || null,
+            productId: ctx.productId || options.productId || null,
+            productRevisionId: ctx.productRevisionId || options.productRevisionId || null,
+            brandId: ctx.brandId || options.brandId || null,
+            brandRevisionId: ctx.brandRevisionId || options.brandRevisionId || null,
+            campaignId: ctx.campaignId || options.campaignId || null,
+            campaignRevisionId: ctx.campaignRevisionId || options.campaignRevisionId || null,
+            metadata: {
+                ...(ctx.referenceAssetIds
+                    ? { referenceAssetIds: ctx.referenceAssetIds }
+                    : {}),
+                ...(ctx.productReferenceAssetIds
+                    ? { productReferenceAssetIds: ctx.productReferenceAssetIds }
+                    : {}),
+                ...(ctx.brandLogoAssetId
+                    ? { brandLogoAssetId: ctx.brandLogoAssetId }
+                    : {}),
+                ...(ctx.generationMetadata && typeof ctx.generationMetadata === 'object'
+                    ? ctx.generationMetadata
+                    : {}),
+                ...(options.characterMetadata || {}),
+                ...(options.productMetadata || {}),
+                ...(options.brandMetadata || {}),
+            },
+        });
+        generationId = tracking?.generation?.id || null;
+        jobId = tracking?.job?.id || null;
+    }
+
+    const url = `${BASE_URL}/api/v1/${endpoint}`;
+    let requestId = null;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': key },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            notifyAuthRequired(response.status, errText);
+            throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
+        }
+        const submitData = await response.json();
+        requestId = submitData.request_id || submitData.id;
+        if (!requestId) {
+            if (generationId && jobId) {
+                const urls = [];
+                const u = submitData.outputs?.[0] || submitData.url || submitData.output?.url;
+                if (u) urls.push(u);
+                await dynaxisLifecycleFetch('/api/dynaxis/lifecycle/complete', key, {
+                    generationId,
+                    jobId,
+                    result: submitData,
+                    urls,
+                });
+            }
+            return submitData;
+        }
+        if (onRequestId) onRequestId(requestId);
+        if (generationId && jobId) {
+            await dynaxisLifecycleFetch('/api/dynaxis/lifecycle/provider-id', key, {
+                generationId,
+                jobId,
+                providerJobId: String(requestId),
+            });
+        }
+        const result = await pollForResult(requestId, key, maxAttempts);
+        const outputUrl = result.outputs?.[0] || result.url || result.output?.url;
+        const urls = Array.isArray(result.outputs)
+            ? result.outputs.filter((u) => typeof u === 'string')
+            : outputUrl
+              ? [outputUrl]
+              : [];
+        if (generationId && jobId) {
+            await dynaxisLifecycleFetch('/api/dynaxis/lifecycle/complete', key, {
+                generationId,
+                jobId,
+                providerJobId: String(requestId),
+                result,
+                urls,
+            });
+        }
+        return { ...result, url: outputUrl, outputs: urls.length ? urls : result.outputs, dynaxisGenerationId: generationId, dynaxisJobId: jobId };
+    } catch (error) {
+        if (generationId && jobId) {
+            await dynaxisLifecycleFetch('/api/dynaxis/lifecycle/fail', key, {
+                generationId,
+                jobId,
+                providerJobId: requestId ? String(requestId) : null,
+                errorCode: 'GENERATION_FAILED',
+                errorMessage: String(error?.message || error).slice(0, 400),
+            });
+        }
+        throw error;
+    }
+}
+
+/**
+ * Raw MuAPI submit+poll for Mini App runtime executors.
+ * Does NOT create Dynaxis lifecycle records (caller owns Generation/Job).
+ */
+export async function executeMuapiPrediction(apiKey, { endpoint, payload, onRequestId, maxAttempts = 900 }) {
+    return submitAndPoll(endpoint, payload, apiKey, onRequestId, maxAttempts, { trackLifecycle: false });
 }
 
 export async function generateImage(apiKey, params) {

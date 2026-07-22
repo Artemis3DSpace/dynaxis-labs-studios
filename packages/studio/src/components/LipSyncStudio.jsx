@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { processLipSync, uploadFile } from "../muapi.js";
 import {
   lipsyncModels,
   imageLipSyncModels,
   videoLipSyncModels,
-  getLipSyncModelById,
   getResolutionsForLipSyncModel,
 } from "../models.js";
+import CharacterPicker from "./character/CharacterPicker.jsx";
+import CharacterReferencePicker from "./character/CharacterReferencePicker.jsx";
+import AssetInputPicker from "./assets/AssetInputPicker.jsx";
+import {
+  publishCharacterGenerationContext,
+  clearCharacterGenerationContext,
+} from "../../../../lib/dynaxis/characters/consumer.js";
+import {
+  resolveLipSyncSourceContext,
+  buildLipSyncRequestParams,
+} from "../../../../lib/dynaxis/characters/lipsync-source.js";
 
 // ---------------------------------------------------------------------------
 // Upload button states
@@ -350,6 +360,14 @@ export default function LipSyncStudio({
   const [audioName, setAudioName] = useState("");
   const [audioUrl, setAudioUrl] = useState(null);
 
+  // ── Character + Project Asset reuse (Phase 5E) ──────────────────────────
+  const [character, setCharacter] = useState(null);
+  const [characterContext, setCharacterContext] = useState(null);
+  const [selectedCharRefIds, setSelectedCharRefIds] = useState([]);
+  const [imageAsset, setImageAsset] = useState(null);
+  const [videoAsset, setVideoAsset] = useState(null);
+  const [audioAsset, setAudioAsset] = useState(null);
+
   // ── Individual progress states ──
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
@@ -458,6 +476,59 @@ export default function LipSyncStudio({
   const showResolution = resolutionOptions.length > 0;
   const showPrompt = !!selectedModel?.hasPrompt;
 
+  // Clear Character provenance when Studio unmounts.
+  useEffect(() => () => clearCharacterGenerationContext(), []);
+
+  const handleCharacterContext = useCallback((resolved) => {
+    setCharacterContext(resolved);
+    if (!resolved) {
+      setCharacter(null);
+      setSelectedCharRefIds([]);
+      clearCharacterGenerationContext();
+      return;
+    }
+    setCharacter(resolved.character);
+    const primary =
+      resolved.visual?.allAssets?.find((a) => a.isPrimary)?.assetId ||
+      resolved.visual?.referenceAssetIds?.[0] ||
+      null;
+    setSelectedCharRefIds(primary ? [primary] : []);
+    // Selecting a Character reference as image source clears a competing upload/asset
+    // only when no upload/asset is already active — upload/asset keep priority.
+  }, []);
+
+  const sourceContext = useMemo(
+    () =>
+      resolveLipSyncSourceContext({
+        inputMode,
+        model: selectedModel,
+        uploadedImageUrl: imageUrl,
+        uploadedVideoUrl: videoUrl,
+        uploadedAudioUrl: audioUrl,
+        imageAsset,
+        videoAsset,
+        audioAsset,
+        characterContext,
+        selectedCharRefIds,
+        prompt,
+        resolution: selectedResolution,
+      }),
+    [
+      inputMode,
+      selectedModel,
+      imageUrl,
+      videoUrl,
+      audioUrl,
+      imageAsset,
+      videoAsset,
+      audioAsset,
+      characterContext,
+      selectedCharRefIds,
+      prompt,
+      selectedResolution,
+    ],
+  );
+
   // ── Sync model when mode changes ────────────────────────────────────────
   useEffect(() => {
     if (hasRestored.current) return;
@@ -485,6 +556,8 @@ export default function LipSyncStudio({
         setImageUrl(url);
         setImageName(file.name);
         setImageState(UPLOAD_STATE.READY);
+        // Upload takes priority — clear competing Project Asset selection.
+        setImageAsset(null);
       } catch (err) {
         setImageState(UPLOAD_STATE.IDLE);
         alert(`Image upload failed: ${err.message}`);
@@ -510,6 +583,7 @@ export default function LipSyncStudio({
         setVideoUrl(url);
         setVideoName(file.name);
         setVideoState(UPLOAD_STATE.READY);
+        setVideoAsset(null);
       } catch (err) {
         setVideoState(UPLOAD_STATE.IDLE);
         alert(`Video upload failed: ${err.message}`);
@@ -543,6 +617,7 @@ export default function LipSyncStudio({
         setAudioUrl(url);
         setAudioName(file.name);
         setAudioState(UPLOAD_STATE.READY);
+        setAudioAsset(null);
       } catch (err) {
         setAudioState(UPLOAD_STATE.IDLE);
         alert(`Audio upload failed: ${err.message}`);
@@ -580,6 +655,7 @@ export default function LipSyncStudio({
     setVideoUrl(null);
     setVideoState(UPLOAD_STATE.IDLE);
     setVideoName("");
+    setVideoAsset(null);
     const first = imageLipSyncModels[0];
     if (first) {
       setSelectedModelId(first.id);
@@ -593,6 +669,8 @@ export default function LipSyncStudio({
     setImageUrl(null);
     setImageState(UPLOAD_STATE.IDLE);
     setImageName("");
+    setImageAsset(null);
+    setSelectedCharRefIds([]);
     const first = videoLipSyncModels[0];
     if (first) {
       setSelectedModelId(first.id);
@@ -635,16 +713,20 @@ export default function LipSyncStudio({
 
   // ── Generation ──────────────────────────────────────────────────────────
   const handleGenerate = async () => {
-    if (!audioUrl) {
-      alert("Please upload an audio file first.");
+    if (!sourceContext.audioSource.url) {
+      alert("Please upload an audio file or select a Project audio Asset first.");
       return;
     }
-    if (inputMode === "image" && !imageUrl) {
-      alert("Please upload a portrait image first.");
+    if (inputMode === "image" && !sourceContext.imageSource.url) {
+      alert(
+        "Please provide a portrait: upload an image, select a Project image Asset, or choose a Character reference.",
+      );
       return;
     }
-    if (inputMode === "video" && !videoUrl) {
-      alert("Please upload a source video first.");
+    if (inputMode === "video" && !sourceContext.videoSource.url) {
+      alert(
+        "Please provide a source video: upload a video or select a Project video Asset.",
+      );
       return;
     }
 
@@ -652,27 +734,51 @@ export default function LipSyncStudio({
     setGenerateError(null);
 
     try {
-      const lipsyncParams = {
-        model: selectedModelId,
-        audio_url: audioUrl,
-      };
-      if (inputMode === "image") lipsyncParams.image_url = imageUrl;
-      else lipsyncParams.video_url = videoUrl;
-      if (prompt && selectedModel?.hasPrompt) lipsyncParams.prompt = prompt;
-      if (showResolution) lipsyncParams.resolution = selectedResolution;
-      if (selectedModel?.hasSeed) lipsyncParams.seed = -1;
+      const refIds = [];
+      if (sourceContext.characterReferenceAssetId) {
+        refIds.push(sourceContext.characterReferenceAssetId);
+      }
+      publishCharacterGenerationContext({
+        characterId: sourceContext.characterId,
+        characterRevisionId: sourceContext.characterRevisionId,
+        referenceAssetIds: refIds.length ? refIds : null,
+        generationMetadata: {
+          featureId: "lipsync-studio",
+          sourceImageAssetId: sourceContext.provenance.sourceImageAssetId,
+          sourceVideoAssetId: sourceContext.provenance.sourceVideoAssetId,
+          audioAssetId: sourceContext.provenance.audioAssetId,
+          characterReferenceAssetId:
+            sourceContext.provenance.characterReferenceAssetId,
+          sourceImageKind: sourceContext.provenance.sourceImageKind,
+          sourceVideoKind: sourceContext.provenance.sourceVideoKind,
+          audioKind: sourceContext.provenance.audioKind,
+          continuity: "reference-based",
+        },
+      });
+
+      const lipsyncParams = buildLipSyncRequestParams(sourceContext, {
+        modelId: selectedModelId,
+        prompt,
+        resolution: selectedResolution,
+        seed: selectedModel?.hasSeed ? -1 : undefined,
+      });
 
       const res = await processLipSync(apiKey, lipsyncParams);
 
       if (!res?.url) throw new Error("No video URL returned by API");
 
-      const genId = res.id || Date.now().toString();
+      const genId = res.dynaxisGenerationId || res.id || Date.now().toString();
       const entry = {
         id: genId,
         url: res.url,
         prompt,
         model: selectedModelId,
+        resolution: showResolution ? selectedResolution : null,
         timestamp: new Date().toISOString(),
+        characterId: sourceContext.characterId,
+        characterRevisionId: sourceContext.characterRevisionId,
+        dynaxisGenerationId: res.dynaxisGenerationId || null,
+        dynaxisJobId: res.dynaxisJobId || null,
       };
 
       if (!historyItems) addToInternalHistory(entry);
@@ -687,6 +793,9 @@ export default function LipSyncStudio({
           model: selectedModelId,
           prompt,
           type: "lipsync",
+          characterId: sourceContext.characterId,
+          characterRevisionId: sourceContext.characterRevisionId,
+          dynaxisGenerationId: res.dynaxisGenerationId || null,
         });
       }
     } catch (e) {
@@ -696,6 +805,7 @@ export default function LipSyncStudio({
       onGenerationError?.(e.message?.slice(0, 120) || "Lip sync generation failed");
     } finally {
       setIsGenerating(false);
+      if (!characterContext?.provenance) clearCharacterGenerationContext();
     }
   };
 
@@ -713,26 +823,40 @@ export default function LipSyncStudio({
     setAudioUrl(null);
     setAudioState(UPLOAD_STATE.IDLE);
     setAudioName("");
+    setImageAsset(null);
+    setVideoAsset(null);
+    setAudioAsset(null);
+    // Character selection is intentionally kept so users can run multiple takes.
   };
 
   // ── Media status labels ─────────────────────────────────────────────────
-  const mediaStatusText =
-    inputMode === "image"
-      ? imageState === UPLOAD_STATE.READY
-        ? `✓ ${imageName}`
-        : "No image"
-      : videoState === UPLOAD_STATE.READY
-        ? `✓ ${videoName}`
-        : "No video";
+  const mediaStatusText = (() => {
+    if (inputMode === "image") {
+      if (sourceContext.imageSource.kind === "upload") return `✓ ${imageName}`;
+      if (sourceContext.imageSource.kind === "asset") return "✓ Project image";
+      if (sourceContext.imageSource.kind === "character_reference")
+        return `✓ ${character?.name || "Character"} ref`;
+      return "No image";
+    }
+    if (sourceContext.videoSource.kind === "upload") return `✓ ${videoName}`;
+    if (sourceContext.videoSource.kind === "asset") return "✓ Project video";
+    return "No video";
+  })();
   const mediaStatusClass =
-    (inputMode === "image" ? imageState : videoState) === UPLOAD_STATE.READY
+    (inputMode === "image"
+      ? sourceContext.imageSource.kind !== "none"
+      : sourceContext.videoSource.kind !== "none")
       ? "text-primary"
       : "text-muted";
 
   const audioStatusText =
-    audioState === UPLOAD_STATE.READY ? `✓ ${audioName}` : "No audio";
+    sourceContext.audioSource.kind === "upload"
+      ? `✓ ${audioName}`
+      : sourceContext.audioSource.kind === "asset"
+        ? "✓ Project audio"
+        : "No audio";
   const audioStatusClass =
-    audioState === UPLOAD_STATE.READY ? "text-primary" : "text-muted";
+    sourceContext.audioSource.kind !== "none" ? "text-primary" : "text-muted";
 
   const hasHistory = history.length > 0;
 
@@ -912,6 +1036,119 @@ export default function LipSyncStudio({
             </button>
           </div>
 
+          {/* Character + Project Asset reuse (Phase 5E) — additive, optional */}
+          <div className="flex flex-col gap-2 px-1 border-b border-white/[0.03] pb-2">
+            <div className="flex items-start gap-3 flex-wrap">
+              <div className="min-w-[180px] flex-1">
+                <CharacterPicker
+                  apiKey={apiKey}
+                  value={character}
+                  onChange={setCharacter}
+                  onContextResolved={handleCharacterContext}
+                  consumer="lipsync-studio"
+                  maxImages={1}
+                  compact
+                />
+              </div>
+              {inputMode === "image" &&
+                characterContext?.visual?.allAssets?.length > 0 && (
+                  <div className="flex-1 min-w-[180px]">
+                    <CharacterReferencePicker
+                      assets={(characterContext.visual.allAssets || []).filter(
+                        (a) =>
+                          !a.role ||
+                          [
+                            "identity_reference",
+                            "portrait_reference",
+                            "generated_portrait",
+                            "character_reference",
+                          ].includes(a.role),
+                      )}
+                      selectedAssetIds={selectedCharRefIds}
+                      onChange={(ids) => {
+                        setSelectedCharRefIds(ids);
+                        // Choosing a Character ref as the active image clears competing sources.
+                        if (ids?.length) {
+                          setImageUrl(null);
+                          setImageState(UPLOAD_STATE.IDLE);
+                          setImageName("");
+                          setImageAsset(null);
+                        }
+                      }}
+                      maxImages={1}
+                      label="Character portrait"
+                    />
+                  </div>
+                )}
+            </div>
+            <div className="flex items-start gap-3 flex-wrap">
+              {inputMode === "image" && (
+                <div className="min-w-[160px] flex-1">
+                  <AssetInputPicker
+                    apiKey={apiKey}
+                    type="image"
+                    value={imageAsset}
+                    onChange={(asset) => {
+                      setImageAsset(asset);
+                      if (asset) {
+                        setImageUrl(null);
+                        setImageState(UPLOAD_STATE.IDLE);
+                        setImageName("");
+                        setSelectedCharRefIds([]);
+                      }
+                    }}
+                    compact
+                  />
+                </div>
+              )}
+              {inputMode === "video" && (
+                <div className="min-w-[160px] flex-1">
+                  <AssetInputPicker
+                    apiKey={apiKey}
+                    type="video"
+                    value={videoAsset}
+                    onChange={(asset) => {
+                      setVideoAsset(asset);
+                      if (asset) {
+                        setVideoUrl(null);
+                        setVideoState(UPLOAD_STATE.IDLE);
+                        setVideoName("");
+                      }
+                    }}
+                    compact
+                  />
+                </div>
+              )}
+              <div className="min-w-[160px] flex-1">
+                <AssetInputPicker
+                  apiKey={apiKey}
+                  type="audio"
+                  value={audioAsset}
+                  onChange={(asset) => {
+                    setAudioAsset(asset);
+                    if (asset) {
+                      setAudioUrl(null);
+                      setAudioState(UPLOAD_STATE.IDLE);
+                      setAudioName("");
+                    }
+                  }}
+                  compact
+                />
+              </div>
+            </div>
+            {character && (
+              <p className="text-[10px] text-white/30 leading-relaxed px-1">
+                Reference-based continuity. Active source:{" "}
+                {inputMode === "image"
+                  ? sourceContext.imageSource.kind
+                  : sourceContext.videoSource.kind}
+                {" · "}audio: {sourceContext.audioSource.kind}. Uploads take
+                priority over Project Assets and Character references. Audio is
+                an Asset — not a Voice Identity.
+              </p>
+            )}
+          </div>
+
           {/* Uploads row */}
           <div className="flex items-center gap-2 px-1">
             <div className="flex items-center gap-2">
@@ -940,11 +1177,25 @@ export default function LipSyncStudio({
                     setImageUrl(null);
                     setImageState(UPLOAD_STATE.IDLE);
                     setImageName("");
+                    setImageAsset(null);
+                    setSelectedCharRefIds([]);
                   }}
-                  uploadState={imageState}
+                  uploadState={
+                    imageState === UPLOAD_STATE.READY
+                      ? UPLOAD_STATE.READY
+                      : sourceContext.imageSource.kind !== "none" &&
+                          sourceContext.imageSource.kind !== "upload"
+                        ? UPLOAD_STATE.READY
+                        : imageState
+                  }
                   progress={imageProgress}
-                  fileName={imageName}
-                  previewUrl={imageUrl}
+                  fileName={imageName || sourceContext.imageSource.kind}
+                  previewUrl={
+                    imageUrl ||
+                    (sourceContext.imageSource.kind !== "upload"
+                      ? sourceContext.imageSource.url
+                      : null)
+                  }
                   isVideo={false}
                   apiKey={apiKey}
                 />
@@ -963,11 +1214,23 @@ export default function LipSyncStudio({
                     setVideoUrl(null);
                     setVideoState(UPLOAD_STATE.IDLE);
                     setVideoName("");
+                    setVideoAsset(null);
                   }}
-                  uploadState={videoState}
+                  uploadState={
+                    videoState === UPLOAD_STATE.READY
+                      ? UPLOAD_STATE.READY
+                      : sourceContext.videoSource.kind === "asset"
+                        ? UPLOAD_STATE.READY
+                        : videoState
+                  }
                   progress={videoProgress}
-                  fileName={videoName}
-                  previewUrl={videoUrl}
+                  fileName={videoName || sourceContext.videoSource.kind}
+                  previewUrl={
+                    videoUrl ||
+                    (sourceContext.videoSource.kind === "asset"
+                      ? sourceContext.videoSource.url
+                      : null)
+                  }
                   isVideo={true}
                   apiKey={apiKey}
                 />
@@ -985,10 +1248,17 @@ export default function LipSyncStudio({
                   setAudioUrl(null);
                   setAudioState(UPLOAD_STATE.IDLE);
                   setAudioName("");
+                  setAudioAsset(null);
                 }}
-                uploadState={audioState}
+                uploadState={
+                  audioState === UPLOAD_STATE.READY
+                    ? UPLOAD_STATE.READY
+                    : sourceContext.audioSource.kind === "asset"
+                      ? UPLOAD_STATE.READY
+                      : audioState
+                }
                 progress={audioProgress}
-                fileName={audioName}
+                fileName={audioName || sourceContext.audioSource.kind}
                 previewUrl={null}
                 isVideo={false}
                 apiKey={apiKey}

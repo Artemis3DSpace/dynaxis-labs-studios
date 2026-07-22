@@ -17,12 +17,14 @@ export function Header(navigate) {
     const logoContainer = document.createElement('div');
     logoContainer.className = 'cursor-pointer hover:scale-110 transition-transform';
     logoContainer.innerHTML = `
-        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-lg">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="black"/>
-                <path d="M2 17L12 22L22 17" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-md overflow-hidden border border-white/10 bg-[#0a0a0a]">
+                <img src="./banner.png" alt="Dynaxis Labs Studios" class="w-full h-full object-cover" />
+            </div>
+            <div class="hidden sm:block leading-tight">
+                <div class="text-[13px] font-bold text-white tracking-tight">Dynaxis</div>
+                <div class="text-[9px] font-medium uppercase tracking-[0.14em] text-white/35">Labs Studios</div>
+            </div>
         </div>
     `;
 

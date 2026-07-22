@@ -1,10 +1,13 @@
 /**
  * Layout for /agents/* pages.
  * These pages host the AiAgent component full-screen — no studio chrome needed.
- * The api key is available via the muapi_key cookie which StandaloneShell sets.
+ * The API key is available via the muapi_key cookie which the Dynaxis session helper syncs
+ * (see lib/dynaxis/session.js). Full Dynaxis identity is Phase 3.
  */
+import { DYNAXIS_METADATA } from '@/lib/dynaxis/product';
+
 export const metadata = {
-  title: "Agent Chat — Open Generative AI",
+  title: DYNAXIS_METADATA.titleAgents,
 };
 
 export default function AgentsLayout({ children }) {

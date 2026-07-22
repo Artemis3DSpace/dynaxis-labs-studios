@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { generateImage } from "../muapi.js";
+import { useState, useCallback, useEffect } from "react";
+import { generateImage, generateI2I } from "../muapi.js";
+import CharacterPicker from "./character/CharacterPicker.jsx";
+import CharacterReferencePicker from "./character/CharacterReferencePicker.jsx";
+import { createPlatformClient } from "../../../../lib/dynaxis/client/platform-api.js";
+import {
+  selectCharacterReferences,
+  publishCharacterGenerationContext,
+  clearCharacterGenerationContext,
+} from "../../../../lib/dynaxis/characters/consumer.js";
 
 const CDN = "https://cdn.muapi.ai/influencer";
 
 // ── Default image generation model ──────────────────────────────────────────
 const INFLUENCER_MODEL = "nano-banana-pro";
+const INFLUENCER_EDIT_MODEL = "nano-banana-pro-edit";
+const INFLUENCER_MAX_REFS = 5;
 
 const TABS_CONFIG = {
   face: {
@@ -350,8 +360,16 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
   const [history, setHistory] = useState([]);                  // all generated images
   const [selectedHistoryIdx, setSelectedHistoryIdx] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [character, setCharacter] = useState(null);
+  const [characterContext, setCharacterContext] = useState(null);
+  const [selectedRefAssetIds, setSelectedRefAssetIds] = useState([]);
+  const [promoting, setPromoting] = useState(false);
 
   const isGenerating = externalIsGenerating || isGeneratingInternal;
+
+  useEffect(() => {
+    return () => clearCharacterGenerationContext();
+  }, []);
 
   // ── Build prompt from selections ──────────────────────────────────────────
   const buildPrompt = useCallback(() => {
@@ -362,11 +380,30 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
         if (opt?.promptVal) parts.push(opt.promptVal);
       })
     );
-    let prompt = "Ultra-realistic professional portrait photograph of an AI influencer character, 8k resolution, cinematic lighting, sharp detail";
+    let prompt =
+      "Ultra-realistic professional portrait photograph of an AI influencer character, 8k resolution, cinematic lighting, sharp detail";
+    // Character visual description only — not chat system prompts
+    const visual = characterContext?.visual?.visualDescription;
+    if (visual) prompt += `, featuring ${visual}`;
     if (parts.length) prompt += ", " + parts.join(", ");
     if (customPrompt.trim()) prompt += ", " + customPrompt.trim();
     return prompt;
-  }, [selectedOptions, customPrompt]);
+  }, [selectedOptions, customPrompt, characterContext]);
+
+  const handleCharacterContext = (resolved) => {
+    setCharacterContext(resolved);
+    if (!resolved) {
+      setCharacter(null);
+      setSelectedRefAssetIds([]);
+      clearCharacterGenerationContext();
+      return;
+    }
+    setCharacter(resolved.character);
+    const auto = selectCharacterReferences(resolved.visual?.allAssets || [], {
+      maxImages: Math.min(INFLUENCER_MAX_REFS, 1),
+    });
+    setSelectedRefAssetIds(auto.assetIds);
+  };
 
   // ── Option selection ───────────────────────────────────────────────────────
   const handleOptionSelect = (subcatId, optId) =>
@@ -391,10 +428,44 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
     setErrorMsg("");
 
     const prompt = buildPrompt();
+    const refSelection = selectCharacterReferences(
+      characterContext?.visual?.allAssets || [],
+      {
+        maxImages: INFLUENCER_MAX_REFS,
+        selectedAssetIds: selectedRefAssetIds,
+      }
+    );
+
     try {
+      if (characterContext?.provenance) {
+        publishCharacterGenerationContext({
+          characterId: characterContext.provenance.characterId,
+          characterRevisionId: characterContext.provenance.characterRevisionId,
+          referenceAssetIds: refSelection.assetIds,
+        });
+      } else {
+        clearCharacterGenerationContext();
+      }
+
       let res;
       if (onGenerate) {
-        res = await onGenerate({ prompt, aspectRatio, selections: selectedOptions });
+        res = await onGenerate({
+          prompt,
+          aspectRatio,
+          selections: selectedOptions,
+          characterId: characterContext?.provenance?.characterId || null,
+          characterRevisionId:
+            characterContext?.provenance?.characterRevisionId || null,
+          referenceAssetIds: refSelection.assetIds,
+        });
+      } else if (refSelection.urls.length > 0) {
+        // Reference-based continuity via edit model — traits stay generation config
+        res = await generateI2I(apiKey, {
+          model: INFLUENCER_EDIT_MODEL,
+          prompt,
+          aspect_ratio: aspectRatio,
+          images_list: refSelection.urls,
+        });
       } else {
         res = await generateImage(apiKey, {
           model: INFLUENCER_MODEL,
@@ -404,13 +475,75 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
       }
       if (res?.url) {
         setCurrentResult(res.url);
-        setHistory((prev) => [{ url: res.url, ts: Date.now() }, ...prev]);
+        setHistory((prev) => [
+          {
+            url: res.url,
+            ts: Date.now(),
+            generationId: res.dynaxisGenerationId || null,
+            assetId: null,
+          },
+          ...prev,
+        ]);
         setSelectedHistoryIdx(0);
       }
     } catch (err) {
       setErrorMsg(err?.message || "Generation failed. Please try again.");
     } finally {
       setIsGeneratingInternal(false);
+      // Keep Character provenance for subsequent generates while Character selected
+      if (!characterContext?.provenance) clearCharacterGenerationContext();
+    }
+  };
+
+  const promoteCurrentToCharacter = async () => {
+    if (!character?.id || !currentResult) return;
+    try {
+      setPromoting(true);
+      setErrorMsg("");
+      const client = createPlatformClient(apiKey);
+      // Register output as Asset in active project, then promote to Character reference
+      const registered = await client.registerAsset({
+        url: currentResult,
+        type: "image",
+        source: "generated",
+        provider: "muapi",
+        model: INFLUENCER_EDIT_MODEL,
+        prompt: buildPrompt(),
+        metadata: {
+          featureId: "ai-influencer",
+          characterId: character.id,
+          promotedFromInfluencer: true,
+        },
+      });
+      const assetId = registered?.asset?.id || registered?.id;
+      if (!assetId) throw new Error("Asset registration failed");
+      await client.promoteCharacterAsset(character.id, {
+        assetId,
+        role: "identity_reference",
+        isPrimary: true,
+      });
+      // Refresh Character context without mutating via generation
+      const resolved = await client.getCharacter(character.id, {
+        includeAssets: "true",
+      });
+      const char = resolved?.character || resolved;
+      setCharacter(char);
+      setCharacterContext((prev) =>
+        prev
+          ? {
+              ...prev,
+              character: char,
+              visual: {
+                ...prev.visual,
+                allAssets: char.assets || prev.visual?.allAssets || [],
+              },
+            }
+          : prev
+      );
+    } catch (err) {
+      setErrorMsg(err?.message || "Promote to Character failed");
+    } finally {
+      setPromoting(false);
     }
   };
 
@@ -475,6 +608,34 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
           >
             Reset
           </button>
+        </div>
+
+        {/* Optional Dynaxis Character — identity only; traits remain generation config */}
+        <div className="px-3 py-3 border-b border-white/[0.07] space-y-2 shrink-0">
+          <CharacterPicker
+            apiKey={apiKey}
+            value={character}
+            onChange={setCharacter}
+            onContextResolved={handleCharacterContext}
+            consumer="ai-influencer"
+            maxImages={INFLUENCER_MAX_REFS}
+            selectedAssetIds={selectedRefAssetIds}
+            compact
+          />
+          {characterContext?.visual?.allAssets?.length > 0 && (
+            <CharacterReferencePicker
+              assets={characterContext.visual.allAssets}
+              selectedAssetIds={selectedRefAssetIds}
+              onChange={setSelectedRefAssetIds}
+              maxImages={INFLUENCER_MAX_REFS}
+              disabled={isGenerating}
+            />
+          )}
+          {character && (
+            <p className="text-[9px] text-white/30 leading-relaxed">
+              Continuity is reference-based. Face/body/style controls are per-generation styling and do not edit the Character.
+            </p>
+          )}
         </div>
 
         {/* Tab pills */}
@@ -614,13 +775,26 @@ export default function AiInfluencerStudio({ apiKey, onGenerate, isGenerating: e
               <>
                 <img src={previewUrl} alt="Generated AI Character" className="w-full h-full object-cover" />
                 {/* Download overlay button */}
-                <button
-                  onClick={() => downloadImg(previewUrl)}
-                  className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 text-white text-[11px] font-semibold hover:bg-black/80 transition-all"
-                >
-                  <DownloadIcon />
-                  Save
-                </button>
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                  {character?.id && currentResult && (
+                    <button
+                      type="button"
+                      disabled={promoting || isGenerating}
+                      onClick={promoteCurrentToCharacter}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 text-white text-[11px] font-semibold hover:bg-black/80 transition-all disabled:opacity-40"
+                      title="Promote to Character identity reference"
+                    >
+                      {promoting ? "…" : "Promote to Character"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => downloadImg(previewUrl)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 text-white text-[11px] font-semibold hover:bg-black/80 transition-all"
+                  >
+                    <DownloadIcon />
+                    Save
+                  </button>
+                </div>
               </>
             ) : (
               <div className="flex flex-col items-center gap-3 text-center px-8 py-12">

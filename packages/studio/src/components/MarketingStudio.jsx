@@ -1,7 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { uploadFile, generateMarketingStudioAd } from "../muapi.js";
+import ProductPicker from "./product/ProductPicker.jsx";
+import ProductReferencePicker from "./product/ProductReferencePicker.jsx";
+import CharacterPicker from "./character/CharacterPicker.jsx";
+import CharacterReferencePicker from "./character/CharacterReferencePicker.jsx";
+import BrandPicker from "./brand/BrandPicker.jsx";
+import AssetInputPicker from "./assets/AssetInputPicker.jsx";
+import {
+  MARKETING_MAX_ADDITIONAL,
+  MARKETING_MAX_IMAGES,
+  resolveMarketingSourceContext,
+  publishMarketingGenerationContext,
+  clearMarketingGenerationContext,
+} from "../../../../lib/dynaxis/marketing/source-context.js";
 
 const SCROLLBAR_STYLE = `
   .custom-scrollbar-thin::-webkit-scrollbar {
@@ -257,11 +270,32 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
   const [productImage, setProductImage] = useState(null);
   const [avatarImage, setAvatarImage] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
-  
+  const [additionalAssets, setAdditionalAssets] = useState([]);
+
+  // Optional Dynaxis library sources (do not redesign shell — compact strip only)
+  const [product, setProduct] = useState(null);
+  const [productContext, setProductContext] = useState(null);
+  const [selectedProductRefIds, setSelectedProductRefIds] = useState([]);
+  const [productAsset, setProductAsset] = useState(null);
+
+  const [character, setCharacter] = useState(null);
+  const [characterContext, setCharacterContext] = useState(null);
+  const [selectedCharRefIds, setSelectedCharRefIds] = useState([]);
+  const [avatarAsset, setAvatarAsset] = useState(null);
+  const [avatarPreset, setAvatarPreset] = useState(null);
+
+  const [brand, setBrand] = useState(null);
+  const [brandContext, setBrandContext] = useState(null);
+  const [includeBrandLogo, setIncludeBrandLogo] = useState(false);
+
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [sourceError, setSourceError] = useState(null);
+
   const [params, setParams] = useState({
     ratio: "9:16",
     format: ASSETS.ugc[0].name,
     videoUrl: ASSETS.ugc[0].url,
+    formatId: ASSETS.ugc[0].id,
     res: "1080p",
     duration: 5
   });
@@ -276,6 +310,19 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
   const [slideDirection, setSlideDirection] = useState("next"); // 'next' | 'prev'
 
   const textareaRef = useRef(null);
+
+  const productVisualAssets = useMemo(
+    () => productContext?.visual?.allAssets || productContext?.visual?.references || [],
+    [productContext]
+  );
+  const characterVisualAssets = useMemo(
+    () => characterContext?.visual?.allAssets || characterContext?.visual?.references || [],
+    [characterContext]
+  );
+
+  useEffect(() => {
+    return () => clearMarketingGenerationContext();
+  }, []);
 
   // ── Persistence ───────────────────────────────────────────────────────────
 
@@ -322,61 +369,184 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
     }
   };
 
+  const clearProductLibrarySource = () => {
+    setProduct(null);
+    setProductContext(null);
+    setSelectedProductRefIds([]);
+  };
+
+  const clearAvatarLibrarySource = () => {
+    setCharacter(null);
+    setCharacterContext(null);
+    setSelectedCharRefIds([]);
+    setAvatarPreset(null);
+  };
+
   const handleUpload = async (e, target) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     
     if (target === 'additional') {
-      const remaining = 6 - additionalImages.length;
-      const toUpload = files.slice(0, remaining);
+      const remaining = MARKETING_MAX_ADDITIONAL - additionalImages.length - additionalAssets.length;
+      const toUpload = files.slice(0, Math.max(0, remaining));
       for (const file of toUpload) {
         try {
           const url = await uploadFile(apiKey, file, (pct) => setUploadProgress(p => ({ ...p, additional: pct })));
-          setAdditionalImages(prev => [...prev, url].slice(0, 6));
+          setAdditionalImages(prev => [...prev, url].slice(0, MARKETING_MAX_ADDITIONAL));
         } catch (err) { alert(err.message); }
       }
     } else {
       const file = files[0];
       try {
         const url = await uploadFile(apiKey, file, (pct) => setUploadProgress(p => ({ ...p, [target]: pct })));
-        if (target === 'product') setProductImage(url);
-        else setAvatarImage(url);
+        if (target === 'product') {
+          // Upload wins — deactivate competing Product / Asset sources
+          clearProductLibrarySource();
+          setProductAsset(null);
+          setProductImage(url);
+        } else {
+          clearAvatarLibrarySource();
+          setAvatarAsset(null);
+          setAvatarImage(url);
+        }
       } catch (err) { alert(err.message); }
     }
     setUploadProgress(p => ({ ...p, [target]: 0 }));
   };
 
+  const handleProductResolved = (resolved) => {
+    if (!resolved) {
+      clearProductLibrarySource();
+      return;
+    }
+    // Product selection clears competing upload / asset product sources
+    setProductImage(null);
+    setProductAsset(null);
+    setProduct(resolved.product);
+    setProductContext(resolved);
+    const ids = resolved.provenance?.referenceAssetIds || resolved.visual?.referenceAssetIds || [];
+    setSelectedProductRefIds(ids.slice(0, MARKETING_MAX_IMAGES - 1));
+    const primaryUrl = resolved.visual?.referenceUrls?.[0] || null;
+    if (primaryUrl) setProductImage(primaryUrl);
+  };
+
+  const handleCharacterResolved = (resolved) => {
+    if (!resolved) {
+      clearAvatarLibrarySource();
+      return;
+    }
+    setAvatarImage(null);
+    setAvatarAsset(null);
+    setAvatarPreset(null);
+    setCharacter(resolved.character);
+    setCharacterContext(resolved);
+    const ids = resolved.provenance?.referenceAssetIds || resolved.visual?.referenceAssetIds || [];
+    setSelectedCharRefIds(ids.slice(0, 1));
+    const primaryUrl = resolved.visual?.referenceUrls?.[0] || null;
+    if (primaryUrl) setAvatarImage(primaryUrl);
+  };
+
+  const handleBrandResolved = (resolved) => {
+    if (!resolved) {
+      setBrand(null);
+      setBrandContext(null);
+      setIncludeBrandLogo(false);
+      return;
+    }
+    setBrand(resolved.brand);
+    setBrandContext(resolved);
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return alert("Please enter an ad script.");
-    if (!productImage) return alert("Please upload a product image.");
-
+    setSourceError(null);
     setIsGenerating(true);
     try {
-      const result = await generateMarketingStudioAd(apiKey, {
+      const formatMeta = {
+        id: params.formatId ?? ASSETS.ugc.find((u) => u.name === params.format)?.id ?? null,
+        name: params.format,
+        url: params.videoUrl,
+      };
+
+      const source = resolveMarketingSourceContext({
         prompt,
-        aspect_ratio: params.ratio,
-        duration: params.duration,
+        aspectRatio: params.ratio,
         resolution: params.res,
-        images_list: [productImage, avatarImage, ...additionalImages].filter(Boolean),
-        video_files: params.videoUrl ? [params.videoUrl] : []
+        duration: params.duration,
+        format: formatMeta,
+        product,
+        productRevision: productContext?.revision || null,
+        productAssets: productVisualAssets,
+        selectedProductAssetIds: selectedProductRefIds.length ? selectedProductRefIds : null,
+        productUploadUrl: productAsset || product ? null : productImage,
+        productAsset,
+        character,
+        characterRevision: characterContext?.revision || null,
+        characterAssets: characterVisualAssets,
+        selectedCharacterAssetIds: selectedCharRefIds.length ? selectedCharRefIds : null,
+        avatarUploadUrl: avatarAsset || character || avatarPreset ? null : avatarImage,
+        avatarAsset,
+        avatarPreset,
+        additionalUploadUrls: additionalImages,
+        additionalAssets,
+        brand,
+        brandContext,
+        includeBrandLogo: includeBrandLogo && Boolean(brandContext?.visual?.logoUrl),
+        maxImages: MARKETING_MAX_IMAGES,
+      });
+
+      if (typeof window !== 'undefined') {
+        window.__dynaxisFeatureId = 'marketing-studio';
+        window.__dynaxisAssetHint = 'video';
+      }
+
+      publishMarketingGenerationContext(source);
+
+      const result = await generateMarketingStudioAd(apiKey, {
+        prompt: source.prompt,
+        aspect_ratio: source.aspectRatio,
+        duration: source.duration,
+        resolution: source.resolution,
+        images_list: source.imagesList,
+        video_files: source.videoFiles,
       });
 
       if (result?.url) {
         const entry = {
-          id: Date.now(),
+          id: result.dynaxisGenerationId || Date.now(),
           url: result.url,
-          prompt,
+          prompt: source.userScript || prompt,
           format: params.format,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          type: 'video',
+          model: source.capability?.endpoint || null,
+          dynaxisGenerationId: result.dynaxisGenerationId || null,
+          dynaxisJobId: result.dynaxisJobId || null,
+          productId: source.productId,
+          productRevisionId: source.productRevisionId,
+          characterId: source.characterId,
+          characterRevisionId: source.characterRevisionId,
+          brandId: source.brandId,
+          brandRevisionId: source.brandRevisionId,
+          provenance: source.provenance,
         };
         if (!historyItems) {
           setLocalHistory(prev => [entry, ...prev]);
         }
         setFullscreenUrl(result.url);
-        onGenerationComplete?.({ url: result.url, type: "video" });
+        onGenerationComplete?.({
+          url: result.url,
+          type: "video",
+          dynaxisGenerationId: result.dynaxisGenerationId,
+          dynaxisJobId: result.dynaxisJobId,
+        });
+      } else {
+        throw new Error("Marketing generation completed without a video URL");
       }
     } catch (err) {
-      onGenerationError?.(err.message?.slice(0, 120) || "Marketing generation failed");
+      const message = err.message?.slice(0, 160) || "Marketing generation failed";
+      setSourceError(message);
+      onGenerationError?.(message);
     } finally {
       setIsGenerating(false);
     }
@@ -515,6 +685,176 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
         )}
       </div>
 
+      {/* ── OPTIONAL LIBRARY STRIP (Products / Characters / Assets) ── */}
+      <div className="absolute bottom-[7.5rem] sm:bottom-[8.5rem] w-full max-w-[95%] lg:max-w-4xl z-30 px-0">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <button
+            type="button"
+            onClick={() => setLibraryOpen((o) => !o)}
+            className="text-[10px] font-black uppercase tracking-widest text-white/35 hover:text-white/60"
+          >
+            {libraryOpen ? 'Hide library' : 'Library — Product · Character · Brand · Assets'}
+          </button>
+          {sourceError ? (
+            <span className="text-[10px] text-amber-300/90 truncate max-w-[60%]">{sourceError}</span>
+          ) : null}
+        </div>
+        {libraryOpen ? (
+          <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl p-3 space-y-3 shadow-xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <ProductPicker
+                apiKey={apiKey}
+                value={product}
+                compact
+                consumer="marketing-studio"
+                maxImages={MARKETING_MAX_IMAGES - 1}
+                selectedAssetIds={selectedProductRefIds}
+                publishContext={false}
+                onChange={(p) => {
+                  if (!p) {
+                    clearProductLibrarySource();
+                    setProductImage(null);
+                  }
+                }}
+                onContextResolved={handleProductResolved}
+              />
+              <CharacterPicker
+                apiKey={apiKey}
+                value={character}
+                compact
+                consumer="marketing-studio"
+                maxImages={1}
+                selectedAssetIds={selectedCharRefIds}
+                onChange={(c) => {
+                  if (!c) {
+                    clearAvatarLibrarySource();
+                    setAvatarImage(null);
+                  }
+                }}
+                onContextResolved={handleCharacterResolved}
+              />
+              <div className="space-y-2">
+                <BrandPicker
+                  apiKey={apiKey}
+                  value={brand}
+                  compact
+                  consumer="marketing-studio"
+                  includeLogo={includeBrandLogo}
+                  publishContext={false}
+                  onChange={(b) => {
+                    if (!b) handleBrandResolved(null);
+                  }}
+                  onContextResolved={handleBrandResolved}
+                />
+                {brand ? (
+                  <label className="flex items-center gap-2 text-[10px] text-white/50">
+                    <input
+                      type="checkbox"
+                      checked={includeBrandLogo}
+                      onChange={(e) => setIncludeBrandLogo(e.target.checked)}
+                      className="rounded border-white/20"
+                    />
+                    Include brand logo in image budget
+                  </label>
+                ) : null}
+              </div>
+            </div>
+            {product && productVisualAssets.length > 0 ? (
+              <ProductReferencePicker
+                assets={productVisualAssets}
+                selectedAssetIds={selectedProductRefIds}
+                maxImages={Math.max(1, MARKETING_MAX_IMAGES - 1)}
+                onChange={(ids) => {
+                  setSelectedProductRefIds(ids);
+                  const byId = new Map(productVisualAssets.map((a) => [a.assetId, a]));
+                  const first = ids.map((id) => byId.get(id)).find((a) => a?.url);
+                  if (first?.url) setProductImage(first.url);
+                }}
+              />
+            ) : null}
+            {character && characterVisualAssets.length > 0 ? (
+              <CharacterReferencePicker
+                assets={characterVisualAssets}
+                selectedAssetIds={selectedCharRefIds}
+                maxImages={1}
+                onChange={(ids) => {
+                  setSelectedCharRefIds(ids.slice(0, 1));
+                  const byId = new Map(characterVisualAssets.map((a) => [a.assetId, a]));
+                  const first = ids.map((id) => byId.get(id)).find((a) => a?.url);
+                  if (first?.url) setAvatarImage(first.url);
+                }}
+              />
+            ) : null}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <AssetInputPicker
+                apiKey={apiKey}
+                type="image"
+                label="Product Asset"
+                compact
+                value={productAsset}
+                onChange={(asset) => {
+                  clearProductLibrarySource();
+                  setProductAsset(asset);
+                  setProductImage(asset?.url || null);
+                }}
+              />
+              <AssetInputPicker
+                apiKey={apiKey}
+                type="image"
+                label="Avatar Asset"
+                compact
+                value={avatarAsset}
+                onChange={(asset) => {
+                  clearAvatarLibrarySource();
+                  setAvatarAsset(asset);
+                  setAvatarImage(asset?.url || null);
+                }}
+              />
+              <AssetInputPicker
+                apiKey={apiKey}
+                type="image"
+                label="Extra reference Asset"
+                compact
+                value={null}
+                onChange={(asset) => {
+                  if (!asset?.url) return;
+                  const total =
+                    (productImage ? 1 : 0) +
+                    (avatarImage ? 1 : 0) +
+                    additionalImages.length +
+                    additionalAssets.length;
+                  if (total >= MARKETING_MAX_IMAGES) {
+                    setSourceError(`At most ${MARKETING_MAX_IMAGES} images for this model`);
+                    return;
+                  }
+                  if (additionalImages.length + additionalAssets.length >= MARKETING_MAX_ADDITIONAL) {
+                    setSourceError(`At most ${MARKETING_MAX_ADDITIONAL} additional references`);
+                    return;
+                  }
+                  setAdditionalAssets((prev) => [...prev, asset]);
+                }}
+              />
+            </div>
+            {additionalAssets.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {additionalAssets.map((a) => (
+                  <div key={a.id} className="relative group/img">
+                    <img src={a.url} className="w-9 h-9 rounded-full object-cover border border-[#22d3ee]/30" alt="" />
+                    <button
+                      type="button"
+                      onClick={() => setAdditionalAssets((prev) => prev.filter((x) => x.id !== a.id))}
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 border border-white/10"
+                    >
+                      <CloseSvg />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
       {/* ── BOTTOM PROMPT BAR ── */}
       <div style={{ animationDelay: "0.2s" }} className="absolute bottom-4 w-full max-w-[95%] lg:max-w-4xl z-40 animate-fade-in-up">
         <div className="w-full bg-gradient-to-b from-[#18181c]/90 via-[#0f0f12]/90 to-[#0c0c0e]/95 backdrop-blur-2xl rounded-[2rem] border border-white/[0.08] p-4 flex flex-col gap-3 shadow-[0_15px_50px_rgba(0,0,0,0.8)]">
@@ -558,7 +898,11 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
                   url={productImage} 
                   progress={uploadProgress.product} 
                   onUpload={(e) => handleUpload(e, 'product')} 
-                  onClear={() => setProductImage(null)} 
+                  onClear={() => {
+                    setProductImage(null);
+                    setProductAsset(null);
+                    clearProductLibrarySource();
+                  }} 
                 />
                 <UploadSlot 
                   label="Avatar" 
@@ -566,7 +910,11 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
                   url={avatarImage} 
                   progress={uploadProgress.avatar} 
                   onUpload={(e) => handleUpload(e, 'avatar')} 
-                  onClear={() => setAvatarImage(null)} 
+                  onClear={() => {
+                    setAvatarImage(null);
+                    setAvatarAsset(null);
+                    clearAvatarLibrarySource();
+                  }} 
                 />
                 <UploadSlot 
                   label="References" 
@@ -603,7 +951,7 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
                   title="Video Format Presets"
                   items={ASSETS.ugc} 
                   selectedId={params.format}
-                  onSelect={(item) => setParams({ ...params, format: item.name, videoUrl: item.url })}
+                  onSelect={(item) => setParams({ ...params, format: item.name, videoUrl: item.url, formatId: item.id })}
                   onClose={() => setDropdown(null)}
                   isVideo
                 />
@@ -653,7 +1001,12 @@ export default function MarketingStudio({ apiKey, droppedFiles, onFilesHandled, 
                   title="Avatar Presets"
                   items={ASSETS.avatar} 
                   selectedId={avatarImage}
-                  onSelect={(item) => setAvatarImage(item.url)}
+                  onSelect={(item) => {
+                    clearAvatarLibrarySource();
+                    setAvatarAsset(null);
+                    setAvatarPreset(item);
+                    setAvatarImage(item.url);
+                  }}
                   onPreview={(item) => setPreviewAvatar(item)}
                   onClose={() => setDropdown(null)}
                 />

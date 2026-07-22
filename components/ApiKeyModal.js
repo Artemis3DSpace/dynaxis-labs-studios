@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 
-export default function ApiKeyModal({ onSave, onClose, overlay = false, title, subtitle }) {
+/** Local-only session marker — unlocks shell UI; generation calls will fail without a real MuAPI key. */
+export const DYNAXIS_PREVIEW_KEY = 'dynaxis-local-preview';
+
+export default function ApiKeyModal({ onSave, onClose, overlay = false, title, subtitle, allowLocalPreview = false }) {
   const [key, setKey] = useState('');
   const [error, setError] = useState('');
 
@@ -11,6 +14,10 @@ export default function ApiKeyModal({ onSave, onClose, overlay = false, title, s
     const trimmed = key.trim();
     if (!trimmed) { setError('Please enter your API key'); return; }
     onSave(trimmed);
+  };
+
+  const handlePreview = () => {
+    onSave(DYNAXIS_PREVIEW_KEY);
   };
 
   const wrapperClass = overlay
@@ -39,7 +46,7 @@ export default function ApiKeyModal({ onSave, onClose, overlay = false, title, s
             </svg>
           </div>
           <h1 className="text-xl font-bold text-white tracking-tight mb-2">
-            {title || 'Open Generative AI'}
+            {title || 'Dynaxis Labs Studios'}
           </h1>
           <p className="text-white/40 text-[13px] leading-relaxed px-4">
             {subtitle || (
@@ -71,6 +78,16 @@ export default function ApiKeyModal({ onSave, onClose, overlay = false, title, s
           >
             Get Started
           </button>
+
+          {allowLocalPreview && (
+            <button
+              type="button"
+              onClick={handlePreview}
+              className="w-full bg-white/5 border border-white/10 text-white/80 font-medium py-2.5 rounded-md hover:bg-white/10 hover:text-white transition-all"
+            >
+              Preview platform UI (no API key)
+            </button>
+          )}
 
           <p className="text-center text-[12px] text-white/20 pt-2">
             Need a key?{' '}
