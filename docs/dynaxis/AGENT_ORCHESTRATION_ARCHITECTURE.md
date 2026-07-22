@@ -1,7 +1,7 @@
 # Dynaxis Labs Studios - Agent Orchestration Architecture
 
 **Status:** Planned architecture. Current Agents and Design Agent remain preserved.  
-**Scope:** Role, memory, worker, and verification boundaries only.
+**Scope:** Distinguishes early contract foundation from later orchestration runtime.
 
 ---
 
@@ -33,7 +33,83 @@ Not implemented now:
 
 ---
 
-## 3. Planned Role Model
+## 3. Early Contract Foundation
+
+The early foundation defines contracts only. It does not implement Supercomputer, Skills, autonomous agents, memory-driven planning, worker scheduling, or provider-specific worker integrations.
+
+### AgentRole contract
+
+Defines a canonical Dynaxis role independent of provider:
+
+- role id and purpose;
+- permissions;
+- allowed Project Graph context;
+- allowed tools and future skills;
+- expected inputs and outputs;
+- review requirements;
+- verification responsibilities.
+
+### WorkPackage contract
+
+Defines a scoped unit of delegated engineering or design/build work:
+
+- objective;
+- scope;
+- Project Graph inputs;
+- target repository/worktree if any;
+- App IR or Composition delta;
+- allowed tools/providers;
+- acceptance criteria;
+- verification plan;
+- dependencies;
+- review gates;
+- audit trail.
+
+### WorkerAdapter contract
+
+Defines how Dynaxis can later hand a Work Package to a provider-specific worker:
+
+- provider id;
+- capabilities;
+- required credentials/connection;
+- input envelope;
+- status/progress reporting;
+- artifact reporting;
+- command/test evidence;
+- cancellation and timeout semantics.
+
+### VerificationGate contract
+
+Defines how completed work is accepted or rejected:
+
+- gate id and type;
+- required evidence;
+- automated or human review mode;
+- blocking/non-blocking severity;
+- artifact references;
+- result status;
+- software genome reliability impact where relevant.
+
+Build and Engineer modes depend on these contracts before production software generation can be safe.
+
+---
+
+## 4. Later Orchestration Runtime
+
+The later runtime provides:
+
+- worker scheduling;
+- multi-agent coordination;
+- Skills execution;
+- memory-driven planning;
+- high-order orchestration;
+- Supercomputer.
+
+This runtime depends on the early contracts, Project Graph, identity/permissions, Provider Connections, and Job/Event infrastructure.
+
+---
+
+## 5. Planned Role Model
 
 Canonical Dynaxis roles include:
 
@@ -61,7 +137,7 @@ The provider chosen to execute a role is an implementation detail.
 
 ---
 
-## 4. Memory and Context
+## 6. Memory and Context
 
 ### Implemented now
 
@@ -84,9 +160,9 @@ Memory must be scoped by Project, owner/org, permissions, and role. It is not fr
 
 ---
 
-## 5. Worker Adapters
+## 7. Worker Adapters
 
-Worker adapters translate Dynaxis work packages into provider execution:
+Worker adapters eventually translate Dynaxis work packages into provider execution:
 
 | Adapter | Role |
 |---------|------|
@@ -99,9 +175,11 @@ Worker adapters translate Dynaxis work packages into provider execution:
 
 Adapters report status, artifacts, files changed, commands run, tests, and verification evidence back to Dynaxis. They must not own the Project Graph.
 
+The early foundation defines the adapter contract only. Provider-specific integrations are later work.
+
 ---
 
-## 6. Skills Relationship
+## 8. Skills Relationship
 
 Skills are reusable capability packages. They may call creative generation, inspect Project Graph context, run engineering actions, or operate domain tools.
 
@@ -115,7 +193,7 @@ Skills are not implemented in Phase 6I and must not be assumed available. Mini A
 
 ---
 
-## 7. Work Packages
+## 9. Work Packages
 
 Work packages are the unit of delegated action:
 
@@ -135,7 +213,7 @@ Build and Engineer modes depend on this contract before production software gene
 
 ---
 
-## 8. Verification Gates
+## 10. Verification Gates
 
 Verification gates should be role-specific:
 
@@ -152,7 +230,7 @@ For App Factory, gates also update software genome reliability levels.
 
 ---
 
-## 9. Supercomputer Relationship
+## 11. Supercomputer Relationship
 
 Supercomputer is a later orchestration layer across roles, workers, workflows, skills, and Project Graph memory.
 
@@ -169,7 +247,7 @@ It is deferred and not part of Phase 6J.
 
 ---
 
-## 10. Deferred
+## 12. Deferred
 
 - Role registry implementation.
 - Memory service implementation.

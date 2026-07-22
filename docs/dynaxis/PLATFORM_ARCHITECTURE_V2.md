@@ -36,17 +36,17 @@ V2 consolidates these into one product architecture:
           CREATIVE ENGINE     SOFTWARE ENGINE
                  |                  |
          generation jobs      engineering jobs
-                 |                  |
-       capability registry       agent roles
-                 |                  |
-        provider registry       worker registry
-                 |                  |
- MuAPI / Higgsfield / ...  Codex / Claude / OpenHands / ...
                   \                /
                    \              /
                       JOB ENGINE
                           |
                Queue / Events / Audit
+                          |
+          Capability Router / Worker Router
+                     /                    \
+                    /                      \
+       Provider Adapters              Worker Adapters
+       MuAPI / Higgsfield / ...       Codex / Claude / OpenHands / ...
                           |
                 Postgres / S3 / GitHub
 ```
@@ -104,9 +104,12 @@ Current Generation / Job / Asset infrastructure evolves into a provider-neutral 
 - Capability Registry.
 - Generation Gateway.
 - Provider Registry.
+- Provider Connections / Secrets owned by Dynaxis users or organizations.
 - Provider adapters for MuAPI, Higgsfield, Fal, Replicate, local inference, and future systems.
 - Queue / event / webhook completion.
 - Character identity profiles attached to Dynaxis Characters.
+
+The Generation Gateway creates the canonical Dynaxis Generation/Job request before provider dispatch. The Dynaxis Job Engine owns durable execution; provider adapters are downstream.
 
 ### Software Engine / App Factory
 
@@ -125,6 +128,8 @@ Build and Engineer modes add production software creation without duplicating ex
 
 Dynaxis Orchestrator coordinates role-based agents, work packages, memory, permissions, skills, workers, queues, and verification gates. Providers are execution engines, not canonical roles.
 
+V2 separates early Agent / Engineering Contracts from later orchestration runtime. Agent Role, Work Package, Worker Adapter, and Verification Gate contracts are required before App Factory can delegate engineering safely. Full Supercomputer orchestration remains deferred.
+
 ---
 
 ## 4. Deferred
@@ -132,6 +137,7 @@ Dynaxis Orchestrator coordinates role-based agents, work packages, memory, permi
 These are intentionally not implemented by this consolidation:
 
 - Provider kernel code.
+- Provider Connections / Secrets.
 - App IR schema or packages.
 - Software registry packages.
 - Higgsfield SDK or provider implementation.

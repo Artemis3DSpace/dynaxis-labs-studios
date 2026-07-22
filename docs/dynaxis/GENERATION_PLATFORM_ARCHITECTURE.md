@@ -15,23 +15,31 @@ Providers execute capabilities. Providers do not own Dynaxis domain entities.
 Studio / Mini App / Skill / Agent / Workflow
         |
         v
-Capability Registry
-        |
-        v
 Generation Gateway
-        |
-        v
-Provider Registry
-   +----+------------------------+
-   |             |               |
- MuAPI       Higgsfield         ...
         |
         v
 Dynaxis Job Engine
         |
         v
-Assets
+Capability Resolver / Provider Router
+        |
+        v
+Provider Adapter
+        |
+        v
+External Provider
+        |
+        v
+status / webhook / completion event
+        |
+        v
+Dynaxis Job Engine
+        |
+        v
+Asset registration
 ```
+
+Generation Gateway establishes the canonical Dynaxis Generation and Job request before any external provider execution. The Dynaxis Job Engine owns durable execution; providers are downstream adapters and never precede or own the Dynaxis Job lifecycle.
 
 ---
 
@@ -79,8 +87,14 @@ The gateway is the canonical submit/status/cancel interface. It accepts Dynaxis 
 - input Assets;
 - policy/permission checks;
 - cost estimate or credit hold;
-- job creation;
-- provider dispatch.
+- canonical Generation and Job creation before provider dispatch;
+- durable handoff to the Dynaxis Job Engine.
+
+### Dynaxis Job Engine
+
+The Job Engine owns durable execution state. It receives a canonical Dynaxis Job, routes it through provider-independent policy, records dispatch attempts, consumes provider status/webhook/completion events, and triggers Asset registration.
+
+The Job Engine must be upstream of provider execution. Provider job ids are metadata on a Dynaxis Job, not the lifecycle authority.
 
 ### Provider Registry
 
@@ -138,9 +152,33 @@ A server job/event engine should add:
 
 Provider webhooks should update Dynaxis Jobs. They should not call product-specific webhooks per domain.
 
+Server-owned execution depends on identity/permissions and Provider Connections / Secrets. A provider API key must not be treated as the user identity for durable server jobs.
+
 ---
 
-## 5. Assets
+## 5. Provider Connections / Secrets
+
+### Implemented now
+
+Users currently supply a MuAPI key through the existing app settings/local storage path. Platform ownership is derived from a hashed key for current rows.
+
+### Planned
+
+Provider Connections are explicit Dynaxis-owned records for credentials and account metadata. A connection belongs to a Dynaxis user or organization and is authorized through Dynaxis permissions.
+
+Future connection types may include:
+
+- MuAPI connection;
+- Higgsfield connection;
+- Fal connection;
+- Replicate connection;
+- local/private provider connection.
+
+Provider Connections must be available before server-owned async execution can safely dispatch jobs on behalf of a user or organization.
+
+---
+
+## 6. Assets
 
 ### Implemented now
 
@@ -160,7 +198,7 @@ The Asset system should add:
 
 ---
 
-## 6. Character Identity Providers
+## 7. Character Identity Providers
 
 ### Implemented now
 
@@ -185,11 +223,11 @@ Soul ID or any provider-specific identity must not become the canonical Characte
 
 ---
 
-## 7. Deferred
+## 8. Deferred
 
 - Provider kernel implementation.
 - Higgsfield SDK.
-- Provider credential UI.
+- Provider Connections / Secrets implementation.
 - Queue workers.
 - Webhooks.
 - Capability Registry database.

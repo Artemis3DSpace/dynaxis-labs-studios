@@ -1,7 +1,7 @@
 # Dynaxis Labs Studios - App Factory Architecture
 
 **Status:** Planned architecture. Not implemented.  
-**Depends on:** Platform Architecture V2, Project Graph, identity/permissions, job/event engine, agent orchestration.
+**Depends on:** Platform Architecture V2, Dynaxis identity/permissions, provider-independent Job/Event infrastructure where relevant, Project Graph, Agent / Engineering Contracts.
 
 ---
 
@@ -183,8 +183,10 @@ App Factory should begin only after:
 
 1. V2 architecture consolidation.
 2. Dynaxis identity / organizations and permissions.
-3. Server job/event engine.
+3. Provider-independent Job/Event infrastructure where Build actions need durable execution.
 4. Project Graph extensions.
-5. Agent orchestration work-package contract.
+5. Agent / Engineering Contracts: Agent Role, Engineering Work Package, Worker Adapter, and Verification Gate.
+
+Full Supercomputer-level orchestration is not required before App IR, software registries, blueprints, or repository modeling can begin. Those systems require the early contract foundation for safe delegation, while full worker scheduling, multi-agent coordination, Skills, memory-driven planning, and high-order orchestration remain later.
 
 The first App Factory implementation should create one minimal App IR path behind feature flags, not a parallel product shell.
