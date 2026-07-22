@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resetMemoryStore } from '../lib/dynaxis/db/memory-store.js';
 import { ownerRefFromApiKey } from '../lib/dynaxis/ownership.js';
+import { PROVIDER_MUAPI } from '../lib/dynaxis/types.js';
 import {
   ensureDefaultProject,
   createProject,
@@ -11,7 +12,7 @@ import {
   archiveProject,
 } from '../lib/dynaxis/services/projects.js';
 import { registerAsset, listAssets, listAssetsForGeneration } from '../lib/dynaxis/services/assets.js';
-import { listGenerations } from '../lib/dynaxis/services/generations.js';
+import { createGeneration, getGeneration, listGenerations } from '../lib/dynaxis/services/generations.js';
 import {
   startLifecycle,
   attachProviderJobId,
@@ -19,7 +20,7 @@ import {
   failLifecycle,
 } from '../lib/dynaxis/services/lifecycle.js';
 import { importLocalHistory } from '../lib/dynaxis/services/history-compat.js';
-import { getJob } from '../lib/dynaxis/services/jobs.js';
+import { createJob, getJob } from '../lib/dynaxis/services/jobs.js';
 
 process.env.NODE_ENV = 'test';
 process.env.DYNAXIS_PLATFORM_DRIVER = 'memory';
@@ -67,6 +68,8 @@ test('lifecycle: success creates generation, job, and multi-assets', async () =>
   assert.ok(started.generation.id);
   assert.ok(started.job.id);
   assert.equal(started.generation.status, 'submitted');
+  assert.equal(started.generation.provider, PROVIDER_MUAPI);
+  assert.equal(started.job.provider, PROVIDER_MUAPI);
 
   await attachProviderJobId(OWNER, {
     generationId: started.generation.id,
@@ -83,6 +86,7 @@ test('lifecycle: success creates generation, job, and multi-assets', async () =>
   assert.equal(done.generation.status, 'succeeded');
   assert.equal(done.job.status, 'succeeded');
   assert.equal(done.assets.length, 2);
+  assert.equal(done.assets[0].provider, PROVIDER_MUAPI);
 
   const linked = await listAssetsForGeneration(started.generation.id);
   assert.equal(linked.length, 2);
@@ -97,6 +101,106 @@ test('lifecycle: success creates generation, job, and multi-assets', async () =>
   const job = await getJob(OWNER, started.job.id);
   assert.equal(job.providerJobId, 'pred_abc');
   assert.ok(job.completedAt);
+});
+
+test('lifecycle: explicit MuAPI provider persists on generation, job, and assets', async () => {
+  const started = await startLifecycle(OWNER, {
+    provider: PROVIDER_MUAPI,
+    featureId: 'image-studio',
+    model: 'flux',
+    prompt: 'a dog',
+    endpoint: 'flux',
+    assetHint: 'image',
+  });
+  assert.equal(started.generation.provider, PROVIDER_MUAPI);
+  assert.equal(started.job.provider, PROVIDER_MUAPI);
+  const done = await completeLifecycle(OWNER, {
+    generationId: started.generation.id,
+    jobId: started.job.id,
+    result: { status: 'completed', outputs: ['https://cdn.example/dog.png'] },
+  });
+  assert.equal(done.assets[0].provider, PROVIDER_MUAPI);
+});
+
+test('lifecycle: unregistered future provider is rejected deterministically', async () => {
+  await assert.rejects(
+    () => startLifecycle(OWNER, { provider: 'higgsfield', endpoint: 'x' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_NOT_FOUND');
+      assert.equal(err.providerId, 'higgsfield');
+      return true;
+    }
+  );
+});
+
+test('lifecycle: rejects job from another generation', async () => {
+  const a = await startLifecycle(OWNER, { endpoint: 'a' });
+  const b = await startLifecycle(OWNER, { endpoint: 'b' });
+  await assert.rejects(
+    () =>
+      completeLifecycle(OWNER, {
+        generationId: a.generation.id,
+        jobId: b.job.id,
+        urls: ['https://cdn.example/bad.png'],
+      }),
+    (err) => {
+      assert.equal(err.code, 'JOB_GENERATION_MISMATCH');
+      return true;
+    }
+  );
+});
+
+test('lifecycle: rejects mismatched provider pair', async () => {
+  const project = await ensureDefaultProject(OWNER);
+  const generation = await createGeneration(OWNER, {
+    projectId: project.id,
+    provider: 'custom-provider',
+    status: 'submitted',
+  });
+  const job = await createJob(OWNER, {
+    projectId: project.id,
+    generationId: generation.id,
+    provider: PROVIDER_MUAPI,
+  });
+  await assert.rejects(
+    () =>
+      failLifecycle(OWNER, {
+        generationId: generation.id,
+        jobId: job.id,
+        errorMessage: 'provider mismatch',
+      }),
+    (err) => {
+      assert.equal(err.code, 'JOB_PROVIDER_MISMATCH');
+      return true;
+    }
+  );
+});
+
+test('lifecycle: rejects mismatched project pair', async () => {
+  const projectA = await createProject(OWNER, { name: 'A' });
+  const projectB = await createProject(OWNER, { name: 'B' });
+  const generation = await createGeneration(OWNER, {
+    projectId: projectA.id,
+    provider: PROVIDER_MUAPI,
+    status: 'submitted',
+  });
+  const job = await createJob(OWNER, {
+    projectId: projectB.id,
+    generationId: generation.id,
+    provider: PROVIDER_MUAPI,
+  });
+  await assert.rejects(
+    () =>
+      attachProviderJobId(OWNER, {
+        generationId: generation.id,
+        jobId: job.id,
+        providerJobId: 'bad',
+      }),
+    (err) => {
+      assert.equal(err.code, 'JOB_PROJECT_MISMATCH');
+      return true;
+    }
+  );
 });
 
 test('lifecycle: failure persists error without assets', async () => {
@@ -115,6 +219,8 @@ test('lifecycle: failure persists error without assets', async () => {
   assert.equal(failed.job.status, 'failed');
   assert.ok(failed.job.failedAt);
   assert.match(failed.job.errorMessage, /boom/);
+  const generation = await getGeneration(OWNER, started.generation.id);
+  assert.equal(generation.errorMessage, 'Generation failed: boom');
   const assets = await listAssets(OWNER, { generationId: started.generation.id });
   assert.equal(assets.length, 0);
 });
