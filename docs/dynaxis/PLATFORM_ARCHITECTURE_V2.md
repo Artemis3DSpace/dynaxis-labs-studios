@@ -1,7 +1,7 @@
 # Dynaxis Labs Studios - Platform Architecture V2
 
 **Status:** Proposed canonical architecture after Phase 6I  
-**Scope:** Architecture consolidation only. No Phase 6J implementation.  
+**Scope:** Architecture consolidation only. No post-6I runtime implementation.
 **Authority:** Current implementation and migrations are authoritative where they differ from older roadmap text.
 
 ---

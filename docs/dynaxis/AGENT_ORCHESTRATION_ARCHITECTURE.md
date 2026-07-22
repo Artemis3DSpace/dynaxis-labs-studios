@@ -243,7 +243,7 @@ It should coordinate many work packages, not replace the core domain model. It d
 5. Job/event engine.
 6. Verification gates.
 
-It is deferred and not part of Phase 6J.
+It is deferred to Phase 9 and is not part of the Phase 7I Agent / Engineering Contracts foundation.
 
 ---
 

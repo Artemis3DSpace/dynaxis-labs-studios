@@ -372,7 +372,7 @@ Supercomputer should coordinate the platform. It must not become a separate prod
 
 ## 18. Deliberately Not Started
 
-- Phase 6J implementation.
+- Phase 7B+ runtime implementation.
 - Provider kernel.
 - Provider connections.
 - App Factory code.
