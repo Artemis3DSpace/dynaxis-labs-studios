@@ -77,6 +77,15 @@ It also adds this session field:
 
 - `auth.session.active_organization_id`
 
+The Better Auth 1.6.23 generated organization schema includes both
+`slug.unique()` and `uniqueIndex("organization_slug_uidx")`. Phase 7C.2 mirrors
+both generated uniqueness declarations until a pinned upstream generator change
+proves one redundant.
+
+`member_organization_user_uidx` is a deliberate Dynaxis hardening invariant, not
+a Better Auth generated index. It prevents duplicate memberships during
+personal-workspace retry/concurrency paths.
+
 The plugin settings keep these tables absent:
 
 - `auth.team`

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { dirname, join, normalize } from 'node:path';
 import { getTableColumns } from 'drizzle-orm';
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
@@ -11,11 +12,10 @@ import {
   BETTER_AUTH_SCHEMA_NOTES,
 } from '../lib/dynaxis/auth/schema.js';
 import {
-  DYNAXIS_AUTH_APP_NAME,
-  DYNAXIS_AUTH_BASE_PATH,
   createDynaxisAuthOptions,
   summarizeDynaxisAuthOptions,
 } from '../lib/dynaxis/auth/options.js';
+import { DYNAXIS_AUTH_APP_NAME, DYNAXIS_AUTH_BASE_PATH } from '../lib/dynaxis/auth/constants.js';
 import { DRIZZLE_SCHEMA } from '../lib/dynaxis/db/client.js';
 import {
   LOCAL_PREVIEW_KEY,
@@ -28,6 +28,36 @@ const ROOT = new URL('..', import.meta.url);
 
 function source(path) {
   return readFileSync(new URL(path, ROOT), 'utf8');
+}
+
+function localImportSpecifiers(moduleSource) {
+  const imports = [];
+  const importPattern = /import\s+(?:[^'"]+\s+from\s+)?['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = importPattern.exec(moduleSource))) {
+    imports.push(match[1]);
+  }
+  return imports.filter((specifier) => specifier.startsWith('.'));
+}
+
+function collectLocalDependencyGraph(entryPath) {
+  const visited = new Set();
+  const stack = [entryPath];
+
+  while (stack.length > 0) {
+    const current = normalize(stack.pop());
+    if (visited.has(current)) {
+      continue;
+    }
+    visited.add(current);
+
+    for (const specifier of localImportSpecifiers(source(current))) {
+      const resolved = normalize(join(dirname(current), specifier));
+      stack.push(resolved.endsWith('.js') ? resolved : `${resolved}.js`);
+    }
+  }
+
+  return [...visited].sort();
 }
 
 test('Phase 7C.1 Better Auth schema is isolated under auth schema', () => {
@@ -113,11 +143,26 @@ test('Dynaxis auth options enforce the Phase 7C.1 contract without serializing s
 
 test('browser auth client imports without server-only or database boundary imports', async () => {
   const clientSource = source('lib/dynaxis/auth/client.js');
-  assert.doesNotMatch(clientSource, /server-only|getDb|postgres|drizzleAdapter/);
+  assert.doesNotMatch(clientSource, /server-only|getDb|postgres|drizzleAdapter|\.\/options\.js/);
   const mod = await import('../lib/dynaxis/auth/client.js');
   assert.ok(mod.dynaxisAuthClient);
   assert.equal(typeof mod.dynaxisAuthClient.useSession, 'function');
   assert.equal(typeof mod.dynaxisAuthClient.organization, 'function');
+});
+
+test('browser auth client dependency graph stays out of server auth configuration', () => {
+  const graph = collectLocalDependencyGraph('lib/dynaxis/auth/client.js');
+  assert.ok(graph.includes('lib/dynaxis/auth/constants.js'));
+  assert.ok(graph.includes('lib/dynaxis/auth/workspace-access.js'));
+  assert.ok(!graph.includes('lib/dynaxis/auth/options.js'));
+  assert.ok(!graph.includes('lib/dynaxis/auth/server.js'));
+  assert.ok(!graph.includes('lib/dynaxis/db/client.js'));
+
+  for (const file of graph) {
+    const fileSource = source(file);
+    assert.doesNotMatch(fileSource, /server-only|getDb|drizzleAdapter|postgres\s*\(/);
+    assert.doesNotMatch(fileSource, /from ['"]better-auth\/plugins['"]/);
+  }
 });
 
 test('server auth boundary reuses the shared Dynaxis DB pool', () => {
