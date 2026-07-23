@@ -107,6 +107,25 @@ test('provider registration rejects noncanonical ids and malformed descriptors',
       return true;
     }
   );
+
+  const validExtensibleProvider = validateGenerationProvider(
+    makeProvider('valid-capabilities', {
+      capabilities: ['text-to-image', 'lip-sync', 'custom-generation-capability'],
+    })
+  );
+  assert.equal(validExtensibleProvider.providerId, 'valid-capabilities');
+
+  for (const capability of ['Text To Image', ' bad capability ', 'bad capability', '!']) {
+    assert.throws(
+      () => validateGenerationProvider(makeProvider('bad-capability', { capabilities: [capability] })),
+      (err) => {
+        assert.equal(err.code, 'PROVIDER_REGISTRATION_INVALID');
+        assert.equal(err.providerId, 'bad-capability');
+        assert.doesNotMatch(err.message, /Zod|custom|SHOULD_NOT_LEAK/);
+        return true;
+      }
+    );
+  }
 });
 
 test('provider registry supports register, lookup, require, replace, and deterministic list', () => {
@@ -132,6 +151,20 @@ test('provider registry supports register, lookup, require, replace, and determi
   assert.deepEqual(listed.map((p) => p.providerId), ['a-provider', 'z-provider']);
   assert.equal(JSON.stringify(listed).includes('SHOULD_NOT_LEAK'), false);
   assert.equal(Object.isFrozen(listed[0].features), true);
+
+  registry.replace(makeProvider('z-provider', { capabilities: ['custom-generation-capability'] }));
+  assert.deepEqual(registry.list().find((p) => p.providerId === 'z-provider')?.capabilities, [
+    'custom-generation-capability',
+  ]);
+  registry.require('z-provider').capabilities = ['bad capability'];
+  assert.throws(
+    () => registry.list(),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_REGISTRATION_INVALID');
+      assert.equal(err.providerId, 'z-provider');
+      return true;
+    }
+  );
 });
 
 test('production registry contains only MuAPI', async () => {
@@ -390,7 +423,7 @@ test('generation gateway wraps adapter failures with canonical provider errors',
     fetchImpl: async () => ({
       ok: false,
       status: 401,
-      text: async () => JSON.stringify({ error: 'unauthorized', apiKey: 'secret' }),
+      text: async () => JSON.stringify({ error: 'unauthorized', apiKey: 'SUPER_SECRET_VALUE' }),
     }),
   });
   const gateway = createGenerationGateway({
@@ -401,6 +434,9 @@ test('generation gateway wraps adapter failures with canonical provider errors',
     (err) => {
       assert.equal(err.name, 'DynaxisProviderError');
       assert.equal(err.code, 'PROVIDER_AUTH_FAILED');
+      assert.equal(err.message, 'Provider authentication failed');
+      assert.doesNotMatch(err.message, /SUPER_SECRET_VALUE/);
+      assert.doesNotMatch(err.message, /apiKey|unauthorized/);
       assert.equal(err.legacyCode, 'MUAPI_SUBMIT_FAILED');
       assert.equal(err.providerId, PROVIDER_MUAPI);
       assert.equal(err.operation, 'submit');
@@ -415,9 +451,9 @@ test('generation gateway wraps adapter failures with canonical provider errors',
     providerRegistry: createProviderRegistry([
       makeProvider('failing-provider', {
         submit: async () => {
-          const err = new Error('generic failure');
+          const err = new Error('generic failure apiKey=FAKE_CREDENTIAL');
           err.status = 503;
-          err.providerPayload = { client_secret: 'secret' };
+          err.providerPayload = { client_secret: 'FAKE_CREDENTIAL' };
           throw err;
         },
       }),
@@ -427,6 +463,8 @@ test('generation gateway wraps adapter failures with canonical provider errors',
     () => genericGateway.submit({ provider: 'failing-provider', endpoint: 'x' }),
     (err) => {
       assert.equal(err.code, 'PROVIDER_SUBMIT_FAILED');
+      assert.equal(err.message, 'Provider submit failed');
+      assert.doesNotMatch(err.message, /FAKE_CREDENTIAL|apiKey/);
       assert.equal(err.providerId, 'failing-provider');
       assert.equal(err.operation, 'submit');
       assert.equal(err.status, 503);
