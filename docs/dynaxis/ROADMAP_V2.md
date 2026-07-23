@@ -100,6 +100,9 @@ Depends on:
 
 Deliverables:
 
+- 7C.1 authentication foundation: Better Auth pinned runtime, isolated `auth`
+  PostgreSQL schema, shared Drizzle/PostgreSQL pool, database-backed sessions,
+  database-backed auth rate limits, signup disabled until workspace provisioning.
 - User identity.
 - Organizations/workspaces.
 - Project membership.

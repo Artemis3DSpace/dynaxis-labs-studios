@@ -7,7 +7,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default defineConfig({
-  schema: './lib/dynaxis/db/schema.js',
+  schema: ['./lib/dynaxis/db/schema.js', './lib/dynaxis/auth/schema.js'],
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {

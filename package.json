@@ -123,9 +123,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1092.0",
+    "@better-auth/drizzle-adapter": "1.6.23",
     "@resvg/resvg-js": "^2.6.2",
     "ai-agent": "file:./packages/Open-Poe-AI/packages/agents",
     "axios": "^1.7.0",
+    "better-auth": "1.6.23",
     "drizzle-orm": "^0.45.2",
     "next": "^15.0.0",
     "postgres": "^3.4.9",
@@ -154,6 +156,14 @@
   },
   "optionalDependencies": {
     "playwright": "^1.52.0"
+  },
+  "overrides": {
+    "@better-auth/core": "1.6.23",
+    "@better-auth/kysely-adapter": "1.6.23",
+    "@better-auth/memory-adapter": "1.6.23",
+    "@better-auth/mongo-adapter": "1.6.23",
+    "@better-auth/prisma-adapter": "1.6.23",
+    "@better-auth/telemetry": "1.6.23"
   },
   "main": "electron/main.js"
 }
