@@ -1,17 +1,25 @@
 # Dynaxis Work Package Conflict Matrix
 
-HARD means tasks must be serialized unless explicitly coordinated. SOFT means parallel work is possible with explicit file ownership and integration order. NONE means no expected direct file conflict.
+HARD means tasks must be serialized unless explicitly coordinated. SOFT means parallel work is possible with explicit file ownership and integration order. NONE means no expected direct file conflict. This matrix is based on narrowed Allowed Paths and shared_files metadata.
 
 | Shared Area | Conflict | Packages / Phases | Reason | Coordination Rule |
 |---|---|---|---|---|
-| `lib/dynaxis/db/schema.js` | HARD | 7C, 7D, 7E, 7F, 7G, 7H, 7I, 8A, 10 migration owners | Central Drizzle schema is a shared persistence contract. | Only one active migration owner on an integration line. |
-| `lib/dynaxis/identity/schema.js` | HARD | WP-7C-04 through WP-7C-07 | Identity schema is actively owned by 7C.4 and project membership follows it. | Serialize until 7C.4 is integrated. |
-| `lib/dynaxis/auth/**` | HARD | WP-7C-08 through WP-7C-23, 7D permissions, 8F API auth | AuthContext and authorization contracts are cross-cutting. | Auth packages must land before dependent route/client work. |
-| `drizzle/**` | HARD | Every `migration_owner: true` package | Migration file numbering is branch-state dependent. | Resolve migration number only when package starts from its integration branch. |
-| `package.json` | SOFT | 7C TanStack Query, 7E queues, 8F SDK/CLI, testing tools | Dependency additions can collide but are reviewable. | Coordinate dependency/version additions and lockfile updates. |
-| Central provider/capability registries | HARD | 7D, 7G, 8H | Registry ownership determines provider/model/package authority. | 7G registry contracts precede Marketplace distribution. |
-| Shared application layouts and Studio shell | SOFT | 7C client migration, 7D UI, 7G admin, 8C/8D/8H UI | Multiple UI phases touch Studio navigation and shells. | Cursor-owned UI packages should avoid simultaneous shell rewrites. |
-| App IR | HARD | 8A, 8B, 8D, 9 | App IR is canonical Build architecture. | 8A App IR specification and validation land first. |
-| Composer / Composition shared code | SOFT | 8C Composer, 8D responsive design, existing Creative Editor | Composer and Auto Layout both touch composition-adjacent code. | Keep timeline/render graph separate from layout IR. |
-| `packages/mini-apps/character-studio/**` | SOFT | 7H Character Identity, 7C route migration, 8C integrations | UI and API integration may overlap. | Sequence route migration before identity profile UI. |
-| Documentation-only Work Packages | NONE | Specification and review packages | No runtime code changes expected. | May run in parallel if dependencies are documentation-safe. |
+| `lib/dynaxis/identity/schema.js`, `lib/dynaxis/db/schema.js`, `drizzle/**` | HARD | WP-7C-04, WP-7C-05 | 7C.4 owns in-flight workspace ownership migration; project membership schema follows it. | WP-7C-05 cannot start until WP-7C-04 integrates. |
+| Provider connection persistence and secrets | HARD | WP-7D-03 | ProviderConnection schema and encrypted-secret references are one persistence boundary. | No other 7D package owns schema migration. |
+| Job Engine persistence | HARD | WP-7E-04 | Job attempts, events, leases, and idempotency tables form one durable execution schema. | Runtime queue/worker packages depend on WP-7E-04. |
+| Project Graph and Memory persistence | HARD | WP-7F-02, WP-7F-03 | Graph edges land before memory/knowledge/decision records that cite graph nodes. | WP-7F-03 is serialized after WP-7F-02. |
+| Capability / Model Registry persistence | HARD | WP-7G-02 | Registry schema owns capability, model, provider mapping, and version tables. | Resolver/admin packages depend on WP-7G-02. |
+| Character Identity Profile persistence | HARD | WP-7H-02 | Identity profile tables attach provider identity to canonical Characters. | Adapter/UI packages depend on WP-7H-02. |
+| Agent / Engineering contract persistence | HARD | WP-7I-02 | WorkPackage runtime contract schema precedes worker and verification contracts. | WP-7I-03 and WP-7I-04 depend on WP-7I-02. |
+| App Factory persistence | HARD | WP-8A-02, WP-8A-03, WP-8A-04, WP-8A-05 | App IR, Software Components, Blueprints/Capabilities, and Repository model are separate but sequential schema owners. | Migration owners are explicitly serialized in dependency order. |
+| Composer timeline persistence | HARD | WP-8C-02 | Timeline tracks/clips persistence is canonical for later Composer UI/render work. | WP-8C-03 through WP-8C-06 depend on WP-8C-02. |
+| Layout IR persistence | HARD | WP-8D-02, WP-8D-03 | Stack/constraint primitives precede breakpoint/screen state schema. | WP-8D-03 depends on WP-8D-02. |
+| Skills persistence | HARD | WP-8E-02 | Skill registry/package/version/permission persistence is a single initial migration owner. | Later Skills packages depend on WP-8E-02. |
+| Developer Platform persistence | HARD | WP-8F-02, WP-8F-03 | Developer apps/credentials precede public webhook/log/usage storage. | WP-8F-03 depends on WP-8F-02. |
+| Plugin installation persistence | HARD | WP-8G-04 | Install/upgrade/rollback lifecycle owns plugin installation state. | Runtime and signing packages land first; install schema lands in WP-8G-04. |
+| Marketplace persistence | HARD | WP-8H-02, WP-8H-03, WP-8H-04 | Catalogue/publisher persistence precedes versions/installations, then licensing/entitlements. | Marketplace migration owners are serialized in dependency order. |
+| Commercial platform persistence | HARD | WP-10-01, WP-10-02, WP-10-04, WP-10-05, WP-10-06 | Billing, marketplace purchasing, admin/support, audit/security, and compliance retention schemas are separate production lines. | Dependencies serialize migration owners where they share the integration line. |
+| Studio shell and shared UI | SOFT | WP-7C-18 through WP-7C-20, WP-7D-06, WP-7G-05, WP-8C-03, WP-8D-04, WP-8F-05, WP-8H-02 | UI packages can overlap in `packages/studio/src/**`. | Assign one UI shell owner at a time or require explicit file-level coordination. |
+| App IR contracts | HARD | WP-8A-01, WP-8A-02, WP-8D-05, WP-9-01 | App IR is a canonical Build contract consumed by layout and orchestration. | App IR specification and validation land before consumers. |
+| Composer / Composition shared code | SOFT | WP-8C-02 through WP-8C-06, WP-8D-04 | Composer and design canvas work can touch Composition-adjacent code. | Keep Composer timeline/render graph separate from Layout IR. |
+| Specification-only packages | NONE | READY specification Work Packages | Documentation-only work may run while 7C.4 is active. | Specs may inspect runtime code but edit only docs/programme files. |
