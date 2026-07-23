@@ -14,6 +14,7 @@ import {
   safeProviderPayload,
   MuAPIProvider,
   createGenerationGateway,
+  parseGenerationGatewayResult,
 } from '../lib/dynaxis/server.js';
 import { normalizeCapabilityList } from '../lib/dynaxis/providers/capabilities.js';
 
@@ -71,6 +72,40 @@ test('provider contract validates executable provider shape', () => {
         cancel: async () => {},
       }),
     /requires a canonical providerId/
+  );
+});
+
+test('provider registration rejects noncanonical ids and malformed descriptors', () => {
+  for (const providerId of [' MuAPI ', 'MUAPI', 'bad provider']) {
+    assert.throws(
+      () => validateGenerationProvider(makeProvider(providerId)),
+      (err) => {
+        assert.equal(err.code, 'PROVIDER_REGISTRATION_INVALID');
+        assert.match(err.message, /canonical providerId/);
+        return true;
+      }
+    );
+  }
+  assert.equal(validateGenerationProvider(makeProvider(PROVIDER_MUAPI)).providerId, PROVIDER_MUAPI);
+
+  assert.throws(
+    () => validateGenerationProvider(makeProvider('bad-features', { features: { cancel: 'yes' } })),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_REGISTRATION_INVALID');
+      assert.equal(err.providerId, 'bad-features');
+      assert.doesNotMatch(err.message, /Zod|invalid_type|SHOULD_NOT_LEAK/);
+      return true;
+    }
+  );
+
+  assert.throws(
+    () => validateGenerationProvider(makeProvider('bad-descriptor', { metadata: { displayName: '' } })),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_REGISTRATION_INVALID');
+      assert.equal(err.providerId, 'bad-descriptor');
+      assert.doesNotMatch(err.message, /Zod|too_small|SHOULD_NOT_LEAK/);
+      return true;
+    }
   );
 });
 
@@ -134,17 +169,40 @@ test('generic result utilities support MuAPI and generic media shapes', () => {
 });
 
 test('safeProviderPayload removes secrets, bounds size, and survives cyclic data', () => {
-  const cyclic = { ok: true, api_key: 'secret', apiSecret: 'secret', Authorization: 'Bearer x' };
+  const cyclic = {
+    ok: true,
+    api_key: 'secret',
+    apiSecret: 'secret',
+    Authorization: 'Bearer x',
+    nested: {
+      'x-api-key': 'secret',
+      x_api_key: 'secret',
+      client_secret: 'secret',
+      clientSecret: 'secret',
+      password: 'secret',
+      secret: 'secret',
+    },
+  };
   cyclic.self = cyclic;
   const safe = safeProviderPayload(cyclic);
   assert.equal(safe.api_key, '[redacted]');
   assert.equal(safe.apiSecret, '[redacted]');
   assert.equal(safe.Authorization, '[redacted]');
+  assert.equal(safe.nested['x-api-key'], '[redacted]');
+  assert.equal(safe.nested.x_api_key, '[redacted]');
+  assert.equal(safe.nested.client_secret, '[redacted]');
+  assert.equal(safe.nested.clientSecret, '[redacted]');
+  assert.equal(safe.nested.password, '[redacted]');
+  assert.equal(safe.nested.secret, '[redacted]');
   assert.equal(safe.self, '[circular]');
 
   const big = safeProviderPayload({ blob: 'x'.repeat(9000), token: 'secret' });
   assert.equal(big.truncated, true);
   assert.ok(big.bytes > 8000);
+
+  const nonAscii = safeProviderPayload({ blob: 'é'.repeat(4100) });
+  assert.equal(nonAscii.truncated, true);
+  assert.ok(nonAscii.bytes > 8200);
 });
 
 test('capability contract normalizes without claiming provider coverage', () => {
@@ -207,6 +265,26 @@ test('MuAPI adapter preserves legacy error codes with canonical classification',
   );
 });
 
+test('MuAPI retrieve treats HTTP 429 as retryable rate limiting', async () => {
+  const provider = new MuAPIProvider({
+    fetchImpl: async () => ({
+      ok: false,
+      status: 429,
+      text: async () => JSON.stringify({ error: 'rate limited', apiKey: 'secret' }),
+    }),
+  });
+  await assert.rejects(
+    () => provider.retrieve({ apiKey: 'k', providerJobId: 'req_123' }),
+    (err) => {
+      assert.equal(err.code, 'MUAPI_POLL_FAILED');
+      assert.equal(err.dynaxisProviderCode, 'PROVIDER_RATE_LIMITED');
+      assert.equal(err.retryable, true);
+      assert.equal(err.providerPayload.apiKey, '[redacted]');
+      return true;
+    }
+  );
+});
+
 test('generation gateway resolves providers through injected registry and sanitizes canonical request/result', async () => {
   const registry = createProviderRegistry([makeProvider('gateway-provider')]);
   const gateway = createGenerationGateway({ providerRegistry: registry });
@@ -234,6 +312,169 @@ test('generation gateway resolves providers through injected registry and saniti
       return true;
     }
   );
+});
+
+test('generation gateway validates capabilities without silently dropping invalid values', () => {
+  const registry = createProviderRegistry([makeProvider(PROVIDER_MUAPI)]);
+  const gateway = createGenerationGateway({ providerRegistry: registry });
+  assert.equal(gateway.prepareRequest({ endpoint: 'flux' }).request.capability, null);
+  assert.equal(
+    gateway.prepareRequest({ endpoint: 'flux', capability: ' Text-To-Image ' }).request.capability,
+    'text-to-image'
+  );
+  assert.throws(
+    () => gateway.prepareRequest({ endpoint: 'flux', capability: 'not real' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.validate');
+      return true;
+    }
+  );
+});
+
+test('generation gateway enforces provider result identity', async () => {
+  const registry = createProviderRegistry([
+    makeProvider('identity-provider', {
+      submit: async () => ({
+        provider: 'identity-provider',
+        providerJobId: 'job_2',
+        outputs: ['https://cdn.example/match.png'],
+      }),
+      retrieve: async () => ({
+        providerJobId: 'job_2',
+        outputs: ['https://cdn.example/inherited.png'],
+      }),
+    }),
+  ]);
+  const gateway = createGenerationGateway({ providerRegistry: registry });
+  const submitted = await gateway.submit({ provider: 'identity-provider', endpoint: 'x' });
+  assert.equal(submitted.provider, 'identity-provider');
+  assert.equal(submitted.primaryUrl, 'https://cdn.example/match.png');
+
+  const retrieved = await gateway.retrieve({
+    provider: 'identity-provider',
+    providerJobId: 'job_2',
+  });
+  assert.equal(retrieved.provider, 'identity-provider');
+  assert.equal(retrieved.primaryUrl, 'https://cdn.example/inherited.png');
+
+  await assert.rejects(
+    () =>
+      createGenerationGateway({
+        providerRegistry: createProviderRegistry([
+          makeProvider('identity-provider', {
+            submit: async () => ({ provider: PROVIDER_MUAPI, providerJobId: 'bad' }),
+          }),
+        ]),
+      }).submit({ provider: 'identity-provider', endpoint: 'x' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.result');
+      assert.equal(err.providerId, 'identity-provider');
+      return true;
+    }
+  );
+
+  assert.throws(
+    () => parseGenerationGatewayResult({ providerJobId: 'job_without_provider' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.result');
+      return true;
+    }
+  );
+});
+
+test('generation gateway wraps adapter failures with canonical provider errors', async () => {
+  const muapi = new MuAPIProvider({
+    fetchImpl: async () => ({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ error: 'unauthorized', apiKey: 'secret' }),
+    }),
+  });
+  const gateway = createGenerationGateway({
+    providerRegistry: createProviderRegistry([muapi]),
+  });
+  await assert.rejects(
+    () => gateway.submit({ provider: PROVIDER_MUAPI, endpoint: 'x' }, { apiKey: 'k' }),
+    (err) => {
+      assert.equal(err.name, 'DynaxisProviderError');
+      assert.equal(err.code, 'PROVIDER_AUTH_FAILED');
+      assert.equal(err.legacyCode, 'MUAPI_SUBMIT_FAILED');
+      assert.equal(err.providerId, PROVIDER_MUAPI);
+      assert.equal(err.operation, 'submit');
+      assert.equal(err.status, 401);
+      assert.equal(err.providerPayload.apiKey, '[redacted]');
+      assert.equal(Object.prototype.propertyIsEnumerable.call(err, 'cause'), false);
+      return true;
+    }
+  );
+
+  const genericGateway = createGenerationGateway({
+    providerRegistry: createProviderRegistry([
+      makeProvider('failing-provider', {
+        submit: async () => {
+          const err = new Error('generic failure');
+          err.status = 503;
+          err.providerPayload = { client_secret: 'secret' };
+          throw err;
+        },
+      }),
+    ]),
+  });
+  await assert.rejects(
+    () => genericGateway.submit({ provider: 'failing-provider', endpoint: 'x' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_SUBMIT_FAILED');
+      assert.equal(err.providerId, 'failing-provider');
+      assert.equal(err.operation, 'submit');
+      assert.equal(err.status, 503);
+      assert.equal(err.retryable, true);
+      assert.equal(err.providerPayload.client_secret, '[redacted]');
+      return true;
+    }
+  );
+});
+
+test('generation gateway validates provider job operations before provider resolution', async () => {
+  const gateway = createGenerationGateway({
+    providerRegistry: createProviderRegistry([
+      makeProvider('retrieve-provider', {
+        retrieve: async () => ({
+          provider: 'retrieve-provider',
+          providerJobId: 'job_1',
+          outputs: ['https://cdn.example/retrieve.png'],
+        }),
+      }),
+    ]),
+  });
+  await assert.rejects(
+    () => gateway.retrieve({ provider: 'retrieve-provider', providerJobId: '' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.retrieve');
+      return true;
+    }
+  );
+  await assert.rejects(
+    () => gateway.cancel({ provider: 'retrieve-provider', providerJobId: '' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.cancel');
+      return true;
+    }
+  );
+  await assert.rejects(
+    () => gateway.retrieve({ provider: 'bad provider', providerJobId: 'job_1' }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_INVALID_REQUEST');
+      assert.equal(err.operation, 'gateway.retrieve');
+      return true;
+    }
+  );
+  const result = await gateway.retrieve({ provider: 'retrieve-provider', providerJobId: 'job_1' });
+  assert.equal(result.provider, 'retrieve-provider');
 });
 
 test('generation gateway defaults provider to MuAPI for compatibility', () => {
