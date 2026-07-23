@@ -37,6 +37,12 @@ The generated reference schema was written to:
 
 That file is a temporary reference artifact and is not committed.
 
+Phase 7C.2 generated a second pinned organization-plugin schema reference at:
+
+`/tmp/dynaxis-better-auth-1.6.23-organization-schema.ts`
+
+That file is also temporary and is not committed.
+
 ## Auth Boundary
 
 Runtime code is isolated under:
@@ -161,12 +167,12 @@ That belongs to a later Phase 7C subphase and is not implemented here.
 
 ## Future Boundaries
 
-Phase 7C.2 should add account creation/workspace provisioning semantics before
-public signup is enabled.
+Phase 7C.2 adds the Better Auth Organization plugin, personal workspace
+provisioning, personal workspace protections, and active organization session
+initialization. Public signup remains disabled.
 
-Later Phase 7C subphases should add organizations, organization membership,
-project membership, RBAC/ABAC, canonical `AuthContext`, Dynaxis API keys, CLI
-login, and service-account/agent auth.
+Later Phase 7C subphases should add project membership, RBAC/ABAC, canonical
+`AuthContext`, Dynaxis API keys, CLI login, and service-account/agent auth.
 
 Phase 7D remains the provider-connections and encrypted-secrets phase. MuAPI,
 Higgsfield, Fal, Replicate, and other provider credentials must not be stored as
@@ -174,7 +180,7 @@ Dynaxis user identity.
 
 ## Out Of Scope
 
-This subphase does not implement:
+Phase 7C.1 specifically does not implement:
 
 - Better Auth Organization plugin
 - Better Auth API Key plugin
@@ -196,3 +202,5 @@ This subphase does not implement:
 - new generation providers
 - queues, workers, or webhooks
 - App Factory, Composer, Skills, or Supercomputer
+
+See `PHASE_7C_WORKSPACE_FOUNDATION.md` for the Phase 7C.2 continuation.

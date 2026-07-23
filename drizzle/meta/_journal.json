@@ -71,6 +71,13 @@
       "when": 1784803286884,
       "tag": "0009_phase_7c_1_better_auth_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784808619046,
+      "tag": "0010_phase_7c_2_workspace_foundation",
+      "breakpoints": true
     }
   ]
 }
