@@ -80,6 +80,12 @@ function createFakeRepository({
     async listClaimsForOrganization(organizationId) {
       return state.claims.filter((item) => item.organizationId === organizationId);
     },
+    async findOwnershipConflicts() {
+      return [];
+    },
+    async projectRootOwnership() {
+      return {};
+    },
   };
 }
 

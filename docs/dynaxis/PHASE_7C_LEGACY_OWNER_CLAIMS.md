@@ -20,6 +20,9 @@ raw MuAPI API key
 Phase 7C.3 creates a one-way claim from a historical `owner_ref` to a Better
 Auth organization, which is the Dynaxis Workspace primitive.
 
+Phase 7C.4 builds on this claim table by projecting successful claims onto
+nullable `organization_id` columns on canonical workspace-owned root resources.
+
 ## Raw Key Security
 
 The normal claim path accepts `legacyApiKey`, not an arbitrary caller-supplied
@@ -105,6 +108,10 @@ The service does not rewrite:
 
 Those fields record the original claim event.
 
+As of Phase 7C.4, repeated same-workspace claims still run workspace ownership
+projection. This can repair historical root resources that were not projected
+yet without rewriting the original claim event.
+
 If the same ownerRef is claimed by a different organization, the service returns
 a canonical conflict without revealing the owning organization.
 
@@ -149,13 +156,25 @@ do not create claims.
 
 The external claim path still requires possession of the legacy API key.
 
+## Phase 7C.4 Projection
+
+Successful claims now call the canonical workspace ownership boundary:
+
+- new same-workspace claim: insert claim, verify root ownership consistency,
+  project root `organization_id`
+- existing same-workspace claim: preserve claim event fields and rerun
+  projection idempotently
+- different-workspace claim: return the canonical conflict and do not project
+
+Projection is transactional with the real Drizzle/PostgreSQL claim repository.
+If projection detects a contradictory non-null `organization_id`, the claim
+transaction fails.
+
 ## Explicitly Not Included
 
 Phase 7C.3 does not implement:
 
-- resource `organization_id` columns
 - owner_ref rewrites
-- backfills
 - project membership
 - RBAC/ABAC
 - AuthContext
@@ -168,4 +187,5 @@ Phase 7C.3 does not implement:
 - provider network calls
 - queues/workers/webhooks
 
-Phase 7C.4 will introduce canonical workspace ownership using this claim table.
+Resource `organization_id` columns and claim projection are introduced by Phase
+7C.4. Route migration and project membership remain later phases.

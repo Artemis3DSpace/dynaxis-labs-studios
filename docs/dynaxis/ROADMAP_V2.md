@@ -1,6 +1,6 @@
 # Dynaxis Labs Studios - Roadmap V2
 
-**Status:** Post-6I roadmap. Phase 7B and Phase 7C.1-7C.3 foundations are implemented. Phase 7C is not complete.
+**Status:** Post-6I roadmap. Phase 7B and Phase 7C.1-7C.4 foundations are implemented. Phase 7C is not complete.
 **Rule:** Phases 1-6I are completed historical implementation. Do not rewrite them.
 
 ---
@@ -114,9 +114,12 @@ Deliverables:
 - 7C.3 legacy ownerRef claim bridge: durable one-way claims from historical
   `owner_ref` values to Dynaxis Workspaces without raw API key persistence,
   resource backfill, or public claim routes.
+- 7C.4 canonical workspace ownership: nullable `organization_id` on the eight
+  workspace-owned root resources, claim-based runtime projection, safe
+  migration backfill for already-claimed roots, and dual-stamping for new
+  legacy root writes.
 - User identity. **Status:** started.
 - Organizations/workspaces. **Status:** started.
-- 7C.4 canonical workspace ownership.
 - 7C.5 project membership.
 - 7C.6 authorization.
 - 7C.7 AuthContext.
@@ -508,7 +511,7 @@ Deliverables:
 
 ## 22. Deliberately Not Started
 
-- Phase 7C.4+ runtime implementation.
+- Phase 7C.5+ runtime implementation.
 - Provider connections / secrets.
 - App Factory code.
 - Higgsfield.
