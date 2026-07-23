@@ -1,7 +1,7 @@
 # Dynaxis Labs Studios - Platform Architecture V2
 
-**Status:** Proposed canonical architecture after Phase 6I  
-**Scope:** Architecture consolidation only. No post-6I runtime implementation.
+**Status:** Canonical architecture after Phase 6I; Phase 7B provider kernel foundation is implemented.
+**Scope:** Platform architecture plus implemented Phase 7B provider kernel foundation. No Phase 7C+ runtime implementation.
 **Authority:** Current implementation and migrations are authoritative where they differ from older roadmap text.
 
 ---
@@ -70,7 +70,8 @@ The canonical Dynaxis domain model is owned by Dynaxis. MuAPI, Higgsfield, Fal, 
 - Dynaxis Projects with Default Project resolution.
 - Asset metadata catalogue and generated media registration.
 - Generation history and Job metadata lifecycle.
-- MuAPI provider adapter and lifecycle wrapper around current generation calls.
+- Provider kernel foundation: provider-neutral ids, provider contract, provider registry, gateway request/result boundary, provider error taxonomy, and MuAPI adapter compatibility.
+- Lifecycle wrapper around current generation calls.
 - Asset blob store boundary for rendered creative editor exports: memory, filesystem, S3-compatible.
 
 ### Creative platform domains
@@ -136,7 +137,6 @@ V2 separates early Agent / Engineering Contracts from later orchestration runtim
 
 These are intentionally not implemented by this consolidation:
 
-- Provider kernel code.
 - Provider Connections / Secrets.
 - App IR schema or packages.
 - Software registry packages.

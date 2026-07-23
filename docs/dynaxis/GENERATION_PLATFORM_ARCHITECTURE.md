@@ -1,7 +1,7 @@
 # Dynaxis Labs Studios - Generation Platform Architecture
 
-**Status:** Planned provider-neutral architecture. Current MuAPI behavior remains supported.  
-**Scope:** Creative generation architecture only; no provider kernel implemented in this task.
+**Status:** Provider kernel foundation implemented in Phase 7B. Current MuAPI behavior remains supported.
+**Scope:** Creative generation architecture and provider kernel foundation only; no server job/event engine, provider connections, or additional provider adapters.
 
 ---
 
@@ -47,7 +47,13 @@ Generation Gateway establishes the canonical Dynaxis Generation and Job request 
 
 - `dynaxis_generations`, `dynaxis_jobs`, `dynaxis_assets`, and generation-assets link table.
 - Lifecycle routes: start, provider-id, complete, fail.
-- MuAPI provider adapter with submit/retrieve/status/output normalization.
+- Provider-neutral provider id vocabulary and validation helpers.
+- Generation Provider contract with required `submit`, `retrieve`, and `cancel` methods.
+- Provider Registry with deterministic registration, lookup, replacement, descriptor listing, and missing-provider errors.
+- Generation Gateway contract for canonical request/result parsing and provider resolution.
+- Provider-neutral result extraction, status normalization, payload sanitization, and error taxonomy.
+- Production provider registry containing only the MuAPI adapter.
+- MuAPI provider adapter behind the provider contract with submit/retrieve/status/output normalization and compatibility exports.
 - Studio `submitAndPoll` lifecycle integration.
 - Mini App generation executor for integrated modules.
 - Asset blob store for rendered Composition exports.
@@ -60,7 +66,7 @@ Generation Gateway establishes the canonical Dynaxis Generation and Job request 
 
 ### Capability Registry
 
-Describes what can be generated independent of provider:
+Phase 7B establishes a provider-neutral capability vocabulary in code. A governed Capability / Model Registry remains Phase 7G. That later registry describes what can be generated independent of provider:
 
 - text-to-image;
 - image-to-image;
@@ -78,7 +84,7 @@ It should be seeded from `packages/studio/src/models.js` but become Dynaxis-mana
 
 ### Generation Gateway
 
-The gateway is the canonical submit/status/cancel interface. It accepts Dynaxis generation requests and resolves:
+Phase 7B implements the gateway contract and an immediate provider-dispatch primitive. Durable dispatch remains Phase 7E. The long-term gateway is the canonical submit/status/cancel interface. It accepts Dynaxis generation requests and resolves:
 
 - active Project;
 - domain provenance;
@@ -96,6 +102,8 @@ The Job Engine owns durable execution state. It receives a canonical Dynaxis Job
 
 The Job Engine must be upstream of provider execution. Provider job ids are metadata on a Dynaxis Job, not the lifecycle authority.
 
+Phase 7B does not implement this durable engine. Existing lifecycle rows remain durable metadata, and Studio execution still uses the current submit/poll flow.
+
 ### Provider Registry
 
 Provider metadata includes:
@@ -109,6 +117,8 @@ Provider metadata includes:
 - cancellation support;
 - output normalization;
 - legal/licensing notes.
+
+Phase 7B implements the in-process provider registry contract and registers only MuAPI in production. Provider availability, entitlements, credentials, and governed model metadata remain later phases.
 
 ### Provider Adapters
 
@@ -128,13 +138,15 @@ Planned adapters:
 
 Adapters may persist provider job ids and provider metadata, but must not shape canonical Dynaxis Projects, Jobs, Assets, or Characters.
 
+Phase 7B does not implement Higgsfield, Fal, Replicate, local inference, or any provider-specific SDK beyond the existing MuAPI adapter.
+
 ---
 
 ## 4. Jobs, Queues, Webhooks, Events
 
 ### Implemented now
 
-Jobs are durable metadata records. Execution is still mostly client submit/poll through MuAPI.
+Jobs are durable metadata records. The provider kernel can resolve and call provider adapters synchronously as a boundary primitive, but durable execution is still mostly client submit/poll through MuAPI.
 
 ### Planned
 
@@ -225,7 +237,6 @@ Soul ID or any provider-specific identity must not become the canonical Characte
 
 ## 8. Deferred
 
-- Provider kernel implementation.
 - Higgsfield SDK.
 - Provider Connections / Secrets implementation.
 - Queue workers.

@@ -1,6 +1,6 @@
 # Dynaxis Labs Studios - Roadmap V2
 
-**Status:** Proposed post-6I roadmap.  
+**Status:** Post-6I roadmap. Phase 7B provider kernel foundation is implemented.
 **Rule:** Phases 1-6I are completed historical implementation. Do not rewrite them.
 
 ---
@@ -61,6 +61,8 @@ No runtime behavior changes.
 
 ## 4. Phase 7B - Generation Provider Kernel
 
+**Status:** Done in foundation form.
+
 Goal: make creative generation provider-neutral while preserving MuAPI.
 
 Depends on:
@@ -70,17 +72,20 @@ Depends on:
 
 Deliverables:
 
-- Capability Registry contract.
+- Capability contract.
 - Provider Registry contract.
 - Generation Gateway contract.
 - MuAPI adapter moved behind gateway.
 - Provider-neutral request/result/error taxonomy.
+- Lifecycle provider normalization and invariant checks between Generation and Job records.
 
 Not included:
 
 - Higgsfield implementation unless explicitly scoped.
 - Billing.
-- queues/workers unless deferred to 7E.
+- Provider Connections / Secrets.
+- Durable queues/workers/webhooks, deferred to 7E.
+- Governed Capability / Model Registry database, deferred to 7G.
 
 ---
 
@@ -372,8 +377,7 @@ Supercomputer should coordinate the platform. It must not become a separate prod
 
 ## 18. Deliberately Not Started
 
-- Phase 7B+ runtime implementation.
-- Provider kernel.
+- Phase 7C+ runtime implementation.
 - Provider connections.
 - App Factory code.
 - Higgsfield.
