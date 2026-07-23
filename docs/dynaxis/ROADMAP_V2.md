@@ -72,7 +72,7 @@ Depends on:
 
 Deliverables:
 
-- Capability Registry contract.
+- Capability contract.
 - Provider Registry contract.
 - Generation Gateway contract.
 - MuAPI adapter moved behind gateway.

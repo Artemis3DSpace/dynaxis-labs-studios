@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { inspect } from 'node:util';
 import {
   PROVIDER_HIGGSFIELD,
   PROVIDER_MUAPI,
@@ -238,6 +239,20 @@ test('safeProviderPayload removes secrets, bounds size, and survives cyclic data
   assert.ok(nonAscii.bytes > 8200);
 });
 
+test('safeProviderPayload redacts camelCase and snake_case OAuth tokens', () => {
+  const safe = safeProviderPayload({
+    accessToken: 'SECRET_ACCESS_CAMEL',
+    refreshToken: 'SECRET_REFRESH_CAMEL',
+    access_token: 'SECRET_ACCESS_SNAKE',
+    refresh_token: 'SECRET_REFRESH_SNAKE',
+  });
+
+  assert.equal(safe.accessToken, '[redacted]');
+  assert.equal(safe.refreshToken, '[redacted]');
+  assert.equal(safe.access_token, '[redacted]');
+  assert.equal(safe.refresh_token, '[redacted]');
+});
+
 test('capability contract normalizes without claiming provider coverage', () => {
   assert.deepEqual(normalizeCapabilityList(['text-to-image', 'lip-sync', 'text-to-image']), [
     'lip-sync',
@@ -442,7 +457,7 @@ test('generation gateway wraps adapter failures with canonical provider errors',
       assert.equal(err.operation, 'submit');
       assert.equal(err.status, 401);
       assert.equal(err.providerPayload.apiKey, '[redacted]');
-      assert.equal(Object.prototype.propertyIsEnumerable.call(err, 'cause'), false);
+      assert.equal(err.cause, undefined);
       return true;
     }
   );
@@ -470,6 +485,13 @@ test('generation gateway wraps adapter failures with canonical provider errors',
       assert.equal(err.status, 503);
       assert.equal(err.retryable, true);
       assert.equal(err.providerPayload.client_secret, '[redacted]');
+      assert.equal(err.cause, undefined);
+      assert.doesNotMatch(JSON.stringify(err), /FAKE_CREDENTIAL|client_secret=FAKE_CREDENTIAL/);
+      assert.doesNotMatch(inspect(err, { showHidden: true }), /FAKE_CREDENTIAL/);
+      assert.doesNotMatch(
+        inspect(Reflect.ownKeys(err).map((key) => [key, err[key]]), { showHidden: true }),
+        /FAKE_CREDENTIAL/
+      );
       return true;
     }
   );
