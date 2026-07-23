@@ -78,6 +78,13 @@
       "when": 1784808619046,
       "tag": "0010_phase_7c_2_workspace_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784819667768,
+      "tag": "0011_phase_7c_3_legacy_owner_claims",
+      "breakpoints": true
     }
   ]
 }

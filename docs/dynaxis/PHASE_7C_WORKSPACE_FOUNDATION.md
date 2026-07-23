@@ -7,6 +7,9 @@ Phase 7C but does not complete Phase 7C.
 
 Phase 7C.1 authentication foundation remains intact.
 
+Phase 7C.3 continues this foundation with the legacy ownerRef claim bridge in
+`PHASE_7C_LEGACY_OWNER_CLAIMS.md`.
+
 ## Scope
 
 Better Auth Organization is the Dynaxis Workspace identity and membership

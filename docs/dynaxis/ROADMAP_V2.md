@@ -1,6 +1,6 @@
 # Dynaxis Labs Studios - Roadmap V2
 
-**Status:** Post-6I roadmap. Phase 7B, Phase 7C.1, and Phase 7C.2 foundations are implemented. Phase 7C is not complete.
+**Status:** Post-6I roadmap. Phase 7B and Phase 7C.1-7C.3 foundations are implemented. Phase 7C is not complete.
 **Rule:** Phases 1-6I are completed historical implementation. Do not rewrite them.
 
 ---
@@ -111,11 +111,18 @@ Deliverables:
   schema, personal workspace mapping, static workspace roles, personal workspace
   provisioning, active organization session initialization, and personal
   workspace protections.
+- 7C.3 legacy ownerRef claim bridge: durable one-way claims from historical
+  `owner_ref` values to Dynaxis Workspaces without raw API key persistence,
+  resource backfill, or public claim routes.
 - User identity. **Status:** started.
 - Organizations/workspaces. **Status:** started.
-- Project membership.
-- API keys and session model.
-- RBAC/ABAC permissions.
+- 7C.4 canonical workspace ownership.
+- 7C.5 project membership.
+- 7C.6 authorization.
+- 7C.7 AuthContext.
+- 7C.8 route migration.
+- 7C.9 client/session migration + TanStack Query.
+- 7C.10 identity/security hardening.
 
 Avoid coupling identity to one provider account.
 
@@ -501,7 +508,7 @@ Deliverables:
 
 ## 22. Deliberately Not Started
 
-- Phase 7C.3+ runtime implementation.
+- Phase 7C.4+ runtime implementation.
 - Provider connections / secrets.
 - App Factory code.
 - Higgsfield.
@@ -510,6 +517,9 @@ Deliverables:
 - Auto Layout.
 - Project membership.
 - Dynaxis API keys.
+- AuthContext.
+- Route migration.
+- TanStack Query client/session migration.
 - RBAC/ABAC.
 - Queues/workers.
 - UI changes.
