@@ -16,8 +16,15 @@ Phase 7C
 
 - Agent: Codex
 - Branch: `phase-7c/identity-organizations-permissions`
+- Tracking Work Package: `WP-7C-04`
 
 Do not claim 7C.4 is complete until its assigned Work Package has passed review and integration.
+
+## Ready Work Packages
+
+- None.
+
+Only dependency-safe specification work may be marked ready before the active 7C implementation line is integrated. Future implementation work remains unassigned until dependencies and migration ownership are clear.
 
 ## Next Sequential Identity Tasks
 
