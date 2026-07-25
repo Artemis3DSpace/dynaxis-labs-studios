@@ -27,6 +27,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/dynaxis-db-migrate.js",
     "test:dynaxis": "NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis*.test.mjs",
+    "program:status": "node scripts/dynaxis-program-status.mjs",
     "watch:check": "node scripts/dynaxis-watch-check.mjs",
     "test": "node --test tests/*.test.js && npm run test:dynaxis",
     "vite:dev": "vite",
