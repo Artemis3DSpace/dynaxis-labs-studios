@@ -1,6 +1,6 @@
 # Dynaxis Labs Studios - Roadmap V2
 
-**Status:** Post-6I roadmap. Phase 7B provider kernel foundation is implemented.
+**Status:** Post-6I roadmap. Phase 7B and Phase 7C.1-7C.4 foundations are implemented. Phase 7C is not complete.
 **Rule:** Phases 1-6I are completed historical implementation. Do not rewrite them.
 
 ---
@@ -35,7 +35,11 @@ Phase 7A  Architecture consolidation
                       -> Phase 8C  Composer
                         -> Phase 8D  Design / Auto Layout / responsive application design
                           -> Phase 8E  Skills
-                            -> Phase 9  Agent orchestration / Supercomputer
+                            -> Phase 8F  Developer Platform
+                              -> Phase 8G  Extension / Plugin Platform
+                                -> Phase 8H  Marketplace
+                                  -> Phase 9  Agent orchestration / Supercomputer
+                                    -> Phase 10  Production platform / commercial hardening
 ```
 
 Numbering can be adjusted, but dependency order should not be inverted without a deliberate architecture decision.
@@ -100,11 +104,28 @@ Depends on:
 
 Deliverables:
 
-- User identity.
-- Organizations/workspaces.
-- Project membership.
-- API keys and session model.
-- RBAC/ABAC permissions.
+- 7C.1 authentication foundation: Better Auth pinned runtime, isolated `auth`
+  PostgreSQL schema, shared Drizzle/PostgreSQL pool, database-backed sessions,
+  database-backed auth rate limits, signup disabled until workspace provisioning.
+- 7C.2 workspace foundation: Better Auth Organization plugin, organization
+  schema, personal workspace mapping, static workspace roles, personal workspace
+  provisioning, active organization session initialization, and personal
+  workspace protections.
+- 7C.3 legacy ownerRef claim bridge: durable one-way claims from historical
+  `owner_ref` values to Dynaxis Workspaces without raw API key persistence,
+  resource backfill, or public claim routes.
+- 7C.4 canonical workspace ownership: nullable `organization_id` on the eight
+  workspace-owned root resources, claim-based runtime projection, safe
+  migration backfill for already-claimed roots, and dual-stamping for new
+  legacy root writes.
+- User identity. **Status:** started.
+- Organizations/workspaces. **Status:** started.
+- 7C.5 project membership.
+- 7C.6 authorization.
+- 7C.7 AuthContext.
+- 7C.8 route migration.
+- 7C.9 client/session migration + TanStack Query.
+- 7C.10 identity/security hardening.
 
 Avoid coupling identity to one provider account.
 
@@ -357,7 +378,92 @@ Mini App capability summaries can seed this, but they are not a Skills runtime t
 
 ---
 
-## 17. Phase 9 - Agent Orchestration / Supercomputer
+## 17. Phase 8F - Developer Platform
+
+Goal: expose stable developer-facing surfaces for building against Dynaxis.
+
+Depends on:
+
+- Identity/permissions.
+- App Factory contracts.
+- Job/event engine.
+- Capability/model registry.
+
+Deliverables:
+
+- Public API.
+- TypeScript SDK.
+- Python SDK seam.
+- CLI.
+- MCP server.
+- Public webhooks.
+- Developer Console.
+- Developer credentials and apps.
+- Sandbox environment.
+- Developer documentation.
+
+This phase exposes governed platform surfaces; it does not bypass Dynaxis
+identity, Projects, Jobs, Assets, or provider boundaries.
+
+---
+
+## 18. Phase 8G - Extension / Plugin Platform
+
+Goal: allow governed extensions to add capabilities without becoming hidden
+runtime forks.
+
+Depends on:
+
+- Developer Platform.
+- Capability/model registry.
+- Permissions.
+- Skills and App Factory contracts where relevant.
+
+Deliverables:
+
+- Plugin manifest.
+- Plugin SDK.
+- Plugin runtime.
+- Capability and permission declarations.
+- Sandboxing.
+- Signing and integrity checks.
+- Versioning.
+- Dependency model.
+- Install/update/rollback lifecycle.
+- Extension points.
+
+Extensions should register canonical Dynaxis objects and capabilities rather
+than inventing parallel product, project, job, or provider models.
+
+---
+
+## 19. Phase 8H - Marketplace
+
+Goal: distribute governed Dynaxis registry objects and extension packages.
+
+Depends on:
+
+- Developer Platform.
+- Extension / Plugin Platform.
+- Identity/organizations/permissions.
+- Billing/commercial foundations where required.
+
+Marketplace distributes canonical registry objects such as Skills, plugins,
+templates, blueprints, software components, design components, models,
+providers, workflows, and integrations.
+
+Initial marketplace responsibility model:
+
+- Dynaxis Official.
+- Verified Partners.
+- Selected Creators.
+
+Marketplace does not replace the governed registries; it is a discovery,
+distribution, trust, review, licensing, and installation layer over them.
+
+---
+
+## 20. Phase 9 - Agent Orchestration / Supercomputer
 
 Goal: high-order orchestration across Projects, workflows, skills, workers, providers, and verification gates.
 
@@ -375,15 +481,48 @@ Supercomputer should coordinate the platform. It must not become a separate prod
 
 ---
 
-## 18. Deliberately Not Started
+## 21. Phase 10 - Production Platform / Commercial Hardening
 
-- Phase 7C+ runtime implementation.
-- Provider connections.
+Goal: harden Dynaxis for commercial production operation.
+
+Depends on:
+
+- Identity/organizations/permissions.
+- Provider Connections / Secrets.
+- Job/event engine.
+- Developer Platform.
+- Marketplace where monetized distribution is included.
+
+Deliverables:
+
+- Billing and credits.
+- Plans, limits, and entitlements.
+- Audit logs.
+- Admin operations.
+- Compliance and retention policies.
+- Incident response surfaces.
+- Observability and SLOs.
+- Abuse prevention.
+- Data export/deletion workflows.
+- Production support tooling.
+- Commercial provider and partner governance.
+
+---
+
+## 22. Deliberately Not Started
+
+- Phase 7C.5+ runtime implementation.
+- Provider connections / secrets.
 - App Factory code.
 - Higgsfield.
 - Skills.
 - Supercomputer.
 - Auto Layout.
-- Identity/organizations.
+- Project membership.
+- Dynaxis API keys.
+- AuthContext.
+- Route migration.
+- TanStack Query client/session migration.
+- RBAC/ABAC.
 - Queues/workers.
 - UI changes.

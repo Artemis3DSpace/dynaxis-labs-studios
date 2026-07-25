@@ -1,0 +1,279 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { getTableColumns, getTableName } from 'drizzle-orm';
+import { getTableConfig } from 'drizzle-orm/pg-core';
+import {
+  AUTH_SCHEMA_NAME,
+  BETTER_AUTH_DRIZZLE_SCHEMA,
+  BETTER_AUTH_ORGANIZATION_MODELS,
+  invitation,
+  member,
+  organization,
+  session,
+  user,
+} from '../lib/dynaxis/auth/schema.js';
+import {
+  DYNAXIS_WORKSPACE_ACCESS_SUMMARY,
+  DYNAXIS_WORKSPACE_ROLE_NAMES,
+  dynaxisWorkspaceRoles,
+} from '../lib/dynaxis/auth/workspace-access.js';
+import { createDynaxisAuthOptions } from '../lib/dynaxis/auth/options.js';
+import { DYNAXIS_IDENTITY_DRIZZLE_SCHEMA, dynaxisPersonalWorkspaces } from '../lib/dynaxis/identity/schema.js';
+import {
+  DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE,
+  ensurePersonalWorkspaceForUser,
+  personalWorkspaceSlugForUserId,
+} from '../lib/dynaxis/identity/personal-workspace.js';
+import {
+  DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE,
+  assertPersonalWorkspaceMutationAllowed,
+} from '../lib/dynaxis/identity/workspace-protection.js';
+import { resolveSessionActiveOrganization } from '../lib/dynaxis/identity/session-workspace.js';
+import { DRIZZLE_SCHEMA } from '../lib/dynaxis/db/client.js';
+
+const ROOT = new URL('..', import.meta.url);
+
+function source(path) {
+  return readFileSync(new URL(path, ROOT), 'utf8');
+}
+
+function tableKey(table) {
+  return `${getTableConfig(table).schema || 'public'}.${getTableName(table)}`;
+}
+
+function createFakeDb({ users = [], mappings = [], organizations = [], members = [] } = {}) {
+  const state = {
+    users,
+    mappings,
+    organizations,
+    members,
+    conflictNextMappingInsert: false,
+    conflictMappingRow: null,
+  };
+
+  function rowsFor(table) {
+    const key = tableKey(table);
+    if (key === tableKey(user)) return state.users;
+    if (key === tableKey(dynaxisPersonalWorkspaces)) return state.mappings;
+    if (key === tableKey(organization)) return state.organizations;
+    if (key === tableKey(member)) return state.members;
+    return [];
+  }
+
+  function pushRow(table, row) {
+    const key = tableKey(table);
+    if (key === tableKey(organization)) state.organizations.push(row);
+    if (key === tableKey(member)) {
+      if (!state.members.some((item) => item.userId === row.userId && item.organizationId === row.organizationId)) {
+        state.members.push(row);
+      }
+    }
+    if (key === tableKey(dynaxisPersonalWorkspaces)) {
+      if (state.conflictNextMappingInsert) {
+        state.conflictNextMappingInsert = false;
+        if (state.conflictMappingRow) {
+          state.mappings.push(state.conflictMappingRow);
+        }
+        return [];
+      }
+      if (!state.mappings.some((item) => item.userId === row.userId)) {
+        state.mappings.push(row);
+        return [row];
+      }
+      return [];
+    }
+    return [row];
+  }
+
+  const db = {
+    state,
+    transaction(callback) {
+      return callback(db);
+    },
+    select() {
+      return {
+        from(table) {
+          return {
+            where() {
+              return {
+                async limit() {
+                  return rowsFor(table);
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+    insert(table) {
+      let row;
+      return {
+        values(value) {
+          row = value;
+          return this;
+        },
+        onConflictDoNothing() {
+          if (tableKey(table) === tableKey(member)) {
+            pushRow(table, row);
+          }
+          return this;
+        },
+        async returning() {
+          return pushRow(table, row);
+        },
+      };
+    },
+  };
+
+  return db;
+}
+
+test('Phase 7C.2 enables Better Auth organization schema without teams or dynamic roles', () => {
+  assert.deepEqual(BETTER_AUTH_ORGANIZATION_MODELS, ['organization', 'member', 'invitation']);
+
+  for (const table of [organization, member, invitation]) {
+    assert.equal(getTableConfig(table).schema, AUTH_SCHEMA_NAME);
+  }
+
+  assert.equal(getTableName(organization), 'organization');
+  assert.equal(getTableName(member), 'member');
+  assert.equal(getTableName(invitation), 'invitation');
+  assert.equal(getTableColumns(session).activeOrganizationId.columnType, 'PgUUID');
+  assert.equal(getTableColumns(member).organizationId.columnType, 'PgUUID');
+  assert.equal(getTableColumns(member).userId.columnType, 'PgUUID');
+  assert.equal(getTableColumns(invitation).organizationId.columnType, 'PgUUID');
+
+  assert.ok(!('team' in BETTER_AUTH_DRIZZLE_SCHEMA));
+  assert.ok(!('teamMember' in BETTER_AUTH_DRIZZLE_SCHEMA));
+  assert.ok(!('organizationRole' in BETTER_AUTH_DRIZZLE_SCHEMA));
+});
+
+test('workspace roles preserve Better Auth defaults and add static viewer', () => {
+  assert.deepEqual(DYNAXIS_WORKSPACE_ROLE_NAMES, ['owner', 'admin', 'member', 'viewer']);
+  assert.ok(dynaxisWorkspaceRoles.owner);
+  assert.ok(dynaxisWorkspaceRoles.admin);
+  assert.ok(dynaxisWorkspaceRoles.member);
+  assert.ok(dynaxisWorkspaceRoles.viewer);
+  assert.equal(DYNAXIS_WORKSPACE_ACCESS_SUMMARY.dynamicAccessControl, false);
+  assert.equal(DYNAXIS_WORKSPACE_ACCESS_SUMMARY.organizationRoleTable, false);
+});
+
+test('personal workspace mapping lives in public schema with one user and organization each', () => {
+  const config = getTableConfig(dynaxisPersonalWorkspaces);
+  const columns = getTableColumns(dynaxisPersonalWorkspaces);
+
+  assert.equal(config.schema, undefined);
+  assert.equal(config.name, 'dynaxis_personal_workspaces');
+  assert.equal(columns.userId.primary, true);
+  assert.equal(columns.userId.columnType, 'PgUUID');
+  assert.equal(columns.organizationId.columnType, 'PgUUID');
+  assert.ok('dynaxisPersonalWorkspaces' in DYNAXIS_IDENTITY_DRIZZLE_SCHEMA);
+  assert.ok('dynaxisPersonalWorkspaces' in DRIZZLE_SCHEMA);
+});
+
+test('auth options configure organization plugin and session workspace hook without enabling signup', () => {
+  const options = createDynaxisAuthOptions({
+    database: { id: 'test-adapter' },
+    databaseHooks: { session: { create: { before: async () => {} } } },
+    organizationHooks: { beforeAddMember: async () => {} },
+    env: {
+      NODE_ENV: 'test',
+      BETTER_AUTH_SECRET: 'secret',
+      BETTER_AUTH_URL: 'http://localhost:3000',
+    },
+  });
+
+  assert.equal(options.emailAndPassword.disableSignUp, true);
+  assert.equal(options.plugins.length, 1);
+  assert.equal(options.plugins[0].id, 'organization');
+  assert.equal(options.plugins[0].options.allowUserToCreateOrganization, false);
+  assert.equal(options.plugins[0].options.disableOrganizationDeletion, true);
+  assert.equal(options.plugins[0].options.teams.enabled, false);
+  assert.equal(options.plugins[0].options.dynamicAccessControl.enabled, false);
+  assert.equal(typeof options.databaseHooks.session.create.before, 'function');
+});
+
+test('personal workspace provisioning is idempotent and creates owner membership', async () => {
+  const userId = '11111111-1111-4111-8111-111111111111';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Sotira', email: 'sotira@example.test' }],
+  });
+
+  const first = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Sotira' }, { db });
+  const second = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Sotira' }, { db });
+
+  assert.equal(first.userId, userId);
+  assert.equal(second.userId, userId);
+  assert.equal(db.state.organizations.length, 1);
+  assert.equal(db.state.members.length, 1);
+  assert.equal(db.state.members[0].role, DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE);
+  assert.equal(db.state.organizations[0].slug, personalWorkspaceSlugForUserId(userId));
+});
+
+test('personal workspace provisioning rereads mapping when a concurrent insert wins', async () => {
+  const userId = '22222222-2222-4222-8222-222222222222';
+  const organizationId = '33333333-3333-4333-8333-333333333333';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Race', email: 'race@example.test' }],
+  });
+  db.state.conflictNextMappingInsert = true;
+  db.state.conflictMappingRow = { userId, organizationId, createdAt: new Date() };
+
+  const workspace = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Race' }, { db });
+  assert.equal(workspace.organizationId, organizationId);
+});
+
+test('personal workspace protections reject member and invitation mutations', async () => {
+  const personalOrganizationId = '44444444-4444-4444-8444-444444444444';
+  const db = createFakeDb({
+    mappings: [
+      {
+        userId: '55555555-5555-4555-8555-555555555555',
+        organizationId: personalOrganizationId,
+        createdAt: new Date(),
+      },
+    ],
+  });
+
+  for (const action of ['deleteOrganization', 'inviteMember', 'addMember', 'removeMember']) {
+    await assert.rejects(
+      assertPersonalWorkspaceMutationAllowed(
+        { organizationId: personalOrganizationId, action, member: { role: 'owner' } },
+        { db }
+      ),
+      (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+    );
+  }
+
+  await assert.rejects(
+    assertPersonalWorkspaceMutationAllowed(
+      {
+        organizationId: personalOrganizationId,
+        action: 'updateMemberRole',
+        member: { role: 'owner' },
+        newRole: 'member',
+      },
+      { db }
+    ),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+});
+
+test('session workspace hook initializes missing active organization to personal workspace', async () => {
+  const userId = '66666666-6666-4666-8666-666666666666';
+  const organizationId = '77777777-7777-4777-8777-777777777777';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Session', email: 'session@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+  });
+
+  const session = await resolveSessionActiveOrganization({ id: 'session-id', userId }, { db });
+  assert.equal(session.activeOrganizationId, organizationId);
+});
+
+test('Phase 7C.2 does not add provider connections, project auth, or runtime UI changes', () => {
+  assert.doesNotMatch(source('lib/dynaxis/identity/personal-workspace.js'), /provider connection/i);
+  assert.doesNotMatch(source('lib/dynaxis/identity/personal-workspace.js'), /project membership/i);
+  assert.doesNotMatch(source('lib/dynaxis/auth/client.js'), /localStorage|cookie/i);
+});
