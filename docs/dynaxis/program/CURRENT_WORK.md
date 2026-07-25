@@ -9,19 +9,19 @@ Phase 7C with parallel specification-only planning.
 - 7C.1
 - 7C.2
 - 7C.3
+- 7C.4 Canonical Workspace Ownership
 
 ## In Progress
 
-7C.4 Canonical Workspace Ownership
+(none)
 
-- Agent: Codex
-- Branch: `phase-7c/identity-organizations-permissions`
-- Tracking Work Package: `WP-7C-04`
+Phase 7C.4 is integrated. `WP-7C-04` is complete and its branch and implementation history are preserved on main.
 
-Do not claim 7C.4 is complete until its assigned Work Package has passed review and integration. It remains the active migration owner on the Phase 7C implementation line.
+`WP-7C-05` is the next ready implementation package. It becomes the active migration owner only when assigned.
 
 ## Ready Work Packages
 
+- WP-7C-05 Project Membership Schema and Role Model
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
@@ -38,11 +38,11 @@ Do not claim 7C.4 is complete until its assigned Work Package has passed review 
 - WP-8H-01 Marketplace Package Contract and Publisher Model
 - WP-9-01 Supercomputer Planning Contract and Safety Model
 
-Only specification-only Work Packages are READY while 7C.4 is active. They may inspect runtime code and architecture documents, but they must not edit `lib/**`, `app/**`, `packages/**`, `drizzle/**`, runtime schemas, production APIs, or product UI.
+Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-05` is the next ready runtime implementation package and must not become the active migration owner until assigned.
 
 ## Blocked Runtime Implementation
 
-All runtime implementation packages remain backlog until their dependencies are integrated and migration ownership is available.
+Runtime implementation packages after `WP-7C-05` remain backlog until their dependencies are integrated and migration ownership is available.
 
 ## Next Sequential Identity Tasks
 

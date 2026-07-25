@@ -11,23 +11,23 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: documentation/programme/specification edits only; no runtime files, schemas, APIs, product UI, or migrations.
 
-## Wave B - Active Implementation Work
+## Wave B - Completed Implementation Work
 
 - Packages: WP-7C-04
 - Specification packages: -
 - Implementation packages: WP-7C-04
 - Review / integration gates: -
-- Migration owner constraints: WP-7C-04
-- Rule: already in progress on the separate Phase 7C implementation worktree. This catalogue correction does not touch that worktree.
+- Migration owner constraints: complete
+- Rule: integrated through `phase-7c/identity-organizations-permissions`; branch and implementation history are preserved.
 
-## Later Wave 1
+## Wave C - Next Ready Implementation Work
 
 - Specification packages: WP-7C-08, WP-8B-01, WP-8D-01, WP-8E-01
 - Implementation packages: WP-7C-05
 - Review / integration gates: -
 - Migration owner constraints: WP-7C-05
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7C-05, WP-7C-08, WP-8B-01, WP-8D-01, WP-8E-01
-- Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
+- Serialization note: WP-7C-05 becomes the active migration owner only when assigned; any other ready migration owner waits for a later wave.
 
 ## Later Wave 2
 
@@ -470,4 +470,3 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Review / integration gates: WP-10-09
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-10-09
-

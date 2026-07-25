@@ -6,8 +6,8 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 
 | ID | Phase | Title | Type | Recommended Agent | Status | Depends On | Migration Owner |
 |---|---|---|---|---|---|---|---|
-| WP-7C-04 | 7C | Canonical Workspace Ownership Tracking | implementation | codex | in_progress | - | yes |
-| WP-7C-05 | 7C | Project Membership Schema and Role Model | implementation | codex | backlog | WP-7C-04 | yes |
+| WP-7C-04 | 7C | Canonical Workspace Ownership Tracking | implementation | codex | done | - | yes |
+| WP-7C-05 | 7C | Project Membership Schema and Role Model | implementation | codex | ready | WP-7C-04 | yes |
 | WP-7C-06 | 7C | Project Membership Service Invariants | implementation | codex | backlog | WP-7C-05 | no |
 | WP-7C-07 | 7C | Project Membership Tests and Fixtures | review | codex | backlog | WP-7C-05, WP-7C-06 | no |
 | WP-7C-08 | 7C | Authorization Vocabulary and Policy Specification | specification | claude | backlog | WP-7C-04 | no |
