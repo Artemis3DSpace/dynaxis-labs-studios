@@ -17,6 +17,7 @@ import {
 import { projectServiceImpl } from '../lib/dynaxis/services/projects.js';
 import { user, organization, member } from '../lib/dynaxis/auth/schema.js';
 import { dynaxisProjectMembers, dynaxisProjects } from '../lib/dynaxis/db/schema.js';
+import { dynaxisOwnerRefClaims } from '../lib/dynaxis/identity/schema.js';
 
 const ROOT = new URL('..', import.meta.url);
 
@@ -54,6 +55,7 @@ function createRepositoryState(overrides = {}) {
     personalWorkspaces: overrides.personalWorkspaces || [],
     memberships: overrides.memberships || [],
     locks: [],
+    insertAttempts: 0,
   };
 }
 
@@ -95,6 +97,7 @@ function createFakeRepository(state = createRepositoryState()) {
       );
     },
     async insertMembership(membership) {
+      state.insertAttempts += 1;
       const existing = await this.findMembership(membership);
       if (existing) {
         const err = new Error('duplicate project member');
@@ -182,9 +185,62 @@ test('create rejects unresolved canonical Workspace', async () => {
   );
 });
 
-test('create resolves legacy claim ownership and rejects Workspace mismatch', async () => {
+test('claimed legacy ownership does not substitute for projected Project ownership', async () => {
   const state = createRepositoryState({
     projects: [{ id: 'project-1', ownerRef: 'claimed-owner', organizationId: null }],
+    claims: [{ legacyOwnerRef: 'claimed-owner', organizationId: 'org-1' }],
+  });
+  const { service } = createService(state);
+
+  await assert.rejects(
+    service.create({ projectId: 'project-1', userId: 'user-owner', role: 'owner' }),
+    expectCode(PROJECT_MEMBERSHIP_ERROR_CODES.PROJECT_WORKSPACE_UNRESOLVED)
+  );
+  assert.equal(state.insertAttempts, 0);
+  assert.equal(state.memberships.length, 0);
+
+  state.projects[0].organizationId = 'org-1';
+  const row = await service.create({ projectId: 'project-1', userId: 'user-owner', role: 'owner' });
+  assert.equal(row.organizationId, 'org-1');
+  assert.equal(row.role, 'owner');
+  assert.equal(state.insertAttempts, 1);
+  assert.equal(state.memberships.length, 1);
+});
+
+test('unprojected claimed legacy Project is not a membership domain for any operation', async () => {
+  const existing = makeMembership({ userId: 'user-owner', role: 'owner' });
+  const state = createRepositoryState({
+    projects: [{ id: 'project-1', ownerRef: 'claimed-owner', organizationId: null }],
+    claims: [{ legacyOwnerRef: 'claimed-owner', organizationId: 'org-1' }],
+    memberships: [existing],
+  });
+  const { service } = createService(state);
+
+  for (const [operation, action] of [
+    [
+      'create',
+      () => service.create({ projectId: 'project-1', userId: 'user-admin', role: 'admin' }),
+    ],
+    [
+      'update',
+      () => service.update({ projectId: 'project-1', userId: 'user-owner', role: 'admin' }),
+    ],
+    ['remove', () => service.remove({ projectId: 'project-1', userId: 'user-owner' })],
+    ['get', () => service.get({ projectId: 'project-1', userId: 'user-owner' })],
+    ['list', () => service.list({ projectId: 'project-1' })],
+  ]) {
+    await assert.rejects(
+      action(),
+      expectCode(PROJECT_MEMBERSHIP_ERROR_CODES.PROJECT_WORKSPACE_UNRESOLVED),
+      `${operation} rejects unprojected claimed legacy Project`
+    );
+  }
+  assert.deepEqual(state.memberships, [existing]);
+});
+
+test('create resolves legacy claim ownership and rejects Workspace mismatch', async () => {
+  const state = createRepositoryState({
+    projects: [{ id: 'project-1', ownerRef: 'claimed-owner', organizationId: 'org-1' }],
     claims: [{ legacyOwnerRef: 'claimed-owner', organizationId: 'org-1' }],
   });
   const { service } = createService(state);
@@ -470,6 +526,84 @@ async function seedPgProject(db) {
   });
   return { orgId, ownerId, projectId };
 }
+
+async function seedPgClaimedLegacyProject(db) {
+  const orgId = randomUUID();
+  const ownerId = randomUUID();
+  const projectId = randomUUID();
+  await db.insert(user).values({
+    id: ownerId,
+    name: 'Claimed Owner',
+    email: `${ownerId}@example.test`,
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  await db.insert(organization).values({
+    id: orgId,
+    name: 'Claimed Workspace',
+    slug: `claimed-workspace-${orgId}`,
+    createdAt: new Date(),
+    metadata: null,
+  });
+  await db.insert(member).values({
+    id: randomUUID(),
+    organizationId: orgId,
+    userId: ownerId,
+    role: 'owner',
+    createdAt: new Date(),
+  });
+  await db.insert(dynaxisOwnerRefClaims).values({
+    legacyOwnerRef: 'claimed-owner',
+    organizationId: orgId,
+    claimedByUserId: ownerId,
+    claimedAt: new Date(),
+    metadata: {},
+  });
+  await db.insert(dynaxisProjects).values({
+    id: projectId,
+    ownerRef: 'claimed-owner',
+    organizationId: null,
+    name: 'Claimed Legacy Project',
+    status: 'active',
+    isDefault: false,
+    metadata: {},
+  });
+  return { orgId, ownerId, projectId };
+}
+
+test('PostgreSQL regression: claimed legacy Project requires projected ownership', async () => {
+  await withPostgres(async ({ db }) => {
+    const { orgId, ownerId, projectId } = await seedPgClaimedLegacyProject(db);
+    const service = new ProjectMembershipService({
+      repository: createDrizzleProjectMembershipRepository(db),
+    });
+
+    await assert.rejects(
+      service.create({ projectId, userId: ownerId, role: 'owner' }),
+      expectCode(PROJECT_MEMBERSHIP_ERROR_CODES.PROJECT_WORKSPACE_UNRESOLVED)
+    );
+    let rows = await db
+      .select()
+      .from(dynaxisProjectMembers)
+      .where(eq(dynaxisProjectMembers.projectId, projectId));
+    assert.equal(rows.length, 0);
+
+    await db
+      .update(dynaxisProjects)
+      .set({ organizationId: orgId })
+      .where(eq(dynaxisProjects.id, projectId));
+
+    const row = await service.create({ projectId, userId: ownerId, role: 'owner' });
+    assert.equal(row.organizationId, orgId);
+    assert.equal(row.userId, ownerId);
+    rows = await db
+      .select()
+      .from(dynaxisProjectMembers)
+      .where(eq(dynaxisProjectMembers.projectId, projectId));
+    assert.equal(rows.length, 1);
+  });
+});
 
 test('PostgreSQL concurrency: concurrent final owner removal cannot leave zero owners', async () => {
   await withPostgres(async ({ db }) => {
