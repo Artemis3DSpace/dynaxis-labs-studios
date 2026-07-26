@@ -21,6 +21,10 @@ const WORKSPACE_MIGRATION = readFileSync(
   new URL('drizzle/0010_phase_7c_2_workspace_foundation.sql', ROOT),
   'utf8'
 );
+const PROJECT_MEMBERSHIP_SERVICE = readFileSync(
+  new URL('lib/dynaxis/identity/project-membership.js', ROOT),
+  'utf8'
+);
 
 function indexNames(table) {
   return getTableConfig(table).indexes.map((idx) => idx.config.name);
@@ -49,6 +53,19 @@ test('Project membership table lives in public and references canonical Dynaxis/
   assert.equal(getTableConfig(member).schema, 'auth');
   assert.equal(getTableName(member), 'member');
   assert.ok('dynaxisProjectMembers' in DRIZZLE_SCHEMA);
+});
+
+test('Project membership migration creates the canonical membership table exactly once', () => {
+  assert.match(MIGRATION, /CREATE TABLE "dynaxis_project_members" \(/);
+  assert.equal((MIGRATION.match(/CREATE TABLE "dynaxis_project_members"/g) || []).length, 1);
+  assert.doesNotMatch(MIGRATION, /CREATE TABLE "public"\."dynaxis_projects"/);
+  assert.doesNotMatch(MIGRATION, /CREATE TABLE "project_members"/);
+});
+
+test('Project membership service queries canonical Dynaxis Project membership tables', () => {
+  assert.match(PROJECT_MEMBERSHIP_SERVICE, /\.from\(dynaxisProjects\)/);
+  assert.match(PROJECT_MEMBERSHIP_SERVICE, /\.from\(dynaxisProjectMembers\)/);
+  assert.doesNotMatch(PROJECT_MEMBERSHIP_SERVICE, /dynaxisWorkspaces|projectMembershipsTable/);
 });
 
 test('Project membership roles are distinct from workspace roles', () => {
@@ -86,23 +103,23 @@ test('Project membership schema enforces lookup indexes and duplicate prevention
 test('Migration ties project members to project workspace and Better Auth membership', () => {
   assert.match(
     MIGRATION,
-    /FOREIGN KEY \("project_id"\) REFERENCES "public"."dynaxis_projects"\("id"\) ON DELETE cascade/
+    /FOREIGN KEY \("project_id"\) REFERENCES "public"."dynaxis_projects"\("id"\) ON DELETE cascade ON UPDATE no action/
   );
   assert.match(
     MIGRATION,
-    /FOREIGN KEY \("organization_id"\) REFERENCES "auth"."organization"\("id"\) ON DELETE restrict/
+    /FOREIGN KEY \("organization_id"\) REFERENCES "auth"."organization"\("id"\) ON DELETE restrict ON UPDATE no action/
   );
   assert.match(
     MIGRATION,
-    /FOREIGN KEY \("user_id"\) REFERENCES "auth"."user"\("id"\) ON DELETE cascade/
+    /FOREIGN KEY \("user_id"\) REFERENCES "auth"."user"\("id"\) ON DELETE cascade ON UPDATE no action/
   );
   assert.match(
     MIGRATION,
-    /CONSTRAINT "dynaxis_project_members_project_organization_fk" FOREIGN KEY \("project_id","organization_id"\) REFERENCES "public"."dynaxis_projects"\("id","organization_id"\) ON DELETE cascade/
+    /CONSTRAINT "dynaxis_project_members_project_organization_fk" FOREIGN KEY \("project_id","organization_id"\) REFERENCES "public"."dynaxis_projects"\("id","organization_id"\) ON DELETE cascade ON UPDATE no action/
   );
   assert.match(
     MIGRATION,
-    /CONSTRAINT "dynaxis_project_members_workspace_member_fk" FOREIGN KEY \("organization_id","user_id"\) REFERENCES "auth"."member"\("organization_id","user_id"\) ON DELETE cascade/
+    /CONSTRAINT "dynaxis_project_members_workspace_member_fk" FOREIGN KEY \("organization_id","user_id"\) REFERENCES "auth"."member"\("organization_id","user_id"\) ON DELETE cascade ON UPDATE no action/
   );
   assert.match(
     WORKSPACE_MIGRATION,

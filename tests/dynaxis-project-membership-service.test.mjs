@@ -20,6 +20,29 @@ import { dynaxisProjectMembers, dynaxisProjects } from '../lib/dynaxis/db/schema
 import { dynaxisOwnerRefClaims } from '../lib/dynaxis/identity/schema.js';
 
 const ROOT = new URL('..', import.meta.url);
+const WORKSPACE_PROJECT_ROLE_FIXTURES = Object.freeze([
+  {
+    workspaceRole: 'owner',
+    userId: 'user-owner',
+    impliedProjectRole: 'owner',
+  },
+  {
+    workspaceRole: 'admin',
+    userId: 'user-admin',
+    impliedProjectRole: 'admin',
+  },
+  {
+    workspaceRole: 'member',
+    userId: 'user-editor',
+    impliedProjectRole: 'editor',
+  },
+  {
+    workspaceRole: 'viewer',
+    userId: 'user-viewer',
+    impliedProjectRole: 'viewer',
+  },
+]);
+const PROJECT_ROLE_FIXTURES = Object.freeze(['owner', 'admin', 'editor', 'viewer']);
 
 function expectCode(code) {
   return (err) => err?.code === code;
@@ -142,7 +165,7 @@ function createService(state) {
   return { service: new ProjectMembershipService({ repository }), repository, state };
 }
 
-for (const role of ['owner', 'admin', 'editor', 'viewer']) {
+for (const role of PROJECT_ROLE_FIXTURES) {
   test(`create ${role} Project membership succeeds`, async () => {
     const { service, state } = createService(createRepositoryState());
     const row = await service.create({
@@ -157,6 +180,38 @@ for (const role of ['owner', 'admin', 'editor', 'viewer']) {
     assert.deepEqual(state.locks, ['project-1']);
   });
 }
+
+test('Workspace roles do not imply automatic Project roles', async () => {
+  const { service } = createService(createRepositoryState());
+
+  for (const { workspaceRole, userId, impliedProjectRole } of WORKSPACE_PROJECT_ROLE_FIXTURES) {
+    assert.equal(
+      await service.get({ projectId: 'project-1', userId }),
+      null,
+      `Workspace ${workspaceRole} is not automatically Project ${impliedProjectRole}`
+    );
+  }
+  assert.deepEqual(await service.list({ projectId: 'project-1' }), []);
+});
+
+test('Workspace membership only establishes eligibility for explicit Project role assignment', async () => {
+  for (const { workspaceRole, userId } of WORKSPACE_PROJECT_ROLE_FIXTURES) {
+    for (const projectRole of PROJECT_ROLE_FIXTURES) {
+      const projectId = `project-${workspaceRole}-${projectRole}`;
+      const state = createRepositoryState({
+        projectId,
+        projects: [{ id: projectId, ownerRef: `owner-${projectId}`, organizationId: 'org-1' }],
+      });
+      const { service } = createService(state);
+
+      const row = await service.create({ projectId, userId, role: projectRole });
+      assert.equal(row.role, projectRole);
+      assert.equal(row.userId, userId);
+      assert.equal(row.organizationId, 'org-1');
+      assert.equal(state.memberships.length, 1);
+    }
+  }
+});
 
 test('create rejects invalid Project role', async () => {
   const { service } = createService(createRepositoryState());
