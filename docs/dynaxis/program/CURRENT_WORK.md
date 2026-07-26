@@ -10,18 +10,19 @@ Phase 7C with parallel specification-only planning.
 - 7C.2
 - 7C.3
 - 7C.4 Canonical Workspace Ownership
+- 7C.5 Project Membership Schema and Role Model
 
 ## In Progress
 
 (none)
 
-Phase 7C.4 is integrated. `WP-7C-04` is complete and its branch and implementation history are preserved on main.
+Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
-`WP-7C-05` is the next ready implementation package. It becomes the active migration owner only when assigned.
+`WP-7C-06` is the next ready Phase 7C implementation package. It has `migration_owner: false`, so no migration owner is active.
 
 ## Ready Work Packages
 
-- WP-7C-05 Project Membership Schema and Role Model
+- WP-7C-06 Project Membership Service Invariants
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
@@ -38,17 +39,17 @@ Phase 7C.4 is integrated. `WP-7C-04` is complete and its branch and implementati
 - WP-8H-01 Marketplace Package Contract and Publisher Model
 - WP-9-01 Supercomputer Planning Contract and Safety Model
 
-Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-05` is the next ready runtime implementation package and must not become the active migration owner until assigned.
+Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-06` is the next ready runtime implementation package and does not own a migration.
 
 ## Blocked Runtime Implementation
 
-Runtime implementation packages after `WP-7C-05` remain backlog until their dependencies are integrated and migration ownership is available.
+Runtime implementation packages after `WP-7C-06` remain backlog until their dependencies are integrated.
 
 ## Next Sequential Identity Tasks
 
-1. 7C.5 Project Membership
-2. 7C.6 Authorization
-3. 7C.7 AuthContext
-4. 7C.8 Route Migration
-5. 7C.9 Client/Session Migration + TanStack Query
-6. 7C.10 Identity/Security Hardening
+1. WP-7C-06 Project Membership Service Invariants
+2. Authorization
+3. AuthContext
+4. Route Migration
+5. Client/Session Migration + TanStack Query
+6. Identity/Security Hardening
