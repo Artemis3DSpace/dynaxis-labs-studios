@@ -13,6 +13,7 @@ Phase 7C with parallel specification-only planning.
 - 7C.5 Project Membership Schema and Role Model
 - WP-7C-06 Project Membership Service Invariants
 - WP-7C-07 Project Membership Tests and Fixtures
+- WP-7C-08 Authorization Vocabulary and Policy Specification
 
 ## In Progress
 
@@ -22,11 +23,10 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
-Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. `WP-7C-08` Authorization Vocabulary and Policy Specification is next. No Phase 7C migration owner is active.
+Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. `WP-7C-08` Authorization Vocabulary and Policy Specification is complete on `phase-7c/authorization-spec`. No Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
-- WP-7C-08 Authorization Vocabulary and Policy Specification
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
@@ -43,7 +43,7 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. `WP-7C-08` A
 - WP-8H-01 Marketplace Package Contract and Publisher Model
 - WP-9-01 Supercomputer Planning Contract and Safety Model
 
-Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-08` is the next ready identity package and does not own a migration.
+Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-08` does not own a migration.
 
 ## Blocked Runtime Implementation
 
@@ -51,9 +51,8 @@ Runtime implementation packages after `WP-7C-08` remain backlog until their depe
 
 ## Next Sequential Identity Tasks
 
-1. WP-7C-08 Authorization Vocabulary and Policy Specification
-2. Authorization Evaluator and Project Policy
-3. AuthContext
-4. Route Migration
-5. Client/Session Migration + TanStack Query
-6. Identity/Security Hardening
+1. Authorization Evaluator and Project Policy
+2. AuthContext
+3. Route Migration
+4. Client/Session Migration + TanStack Query
+5. Identity/Security Hardening
