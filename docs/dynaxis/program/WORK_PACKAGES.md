@@ -9,8 +9,8 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-04 | 7C | Canonical Workspace Ownership Tracking | implementation | codex | done | - | yes |
 | WP-7C-05 | 7C | Project Membership Schema and Role Model | implementation | codex | done | WP-7C-04 | yes |
 | WP-7C-06 | 7C | Project Membership Service Invariants | implementation | codex | done | WP-7C-05 | no |
-| WP-7C-07 | 7C | Project Membership Tests and Fixtures | review | codex | ready | WP-7C-05, WP-7C-06 | no |
-| WP-7C-08 | 7C | Authorization Vocabulary and Policy Specification | specification | claude | backlog | WP-7C-04 | no |
+| WP-7C-07 | 7C | Project Membership Tests and Fixtures | review | codex | done | WP-7C-05, WP-7C-06 | no |
+| WP-7C-08 | 7C | Authorization Vocabulary and Policy Specification | specification | claude | ready | WP-7C-04 | no |
 | WP-7C-09 | 7C | Authorization Evaluator and Workspace Policy | implementation | claude | backlog | WP-7C-08 | no |
 | WP-7C-10 | 7C | Project Policy and Resource Inheritance | implementation | claude | backlog | WP-7C-06, WP-7C-09 | no |
 | WP-7C-11 | 7C | Authorization Regression Test Suite | review | codex | backlog | WP-7C-09, WP-7C-10 | no |
