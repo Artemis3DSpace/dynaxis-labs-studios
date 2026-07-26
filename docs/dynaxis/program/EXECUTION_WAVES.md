@@ -13,21 +13,21 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 ## Wave B - Completed Implementation Work
 
-- Packages: WP-7C-04, WP-7C-05
+- Packages: WP-7C-04, WP-7C-05, WP-7C-06
 - Specification packages: -
-- Implementation packages: WP-7C-04, WP-7C-05
+- Implementation packages: WP-7C-04, WP-7C-05, WP-7C-06
 - Review / integration gates: -
 - Migration owner constraints: complete
-- Rule: integrated through `phase-7c/identity-organizations-permissions` and `phase-7c/project-membership`; branch and implementation history are preserved.
+- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, and `phase-7c/project-membership-service`; branch and implementation history are preserved.
 
-## Wave C - Next Ready Implementation Work
+## Wave C - Next Ready Membership Review
 
 - Specification packages: WP-7C-08, WP-8B-01, WP-8D-01, WP-8E-01
-- Implementation packages: WP-7C-06
-- Review / integration gates: -
+- Implementation packages: -
+- Review / integration gates: WP-7C-07
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-06, WP-7C-08, WP-8B-01, WP-8D-01, WP-8E-01
-- Serialization note: WP-7C-06 has `migration_owner: false`; no migration owner is active in this wave.
+- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-07, WP-7C-08, WP-8B-01, WP-8D-01, WP-8E-01
+- Serialization note: WP-7C-07 has `migration_owner: false`; no migration owner is active in this wave.
 
 ## Later Wave 2
 
@@ -41,9 +41,9 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 - Specification packages: -
 - Implementation packages: WP-7C-10
-- Review / integration gates: WP-7C-07
+- Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-07, WP-7C-10
+- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-10
 
 ## Later Wave 4
 

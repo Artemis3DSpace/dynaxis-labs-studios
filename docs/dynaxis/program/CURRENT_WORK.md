@@ -11,6 +11,7 @@ Phase 7C with parallel specification-only planning.
 - 7C.3
 - 7C.4 Canonical Workspace Ownership
 - 7C.5 Project Membership Schema and Role Model
+- WP-7C-06 Project Membership Service Invariants
 
 ## In Progress
 
@@ -18,11 +19,11 @@ Phase 7C with parallel specification-only planning.
 
 Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
-`WP-7C-06` is the next ready Phase 7C implementation package. It has `migration_owner: false`, so no migration owner is active.
+`WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is the next membership package. No Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
-- WP-7C-06 Project Membership Service Invariants
+- WP-7C-07 Project Membership Tests and Fixtures
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
@@ -39,15 +40,15 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 - WP-8H-01 Marketplace Package Contract and Publisher Model
 - WP-9-01 Supercomputer Planning Contract and Safety Model
 
-Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-06` is the next ready runtime implementation package and does not own a migration.
+Specification-only Work Packages may continue in parallel under their documented path restrictions. `WP-7C-07` is the next ready membership package and does not own a migration.
 
 ## Blocked Runtime Implementation
 
-Runtime implementation packages after `WP-7C-06` remain backlog until their dependencies are integrated.
+Runtime implementation packages after `WP-7C-07` remain backlog until their dependencies are integrated.
 
 ## Next Sequential Identity Tasks
 
-1. WP-7C-06 Project Membership Service Invariants
+1. WP-7C-07 Project Membership Tests and Fixtures
 2. Authorization
 3. AuthContext
 4. Route Migration
