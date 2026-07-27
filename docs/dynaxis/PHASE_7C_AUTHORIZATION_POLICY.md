@@ -59,26 +59,49 @@ audited exception:
 Server-side authorization is authoritative. UI visibility is never an
 authorization boundary.
 
-## Subject Model
+## Principal Model
 
-The evaluator receives already-normalized subjects from the future canonical
-AuthContext. It must not parse request headers, load provider secrets, call
-model providers, or derive raw legacy ownerRefs itself.
+The evaluator receives an already-normalized principal from the future
+canonical AuthContext actor contract. It must not parse request headers, load
+provider secrets, call model providers, or derive raw legacy ownerRefs itself.
 
-| Subject Type | Description | Authority Source | May Grant Permissions |
+Canonical principal fields are:
+
+- `principalId`
+- `type`
+- `authMethod`
+
+Supported principal types are:
+
+- `human`
+- `api-key`
+- `service`
+- `legacy`
+
+Supported AuthContext authentication methods are:
+
+- `session`
+- `oauth-token`
+- `api-key`
+- `legacy-muapi-key`
+- `internal`
+
+| Principal Type | Description | Authority Source | May Grant Permissions |
 | --- | --- | --- | --- |
-| `human` | Better Auth human session principal with `auth.user.id` and session state. | Better Auth session, active or resolved Workspace, `auth.member`, and `dynaxis_project_members`. | Yes. |
-| `api-key` | Future Dynaxis Developer API-key principal. | Future Dynaxis API-key registry and scoped grants. | Not in Phase 7C unless a later package defines it. |
-| `service` | Internal Dynaxis service principal for trusted server-to-server work. | Explicit internal service allowlist, scope, and audit metadata. | Deny by default; only explicit future grants. |
-| `legacy` | Compatibility principal derived by the server from `x-api-key` to `owner_ref`. | Existing ownerRef partition plus optional `dynaxis_owner_ref_claims`. | Only on explicit legacy compatibility paths. |
+| `human` | Better Auth human principal. Requires `principalId`, `userId`, and auth method `session` or `oauth-token`. | Better Auth session or OAuth token, active or resolved Workspace, `auth.member`, and `dynaxis_project_members`. | Yes. |
+| `api-key` | Future Dynaxis Developer API-key principal. Requires `principalId` when implemented and `authMethod: 'api-key'`. | Future Dynaxis API-key registry and scoped grants. | Not in Phase 7C unless a later package defines it. |
+| `service` | Internal Dynaxis service principal. Requires `principalId` and `authMethod: 'internal'`. | Explicit internal service allowlist, scope, and audit metadata. | Deny by default; only explicit future grants. |
+| `legacy` | Compatibility principal derived by the server from `x-api-key` to `owner_ref`. Requires `legacyOwnerRef` and `authMethod: 'legacy-muapi-key'`. `principalId` may be absent while compatibility identity is unresolved. | Existing ownerRef partition plus explicitly supported `dynaxis_owner_ref_claims` paths. | Only on explicit legacy compatibility paths. |
 
 Provider credentials, model accounts, and worker adapters are not authorization
-subjects. A MuAPI, Higgsfield, Kling, Fal, Replicate, storage, or model
+principals. A MuAPI, Higgsfield, Kling, Fal, Replicate, storage, or model
 credential must never become a user identity.
 
 Raw legacy `x-api-key` grants no automatic new Dynaxis permissions. It is a
 compatibility input that must be converted by the trusted server boundary into a
-legacy principal containing only the derived `owner_ref`.
+legacy principal containing only normalized compatibility identity such as the
+derived `legacyOwnerRef`. Do not invent a fake `principalId` for an unresolved
+legacy principal.
 
 ## Policy Layers
 
@@ -266,10 +289,31 @@ Workspace-owned roots:
 - Design System
 - Design Component Set
 
-These roots authorize through their own `organization_id` when present. If
-`organization_id` is null and `owner_ref` has a claim, compatibility may resolve
-the Workspace through `dynaxis_owner_ref_claims`. If both are present and
-conflict, authorization denies with `OWNERSHIP_CONFLICT`.
+These roots authorize through their own `organization_id` when present. A
+historical Workspace-owned root with `organization_id` null may use a claimed
+`owner_ref` only on an explicitly supported legacy compatibility path. If both
+are present and conflict, authorization denies with `OWNERSHIP_CONFLICT`.
+
+Project has one additional canonical-authorization rule. A Project entering
+canonical Project policy, Project membership, Project-role authorization, or
+Project-owned child-resource inheritance must have persisted canonical Workspace
+ownership:
+
+```text
+dynaxis_projects.organization_id IS NOT NULL
+```
+
+A legacy claim does not substitute for persisted canonical Project ownership.
+For canonical Project policy purposes:
+
+```text
+claim-resolved Project ownership != projected canonical Project ownership
+```
+
+An unprojected Project cannot satisfy canonical Project membership, canonical
+Project-role authorization, or Project-owned child-resource inheritance that
+requires canonical Project context until ownership has actually been projected
+onto `dynaxis_projects.organization_id`.
 
 Project-owned children:
 
@@ -321,14 +365,7 @@ Input:
 
 ```ts
 type AuthorizationInput = {
-  principal: {
-    type: 'human' | 'api-key' | 'service' | 'legacy';
-    subjectId?: string;
-    userId?: string;
-    serviceId?: string;
-    apiKeyId?: string;
-    legacyOwnerRef?: string;
-  } | null;
+  principal: AuthorizationPrincipal | null;
   workspace: {
     organizationId: string;
     role?: 'owner' | 'admin' | 'member' | 'viewer';
@@ -352,6 +389,30 @@ type AuthorizationInput = {
   } | null;
   permission: DynaxisPermission;
 };
+
+type AuthorizationPrincipal =
+  | {
+      type: 'human';
+      principalId: string;
+      userId: string;
+      authMethod: 'session' | 'oauth-token';
+    }
+  | {
+      type: 'api-key';
+      principalId: string;
+      authMethod: 'api-key';
+    }
+  | {
+      type: 'service';
+      principalId: string;
+      authMethod: 'internal';
+    }
+  | {
+      type: 'legacy';
+      principalId?: string;
+      legacyOwnerRef: string;
+      authMethod: 'legacy-muapi-key';
+    };
 ```
 
 Output:
@@ -379,44 +440,51 @@ WP-7C-09 must export these stable reason constants exactly:
 | Reason | Meaning |
 | --- | --- |
 | `ALLOW` | Request is allowed. |
-| `NO_PRINCIPAL` | No supported principal is present. |
+| `UNKNOWN_PERMISSION` | Requested permission is not in the canonical Dynaxis permission vocabulary. |
+| `NO_PRINCIPAL` | No principal is present. |
+| `UNSUPPORTED_PRINCIPAL` | Principal type or authentication method is unsupported for the permission. |
 | `NO_WORKSPACE` | Required Workspace context is missing. |
 | `NOT_WORKSPACE_MEMBER` | Principal is not a member of the Workspace. |
 | `INSUFFICIENT_WORKSPACE_ROLE` | Workspace role does not grant the requested permission. |
-| `NOT_PROJECT_MEMBER` | Principal is not an explicit member of the Project. |
+| `NO_PROJECT` | Permission requires canonical Project context, but no Project context was provided or resolved. |
+| `NOT_PROJECT_MEMBER` | Project context exists, Project membership is required, and the principal is not an explicit member of the Project. |
 | `INSUFFICIENT_PROJECT_ROLE` | Project role does not grant the requested permission. |
 | `RESOURCE_SCOPE_MISMATCH` | Resource does not belong to the resolved Workspace or Project chain. |
 | `LEGACY_OWNERSHIP_UNRESOLVED` | Legacy `owner_ref` could not be resolved to compatible authority. |
 | `OWNERSHIP_CONFLICT` | Canonical `organization_id` conflicts with claimed legacy ownerRef. |
-| `UNSUPPORTED_PRINCIPAL` | Principal type is unsupported for the permission. |
 | `EXPLICIT_DENY` | A policy, invariant, state rule, or final-owner protection explicitly denies. |
 
-Unknown permission names are `EXPLICIT_DENY` unless WP-7C-09 adds a narrower
-diagnostic reason without changing the public contract above.
+`UNKNOWN_PERMISSION` is distinct from `EXPLICIT_DENY`. Unknown permissions are
+vocabulary failures. `EXPLICIT_DENY` is reserved for actual policy, invariant,
+state, final-owner, service allowlist, or compatibility denials.
 
 ## Evaluation Precedence
 
 Stable evaluator precedence:
 
-1. Permission not in the canonical vocabulary -> `EXPLICIT_DENY`.
+1. Permission not in the canonical vocabulary -> `UNKNOWN_PERMISSION`.
 2. Missing principal -> `NO_PRINCIPAL`.
-3. Provider credential, model account, worker adapter, or unsupported subject
-   presented as authority -> `UNSUPPORTED_PRINCIPAL`.
+3. Provider credential, model account, worker adapter, unsupported principal
+   type, or unsupported authentication method presented as authority ->
+   `UNSUPPORTED_PRINCIPAL`.
 4. Permission requires Workspace and Workspace context is missing ->
    `NO_WORKSPACE`.
 5. Permission requires Workspace membership and it is absent ->
    `NOT_WORKSPACE_MEMBER`.
 6. Workspace role is insufficient -> `INSUFFICIENT_WORKSPACE_ROLE`.
-7. Permission requires Project membership and it is absent ->
+7. Permission requires canonical Project context and no Project context was
+   provided or resolved -> `NO_PROJECT`.
+8. Project context exists, Project membership is required, and explicit Project
+   membership is absent ->
    `NOT_PROJECT_MEMBER`.
-8. Project role is insufficient -> `INSUFFICIENT_PROJECT_ROLE`.
-9. Legacy ownership cannot be resolved -> `LEGACY_OWNERSHIP_UNRESOLVED`.
-10. Canonical ownership conflicts -> `OWNERSHIP_CONFLICT`.
-11. Resource is outside the resolved Workspace or Project chain ->
+9. Project role is insufficient -> `INSUFFICIENT_PROJECT_ROLE`.
+10. Legacy ownership cannot be resolved -> `LEGACY_OWNERSHIP_UNRESOLVED`.
+11. Canonical ownership conflicts -> `OWNERSHIP_CONFLICT`.
+12. Resource is outside the resolved Workspace or Project chain ->
     `RESOURCE_SCOPE_MISMATCH`.
-12. Final-owner, personal Workspace, unsupported transfer, invalid state, or
+13. Final-owner, personal Workspace, unsupported transfer, invalid state, or
     explicit service allowlist failure -> `EXPLICIT_DENY`.
-13. Matching policy grant with no denial -> `ALLOW`.
+14. Matching policy grant with no denial -> `ALLOW`.
 
 The evaluator may short-circuit before expensive resource loading when an
 earlier denial is already known. It must preserve observable reason precedence
@@ -469,11 +537,21 @@ This specification explicitly excludes:
 - Project-owned resources inherit through Project.
 - Workspace-owned roots inherit through their own `organization_id` or claimed
   ownerRef compatibility.
+- AuthorizationInput aligns with the canonical AuthContext actor vocabulary:
+  `principalId`, `type`, and `authMethod`.
+- No second principal vocabulary such as `subjectId`, `serviceId`, or `apiKeyId`
+  exists in the evaluator contract.
+- `UNKNOWN_PERMISSION` is distinct from `EXPLICIT_DENY`.
+- `NO_PROJECT` is distinct from `NOT_PROJECT_MEMBER`.
+- Claim-only legacy Project ownership is not canonical Project authority.
+- Persisted Project `organization_id` is required for canonical Project policy.
 - Globally registered capabilities are not treated as Workspace or Project data
   until instantiated or used against owned resources.
 - Deny by default is explicit.
 - Provider credentials grant no identity or authorization.
 - Raw legacy API keys grant no new automatic permissions.
+- No provider credential can become a principal.
+- No raw key is accepted by the evaluator.
 - Evaluator input and output contracts are defined.
 - Stable decision reasons are defined.
 - No runtime implementation, schema, production API, migration, or UI change is
