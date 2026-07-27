@@ -4,8 +4,8 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 ## Wave A - Ready Specification Work That Can Run Now
 
-- Packages: WP-7C-08, WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
-- Specification packages: WP-7C-08, WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Packages: WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Specification packages: WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
 - Implementation packages: -
 - Review / integration gates: -
 - Migration owner constraints: -
@@ -13,12 +13,12 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 ## Wave B - Completed Implementation Work
 
-- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07
-- Specification packages: -
+- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07, WP-7C-08
+- Specification packages: WP-7C-08
 - Implementation packages: WP-7C-04, WP-7C-05, WP-7C-06
 - Review / integration gates: WP-7C-07
 - Migration owner constraints: complete
-- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, and `phase-7c/project-membership-review`; branch and implementation history are preserved.
+- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, `phase-7c/project-membership-review`, and `phase-7c/authorization-spec`; branch and implementation history are preserved.
 
 ## Wave C - Ready Follow-On Specification Work
 
@@ -29,13 +29,13 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-01, WP-8D-01, WP-8E-01
 - Serialization note: no Phase 7C migration owner is active in this wave.
 
-## Later Wave 2
+## Wave D - Ready Phase 7C Runtime Work
 
 - Specification packages: -
 - Implementation packages: WP-7C-09
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-09
+- Packages that may run after dependency and conflict checks: WP-7C-09
 
 ## Later Wave 3
 

@@ -23,10 +23,11 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
-Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. `WP-7C-08` Authorization Vocabulary and Policy Specification is complete on `phase-7c/authorization-spec`. No Phase 7C migration owner is active.
+Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. `WP-7C-08` Authorization Vocabulary and Policy Specification is complete on `phase-7c/authorization-spec`. `WP-7C-09` Authorization Evaluator and Workspace Policy is ready next. No Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
+- WP-7C-09 Authorization Evaluator and Workspace Policy
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
@@ -47,11 +48,11 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Blocked Runtime Implementation
 
-Runtime implementation packages after `WP-7C-08` remain backlog until their dependencies are integrated.
+Runtime implementation packages after `WP-7C-09` remain backlog until their dependencies are integrated.
 
 ## Next Sequential Identity Tasks
 
-1. Authorization Evaluator and Project Policy
+1. Authorization Evaluator and Workspace Policy
 2. AuthContext
 3. Route Migration
 4. Client/Session Migration + TanStack Query
