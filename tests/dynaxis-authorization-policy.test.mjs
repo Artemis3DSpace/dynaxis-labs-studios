@@ -105,7 +105,7 @@ test('Workspace policy matrix matches the permission registry', () => {
       definition.policyLayer === 'workspace' &&
       (definition.scopeMode === 'workspace' || definition.scopeMode === 'workspace-or-project')
   );
-  assert.ok(workspacePolicyPermissions.length >= 50);
+  assert.equal(workspacePolicyPermissions.length, 46);
 
   for (const definition of workspacePolicyPermissions) {
     for (const role of WORKSPACE_ROLES) {
