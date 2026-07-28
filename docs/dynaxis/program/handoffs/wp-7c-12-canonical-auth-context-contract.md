@@ -8,7 +8,7 @@
 - Starting SHA: `31f2bc9455d4edff747e930e0c5f078d6b9edc14`
 - Migration owner: false
 - Migration status: no migration added
-- Status: implementation validated locally with independent read-only review findings repaired; awaiting integration review
+- Status: integrated on `main` from `phase-7c/auth-context-contract`
 
 ## Implementation Summary
 
@@ -16,7 +16,7 @@
 - Extended `lib/dynaxis/auth/server.js` with canonical AuthContext loader and helper exports.
 - Extended `lib/dynaxis/identity/session-workspace.js` with sanitized active Workspace lookup helpers.
 - Added focused tests in `tests/dynaxis-auth-context-contract.test.mjs`.
-- Updated programme metadata so WP-7C-12 is `in_progress`; WP-7C-13 remains backlog.
+- Updated programme metadata so WP-7C-12 is `done`; WP-7C-13 and WP-7C-18 are ready/unassigned.
 
 ## AuthContext Semantics
 
@@ -71,7 +71,7 @@
   - Result: passed after approved network access for `next/font` Google Fonts and worktree-local package aliases.
 - Programme status:
   - `npm run program:status`
-  - Result: passed; WP-7C-12 is `in_progress`, WP-7C-13 remains backlog.
+  - Result after integration transition: passed; WP-7C-12 is `done`, WP-7C-13 and WP-7C-18 are ready/unassigned.
 - Whitespace:
   - `git diff --check`
   - Result after review repairs: passed.
@@ -82,12 +82,11 @@
 - Security and identity isolation: no findings; reviewer independently validated AuthContext plus authorization policy tests at 47 / 47 before review-repair test additions.
 - Legacy compatibility boundary: no findings; reviewer confirmed opt-in legacy ownerRef bridge and no route migration.
 - Test completeness: repaired missing default Better Auth loader/server-wrapper coverage, default non-legacy `x-api-key` behavior, and missing Project membership AuthContext negative coverage.
-- Allowed-path and programme compliance: no findings; reviewer confirmed allowed paths, `in_progress` status, WP-7C-13 backlog, no migration, and branch/worktree/base metadata.
+- Allowed-path and programme compliance: no findings; reviewer confirmed allowed paths, no migration, and branch/worktree/base metadata before integration.
 
-## Integration Gate
+## Integration Result
 
-- Leave branch unmerged.
-- Do not mark WP-7C-12 done until integration is complete.
-- Do not make WP-7C-13 ready before WP-7C-12 is integrated.
+- Branch integrated by fast-forwarding `main` to `14e8aa2a94a790cc6cbf5cecd7973cbaf300e4c1`.
+- WP-7C-12 is marked done after integration.
+- WP-7C-13 and WP-7C-18 are ready/unassigned after WP-7C-12 integration.
 - No route migration, client/session migration, schema migration, Provider Connections, Developer Platform credentials, Better Auth replacement, or package manifest changes are included.
-- User or integration owner is the final merge authority.

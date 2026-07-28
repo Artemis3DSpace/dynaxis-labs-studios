@@ -14,13 +14,13 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-09 | 7C | Authorization Evaluator and Workspace Policy | implementation | codex | done | WP-7C-08 | no |
 | WP-7C-10 | 7C | Project Policy and Resource Inheritance | implementation | codex | done | WP-7C-06, WP-7C-09 | no |
 | WP-7C-11 | 7C | Authorization Regression Test Suite | review | codex | done | WP-7C-09, WP-7C-10 | no |
-| WP-7C-12 | 7C | Canonical AuthContext Contract | implementation | codex | in_progress | WP-7C-10 | no |
-| WP-7C-13 | 7C | AuthContext Route Helper Integration | implementation | codex | backlog | WP-7C-12 | no |
+| WP-7C-12 | 7C | Canonical AuthContext Contract | implementation | codex | done | WP-7C-10 | no |
+| WP-7C-13 | 7C | AuthContext Route Helper Integration | implementation | codex | ready | WP-7C-12 | no |
 | WP-7C-14 | 7C | Route Migration: Projects and Assets | implementation | codex | backlog | WP-7C-13 | no |
 | WP-7C-15 | 7C | Route Migration: Generations Jobs and Lifecycle | implementation | codex | backlog | WP-7C-10, WP-7C-13 | no |
 | WP-7C-16 | 7C | Route Migration: Characters Products Brands Campaigns | implementation | codex | backlog | WP-7C-13 | no |
 | WP-7C-17 | 7C | Route Migration: Design APIs and Mini App Execution | implementation | codex | backlog | WP-7C-13 | no |
-| WP-7C-18 | 7C | TanStack Query Foundation and Query Keys | implementation | cursor | backlog | WP-7C-12 | no |
+| WP-7C-18 | 7C | TanStack Query Foundation and Query Keys | implementation | cursor | ready | WP-7C-12 | no |
 | WP-7C-19 | 7C | Client Session and Workspace Switching | implementation | cursor | backlog | WP-7C-12, WP-7C-18 | no |
 | WP-7C-20 | 7C | Project Queries and Studio Migration | implementation | cursor | backlog | WP-7C-14, WP-7C-19 | no |
 | WP-7C-21 | 7C | Identity Signup Provisioning and Recovery Hardening | implementation | claude | backlog | WP-7C-12, WP-7C-20 | no |

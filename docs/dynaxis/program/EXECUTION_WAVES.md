@@ -1,6 +1,6 @@
 # Dynaxis Execution Waves
 
-Execution waves are derived from corrected Work Package dependencies and migration-owner serialization. READY specification packages may run now because they edit documentation only. Runtime implementation remains blocked by dependency integration, branch isolation, and migration ownership. No wave lists more than one migration owner as simultaneously executable.
+Execution waves are derived from corrected Work Package dependencies and migration-owner serialization. READY specification packages may run now because they edit documentation only. Runtime implementation opens only after dependency integration, branch isolation, and migration ownership checks. No wave lists more than one migration owner as simultaneously executable.
 
 ## Wave A - Ready Specification Work That Can Run Now
 
@@ -13,12 +13,12 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 ## Wave B - Completed Implementation and Review Work
 
-- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07, WP-7C-08, WP-7C-09, WP-7C-10, WP-7C-11
+- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07, WP-7C-08, WP-7C-09, WP-7C-10, WP-7C-11, WP-7C-12
 - Specification packages: WP-7C-08
-- Implementation packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-09, WP-7C-10
+- Implementation packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-09, WP-7C-10, WP-7C-12
 - Review / integration gates: WP-7C-07, WP-7C-11
 - Migration owner constraints: complete
-- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, `phase-7c/project-membership-review`, `phase-7c/authorization-spec`, `phase-7c/authorization-workspace-policy`, `phase-7c/project-policy-resource-inheritance`, and `phase-7c/authorization-regression-review`; branch and implementation history are preserved.
+- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, `phase-7c/project-membership-review`, `phase-7c/authorization-spec`, `phase-7c/authorization-workspace-policy`, `phase-7c/project-policy-resource-inheritance`, `phase-7c/authorization-regression-review`, and `phase-7c/auth-context-contract`; branch and implementation history are preserved.
 
 ## Wave C - Ready Follow-On Specification Work
 
@@ -37,15 +37,15 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: complete
 - Packages that may run after dependency and conflict checks: -
 
-## Wave E - Ready Phase 7C AuthContext Work
+## Wave E - Completed Phase 7C AuthContext Work
 
 - Specification packages: -
 - Implementation packages: WP-7C-12
 - Review / integration gates: -
-- Migration owner constraints: -
-- Packages that may run after dependencies and conflict checks: WP-7C-12
+- Migration owner constraints: complete
+- Packages that may run after dependencies and conflict checks: -
 
-## Later Wave 5
+## Wave F - Ready Phase 7C Follow-On Work
 
 - Specification packages: -
 - Implementation packages: WP-7C-13, WP-7C-18
