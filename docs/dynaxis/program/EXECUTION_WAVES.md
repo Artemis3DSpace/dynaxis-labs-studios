@@ -11,14 +11,14 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: documentation/programme/specification edits only; no runtime files, schemas, APIs, product UI, or migrations.
 
-## Wave B - Completed Implementation Work
+## Wave B - Completed Implementation and Review Work
 
-- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07, WP-7C-08, WP-7C-09, WP-7C-10
+- Packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-07, WP-7C-08, WP-7C-09, WP-7C-10, WP-7C-11
 - Specification packages: WP-7C-08
 - Implementation packages: WP-7C-04, WP-7C-05, WP-7C-06, WP-7C-09, WP-7C-10
-- Review / integration gates: WP-7C-07
+- Review / integration gates: WP-7C-07, WP-7C-11
 - Migration owner constraints: complete
-- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, `phase-7c/project-membership-review`, `phase-7c/authorization-spec`, `phase-7c/authorization-workspace-policy`, and `phase-7c/project-policy-resource-inheritance`; branch and implementation history are preserved.
+- Rule: integrated through `phase-7c/identity-organizations-permissions`, `phase-7c/project-membership`, `phase-7c/project-membership-service`, `phase-7c/project-membership-review`, `phase-7c/authorization-spec`, `phase-7c/authorization-workspace-policy`, `phase-7c/project-policy-resource-inheritance`, and `phase-7c/authorization-regression-review`; branch and implementation history are preserved.
 
 ## Wave C - Ready Follow-On Specification Work
 
@@ -29,15 +29,15 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-01, WP-8D-01, WP-8E-01
 - Serialization note: no Phase 7C migration owner is active in this wave.
 
-## Wave D - Ready Phase 7C Review Work
+## Wave D - Completed Phase 7C Review Work
 
 - Specification packages: -
 - Implementation packages: -
 - Review / integration gates: WP-7C-11
-- Migration owner constraints: -
-- Packages that may run after dependency and conflict checks: WP-7C-11
+- Migration owner constraints: complete
+- Packages that may run after dependency and conflict checks: -
 
-## Later Wave 4
+## Wave E - Ready Phase 7C AuthContext Work
 
 - Specification packages: -
 - Implementation packages: WP-7C-12
