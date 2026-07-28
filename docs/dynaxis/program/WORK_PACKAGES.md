@@ -13,7 +13,7 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-08 | 7C | Authorization Vocabulary and Policy Specification | specification | codex | done | WP-7C-04 | no |
 | WP-7C-09 | 7C | Authorization Evaluator and Workspace Policy | implementation | codex | done | WP-7C-08 | no |
 | WP-7C-10 | 7C | Project Policy and Resource Inheritance | implementation | codex | done | WP-7C-06, WP-7C-09 | no |
-| WP-7C-11 | 7C | Authorization Regression Test Suite | review | codex | ready | WP-7C-09, WP-7C-10 | no |
+| WP-7C-11 | 7C | Authorization Regression Test Suite | review | codex | in_progress | WP-7C-09, WP-7C-10 | no |
 | WP-7C-12 | 7C | Canonical AuthContext Contract | implementation | claude | backlog | WP-7C-10 | no |
 | WP-7C-13 | 7C | AuthContext Route Helper Integration | implementation | codex | backlog | WP-7C-12 | no |
 | WP-7C-14 | 7C | Route Migration: Projects and Assets | implementation | codex | backlog | WP-7C-13 | no |

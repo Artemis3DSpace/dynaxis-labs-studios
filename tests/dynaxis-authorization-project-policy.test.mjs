@@ -17,6 +17,7 @@ import {
   getProjectPermissionRoles,
   projectRoleGrantsPermission,
 } from '../lib/dynaxis/auth/project-policy.js';
+import { DYNAXIS_PERMISSION_NAMES } from '../lib/dynaxis/auth/permissions.js';
 import {
   PROJECT_INHERITED_RESOURCE_TYPES,
   authorizeResourceInheritance,
@@ -206,6 +207,15 @@ test('Project policy allows and denies owner admin editor viewer deterministical
       },
     ],
     ['settings.read', { owner: ALLOW, admin: ALLOW, editor: ALLOW, viewer: ALLOW }],
+    [
+      'settings.manage',
+      {
+        owner: ALLOW,
+        admin: ALLOW,
+        editor: INSUFFICIENT_PROJECT_ROLE,
+        viewer: INSUFFICIENT_PROJECT_ROLE,
+      },
+    ],
   ];
 
   for (const [permission, expectations] of cases) {
@@ -215,6 +225,53 @@ test('Project policy allows and denies owner admin editor viewer deterministical
       assert.equal(decision.allowed, expectations[role] === ALLOW, `${permission} ${role}`);
       assert.equal(decision.matchedPolicy, 'project', `${permission} ${role}`);
     }
+  }
+});
+
+test('Project inherited permission vocabulary covers every child action under review', () => {
+  const expectedPermissions = [
+    ['asset.read'],
+    ['asset.create'],
+    ['asset.update'],
+    ['asset.delete'],
+    ['generation.read'],
+    ['generation.create'],
+    ['generation.cancel'],
+    ['generation.retry'],
+    ['job.read'],
+    ['job.create'],
+    ['job.cancel'],
+    ['job.retry'],
+    ['campaign.read'],
+    ['campaign.create'],
+    ['campaign.update'],
+    ['campaign.delete'],
+    ['composition.read'],
+    ['composition.create'],
+    ['composition.update'],
+    ['composition.delete'],
+    ['character.read', 'project_character'],
+    ['character.update', 'character_use'],
+    ['product.read', 'project_product'],
+    ['product.update', 'product_use'],
+    ['brand.read', 'project_brand'],
+    ['brand.update', 'brand_use'],
+    ['design.read'],
+    ['design.create'],
+    ['design.update'],
+    ['design.delete'],
+    ['design.publish'],
+    ['settings.read'],
+    ['settings.manage'],
+  ];
+
+  for (const [permission, type] of expectedPermissions) {
+    assert.ok(DYNAXIS_PERMISSION_NAMES.includes(permission), permission);
+    assert.notDeepEqual(
+      getProjectPermissionRoles(permission, type ? { resource: resource(type) } : {}),
+      [],
+      permission
+    );
   }
 });
 
@@ -510,6 +567,26 @@ test('Resource inheritance covers aliases and generation/job lifecycle permutati
   }
 });
 
+test('Resource inheritance applies the Project settings role matrix', async () => {
+  const cases = [
+    ['settings.read', 'settings', 'owner', ALLOW],
+    ['settings.read', 'settings', 'admin', ALLOW],
+    ['settings.read', 'settings', 'editor', ALLOW],
+    ['settings.read', 'settings', 'viewer', ALLOW],
+    ['settings.manage', 'settings', 'owner', ALLOW],
+    ['settings.manage', 'settings', 'admin', ALLOW],
+    ['settings.manage', 'settings', 'editor', INSUFFICIENT_PROJECT_ROLE],
+    ['settings.manage', 'settings', 'viewer', INSUFFICIENT_PROJECT_ROLE],
+  ];
+
+  for (const [permission, type, role, expected] of cases) {
+    const decision = await evaluateResource(permission, role, type);
+    assert.equal(decision.reason, expected, `${permission} ${role}`);
+    assert.equal(decision.allowed, expected === ALLOW, `${permission} ${role}`);
+    assert.equal(decision.resourceType, type, `${permission} ${role}`);
+  }
+});
+
 test('Resource inheritance does not transfer reusable root ownership', async () => {
   for (const [permission, type, reason, status] of [
     ['character.update', 'character', EXPLICIT_DENY, 403],
@@ -580,6 +657,49 @@ test('Resource inheritance distinguishes missing resources from forbidden member
   assert.equal(forbidden.failureKind, 'forbidden');
 });
 
+test('Resource inheritance resolves repository resources without echoing sensitive metadata', async () => {
+  const repository = {
+    calls: [],
+    async findResource(input) {
+      this.calls.push(input);
+      return resource('asset', {
+        id: 'asset-from-repository',
+        rawApiKey: 'muapi-secret',
+        providerCredential: { token: 'provider-secret' },
+        memberList: [{ userId: 'other-user' }],
+      });
+    },
+  };
+
+  const decision = await authorizeResourceInheritance({
+    permission: 'asset.read',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project(),
+    resourceRepository: repository,
+    resourceType: 'asset',
+    resourceId: 'asset-from-repository',
+    projectMembershipService: createMembershipService({ role: 'viewer' }),
+  });
+
+  assert.equal(decision.reason, ALLOW);
+  assert.equal(decision.resourceType, 'asset');
+  assert.equal(decision.resourceId, 'asset-from-repository');
+  assert.deepEqual(repository.calls, [{ type: 'asset', id: 'asset-from-repository' }]);
+
+  const serialized = JSON.stringify(decision);
+  for (const forbidden of [
+    'rawApiKey',
+    'muapi-secret',
+    'providerCredential',
+    'provider-secret',
+    'memberList',
+    'other-user',
+  ]) {
+    assert.doesNotMatch(serialized, new RegExp(forbidden));
+  }
+});
+
 test('Resource inheritance rejects provider credentials before resource disclosure', async () => {
   const decision = await authorizeResourceInheritance({
     permission: 'asset.read',
@@ -622,6 +742,22 @@ test('Resource inheritance supports create requests through the target Project',
   assert.equal(decision.reason, ALLOW);
   assert.equal(decision.resourceType, 'asset');
   assert.deepEqual(decision.requiredRoles, ['owner', 'admin', 'editor']);
+});
+
+test('Resource inheritance rejects create requests for mismatched target Project Workspace', async () => {
+  const decision = await authorizeResourceInheritance({
+    permission: 'asset.create',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ organizationId: 'org-2' }),
+    resource: undefined,
+    projectMembershipService: createMembershipService({ role: 'owner' }),
+  });
+
+  assert.equal(decision.reason, RESOURCE_SCOPE_MISMATCH);
+  assert.equal(decision.status, 404);
+  assert.equal(decision.failureKind, 'not-found');
+  assert.equal(decision.resourceType, 'asset');
 });
 
 test('Resource inheritance is deny-by-default for unknown and non-project inherited inputs', async () => {
