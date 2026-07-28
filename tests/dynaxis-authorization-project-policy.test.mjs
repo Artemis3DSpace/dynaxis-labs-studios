@@ -628,6 +628,28 @@ test('Resource inheritance denies scope mismatches before role grants', async ()
   assert.equal(wrongProjectAndInsufficientRole.failureKind, 'not-found');
 });
 
+test('Resource inheritance authorizes child resources through Project without child organizationId', async () => {
+  const decision = await authorizeResourceInheritance({
+    permission: 'asset.update',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project(),
+    resource: {
+      type: 'asset',
+      id: 'asset-with-project-only-scope',
+      projectId: 'project-1',
+    },
+    projectMembershipService: createMembershipService({ role: 'editor' }),
+  });
+
+  assert.equal(decision.reason, ALLOW);
+  assert.equal(decision.allowed, true);
+  assert.equal(decision.workspaceId, 'org-1');
+  assert.equal(decision.projectId, 'project-1');
+  assert.equal(decision.resourceType, 'asset');
+  assert.equal(decision.resourceId, 'asset-with-project-only-scope');
+});
+
 test('Resource inheritance distinguishes missing resources from forbidden membership', async () => {
   const missing = await authorizeResourceInheritance({
     permission: 'asset.read',

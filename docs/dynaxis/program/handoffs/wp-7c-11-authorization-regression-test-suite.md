@@ -31,7 +31,7 @@
 | WP-7C-10 | Workspace membership without explicit Project membership cannot grant Project-scoped editor/admin actions unless policy explicitly grants an override. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Workspace membership without explicit Project membership cannot grant project access`, `Project policy ignores caller-supplied membership shortcuts`, `Project policy rejects malformed service-returned membership rows`. |
 | WP-7C-10 | Child resource authorization derives from canonical Project relationship. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Resource inheritance covers representative Project child domains`, `Resource inheritance covers aliases and generation/job lifecycle permutations`, `Resource inheritance resolves repository resources without echoing sensitive metadata`, `Resource inheritance requires canonical Project context for child resources`. |
 | WP-7C-10 | Representative child domains include Assets, Generations, Jobs, Campaigns, Compositions, project-scoped Character/Product/Brand uses, and Design resources. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Project inherited permission vocabulary covers every child action under review`, `Resource inheritance covers representative Project child domains`, `Resource inheritance covers aliases and generation/job lifecycle permutations`. |
-| WP-7C-10 | Do not flatten `organization_id` onto every child; infer through Project and deny scope mismatches safely. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Resource inheritance denies scope mismatches before role grants`, `Resource inheritance rejects create requests for mismatched target Project Workspace`. |
+| WP-7C-10 | Do not flatten `organization_id` onto every child; infer through Project and deny scope mismatches safely. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Resource inheritance authorizes child resources through Project without child organizationId`, `Resource inheritance denies scope mismatches before role grants`, `Resource inheritance rejects create requests for mismatched target Project Workspace`. |
 | WP-7C-10 | Reusable Workspace roots do not inherit ownership merely because linked to a Project. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Resource inheritance does not transfer reusable root ownership`. |
 | WP-7C-10 | Not-found versus forbidden outcomes remain structured and safe. | `tests/dynaxis-authorization-project-policy.test.mjs`: `Project policy distinguishes safe not-found and forbidden outcomes`, `Resource inheritance distinguishes missing resources from forbidden membership`, `Resource inheritance rejects provider credentials before resource disclosure`. |
 
@@ -41,6 +41,7 @@
 - Added inherited permission vocabulary coverage for every child action under WP-7C-10 review, including project-scoped reusable-root use types.
 - Added repository-backed resource inheritance coverage that verifies lookup input and prevents sensitive fetched metadata from appearing in authorization decisions.
 - Added mismatched target Project Workspace coverage for create-time inherited resources.
+- Amendment coverage: added a concrete non-flattening regression proving a child `asset` resource with `projectId` and no child `organizationId` authorizes through canonical Project scope.
 
 ## Defects And Required Fixes
 
@@ -60,10 +61,12 @@
   - Result: 34 passed / 34 total.
 - Targeted WP-7C-11 project/resource authorization test after edits:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import /private/tmp/dynaxis-worktree-deps-register.mjs --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-authorization-project-policy.test.mjs`
-  - Result: 22 passed / 22 total.
+  - Initial result: 22 passed / 22 total.
+  - Amendment result after adding non-flattened child-resource coverage: 23 passed / 23 total.
 - Complete authorization glob after edits:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import /private/tmp/dynaxis-worktree-deps-register.mjs --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-authorization*.test.mjs`
-  - Result: 38 passed / 38 total.
+  - Initial result: 38 passed / 38 total.
+  - Amendment result after adding non-flattened child-resource coverage: 39 passed / 39 total.
 - Full Dynaxis suite:
   - `NODE_OPTIONS="--import /private/tmp/dynaxis-worktree-deps-register.mjs" npm run test:dynaxis`
   - Result: 358 passed / 361 total; 3 PostgreSQL tests failed before assertions because `/opt/homebrew/bin/initdb` could not create a System V shared-memory segment.
@@ -75,9 +78,11 @@
 - Programme status:
   - `NODE_OPTIONS="--import /private/tmp/dynaxis-worktree-deps-register.mjs" npm run program:status`
   - Result: passed; WP-7C-11 is `in_progress`, WP-7C-12 remains `backlog`.
+  - Amendment result: passed with the same status.
 - Whitespace:
   - `git diff --check`
   - Result: passed.
+  - Amendment result: passed.
 
 ## Integration Gate
 
