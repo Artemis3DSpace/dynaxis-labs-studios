@@ -97,6 +97,8 @@ test('permission registry exports canonical immutable permission metadata', () =
   assert.equal(getPermissionDefinition('workspace.fly'), null);
 
   assert.equal(getPermissionDefinition('design.update').scopeMode, 'workspace-or-project');
+  assert.equal(getPermissionDefinition('settings.read').scopeMode, 'workspace-or-project');
+  assert.equal(getPermissionDefinition('settings.manage').scopeMode, 'workspace-or-project');
 });
 
 test('Workspace policy matrix matches the permission registry', () => {
@@ -308,6 +310,57 @@ test('Project-scoped Design never grants from Workspace role', () => {
     }).reason,
     NO_PROJECT
   );
+});
+
+test('Workspace-scoped settings follow the canonical Workspace role matrix', () => {
+  const cases = [
+    ['settings.read', 'owner', ALLOW],
+    ['settings.read', 'admin', ALLOW],
+    ['settings.read', 'member', ALLOW],
+    ['settings.read', 'viewer', ALLOW],
+    ['settings.manage', 'owner', ALLOW],
+    ['settings.manage', 'admin', ALLOW],
+    ['settings.manage', 'member', INSUFFICIENT_WORKSPACE_ROLE],
+    ['settings.manage', 'viewer', INSUFFICIENT_WORKSPACE_ROLE],
+  ];
+
+  for (const [permission, role, reason] of cases) {
+    const decision = authorize(permission, { workspace: workspace(role) });
+    assert.equal(decision.reason, reason, `${permission} ${role}`);
+    assert.equal(decision.allowed, reason === ALLOW, `${permission} ${role}`);
+    assert.equal(decision.matchedPolicy, 'workspace', `${permission} ${role}`);
+  }
+});
+
+test('Project-scoped settings never grant from Workspace role pending WP-7C-10', () => {
+  const readDecision = authorize('settings.read', {
+    workspace: workspace('owner'),
+    project: project(),
+    resource: { type: 'settings', id: 'settings-1', organizationId: 'org-1', projectId: 'project-1' },
+  });
+  assert.equal(readDecision.allowed, false);
+  assert.equal(readDecision.reason, EXPLICIT_DENY);
+  assert.equal(readDecision.matchedPolicy, 'project');
+
+  const manageDecision = authorize('settings.manage', {
+    workspace: workspace('admin'),
+    project: project(),
+  });
+  assert.equal(manageDecision.allowed, false);
+  assert.equal(manageDecision.reason, EXPLICIT_DENY);
+  assert.equal(manageDecision.matchedPolicy, 'project');
+
+  const missingReadProject = authorize('settings.read', {
+    workspace: workspace('owner'),
+    resource: { type: 'settings', id: 'settings-1', organizationId: 'org-1', projectId: 'project-1' },
+  });
+  assert.equal(missingReadProject.reason, NO_PROJECT);
+
+  const missingManageProject = authorize('settings.manage', {
+    workspace: workspace('admin'),
+    resource: { type: 'settings', id: 'settings-1', organizationId: 'org-1', projectId: 'project-1' },
+  });
+  assert.equal(missingManageProject.reason, NO_PROJECT);
 });
 
 test('authorization decisions do not echo sensitive input fields', () => {
