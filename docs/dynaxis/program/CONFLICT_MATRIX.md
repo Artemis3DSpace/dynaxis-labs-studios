@@ -4,7 +4,7 @@ HARD means tasks must be serialized unless explicitly coordinated. SOFT means pa
 
 | Shared Area | Conflict | Packages / Phases | Reason | Coordination Rule |
 |---|---|---|---|---|
-| `lib/dynaxis/identity/schema.js`, `lib/dynaxis/db/schema.js`, `drizzle/**` | HARD | WP-7C-04, WP-7C-05 | 7C.4 workspace ownership and 7C.5 project membership schema migrations are integrated. | No Phase 7C migration owner is active; WP-7C-09 has `migration_owner: false`. |
+| `lib/dynaxis/identity/schema.js`, `lib/dynaxis/db/schema.js`, `drizzle/**` | HARD | WP-7C-04, WP-7C-05 | 7C.4 workspace ownership and 7C.5 project membership schema migrations are integrated. | No Phase 7C migration owner is active; WP-7C-09 is integrated and WP-7C-10 has `migration_owner: false`. |
 | Provider connection persistence and secrets | HARD | WP-7D-03 | ProviderConnection schema and encrypted-secret references are one persistence boundary. | No other 7D package owns schema migration. |
 | Job Engine persistence | HARD | WP-7E-04 | Job attempts, events, leases, and idempotency tables form one durable execution schema. | Runtime queue/worker packages depend on WP-7E-04. |
 | Project Graph and Memory persistence | HARD | WP-7F-02, WP-7F-03 | Graph edges land before memory/knowledge/decision records that cite graph nodes. | WP-7F-03 is serialized after WP-7F-02. |
@@ -22,4 +22,4 @@ HARD means tasks must be serialized unless explicitly coordinated. SOFT means pa
 | Studio shell and shared UI | SOFT | WP-7C-18 through WP-7C-20, WP-7D-06, WP-7G-05, WP-8C-03, WP-8D-04, WP-8F-05, WP-8H-02 | UI packages can overlap in `packages/studio/src/**`. | Assign one UI shell owner at a time or require explicit file-level coordination. |
 | App IR contracts | HARD | WP-8A-01, WP-8A-02, WP-8D-05, WP-9-01 | App IR is a canonical Build contract consumed by layout and orchestration. | App IR specification and validation land before consumers. |
 | Composer / Composition shared code | SOFT | WP-8C-02 through WP-8C-06, WP-8D-04 | Composer and design canvas work can touch Composition-adjacent code. | Keep Composer timeline/render graph separate from Layout IR. |
-| Specification-only packages | NONE | READY specification Work Packages | Documentation-only work may run in parallel with ready identity implementation work. | Specs may inspect runtime code but edit only docs/programme files. WP-7C-08 is complete. |
+| Specification-only packages | NONE | READY specification Work Packages | Documentation-only work may run in parallel with ready identity implementation work. | Specs may inspect runtime code but edit only docs/programme files. WP-7C-08 and WP-7C-09 are complete. |
