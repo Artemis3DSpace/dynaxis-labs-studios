@@ -20,6 +20,10 @@ Phase 7C with parallel specification-only planning.
 
 (none)
 
+## Awaiting Review
+
+- WP-7E-01 Job State Machine Specification
+
 Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
@@ -31,7 +35,6 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 - WP-7C-10 Project Policy and Resource Inheritance
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
-- WP-7E-01 Job State Machine Specification
 - WP-7E-02 Queue Abstraction and Selection
 - WP-7E-03 Job Event Model and Audit Timeline
 - WP-7F-01 Project Graph Ontology and Edge Taxonomy

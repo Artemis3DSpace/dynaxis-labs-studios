@@ -2,10 +2,15 @@
 
 Execution waves are derived from corrected Work Package dependencies and migration-owner serialization. READY specification packages may run now because they edit documentation only. Runtime implementation remains blocked by dependency integration, branch isolation, and migration ownership. No wave lists more than one migration owner as simultaneously executable.
 
+## Review Queue
+
+- Packages: WP-7E-01
+- Rule: review before integration; do not merge directly to `main`.
+
 ## Wave A - Ready Specification Work That Can Run Now
 
-- Packages: WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
-- Specification packages: WP-7D-01, WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Packages: WP-7D-01, WP-7D-02, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Specification packages: WP-7D-01, WP-7D-02, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
 - Implementation packages: -
 - Review / integration gates: -
 - Migration owner constraints: -
