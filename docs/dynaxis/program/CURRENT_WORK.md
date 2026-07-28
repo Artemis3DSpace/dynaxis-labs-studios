@@ -20,7 +20,7 @@ Phase 7C with parallel specification-only planning.
 
 ## In Progress
 
-- None
+- WP-7C-12 Canonical AuthContext Contract
 
 Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
@@ -30,7 +30,6 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 
 ## Ready Work Packages
 
-- WP-7C-12 Canonical AuthContext Contract
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
