@@ -17,12 +17,14 @@
 - Added focused authorization tests in `tests/dynaxis-authorization-project-policy.test.mjs`.
 - Updated existing authorization test labels so the base WP-7C-09 evaluator remains distinct from the WP-7C-10 adapters.
 - Updated programme state for WP-7C-10 to `in_progress`; WP-7C-11 remains backlog.
+- Amendment `WP-7C-10-review-fix-1`: hardened Project policy against malformed service-returned membership rows and removed authorization fallback to caller-supplied Project role fields.
 
 ## Policy Semantics
 
 - Project roles are explicit: `owner`, `admin`, `editor`, `viewer`.
 - Workspace membership is required but never translated into a Project role.
 - Project membership is resolved through the canonical `ProjectMembershipService.get` boundary.
+- The service-returned membership row must directly match the requested Project id, Workspace organization id, principal user id, and a valid Project role before any Project or inherited-resource permission can allow.
 - Canonical Project authorization requires the Project workspace to match the active Workspace context.
 - Legacy principals and provider credentials remain denied by default for canonical Project policy.
 - Decisions use stable authorization reasons and bounded public metadata only.
@@ -39,10 +41,10 @@
 
 - Targeted WP-7C-10 authorization test:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-authorization-project-policy.test.mjs`
-  - Result: 17 passed / 17 total
+  - Latest amendment result: 18 passed / 18 total
 - Complete authorization test file glob:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-authorization*.test.mjs`
-  - Result: 33 passed / 33 total
+  - Latest amendment result: 34 passed / 34 total
 - Full Dynaxis suite:
   - `npm run test:dynaxis`
   - Sandboxed result: 353 passed / 356 total; 3 PostgreSQL tests failed because sandboxed `initdb` could not create a shared memory segment.
@@ -63,7 +65,14 @@
   - Result: passed; WP-7C-10 is `in_progress`, WP-7C-11 remains backlog.
 - Whitespace:
   - `git diff --check`
-  - Result: passed.
+  - Latest amendment result: passed.
+
+## Review Fix Amendment
+
+- Blocking finding: malformed or mismatched membership rows from the injected Project membership service could grant access because authorization normalization preferred caller-supplied Project ids and could fall back to caller-supplied `project.role`.
+- Fix: Project authorization now derives membership Project id, organization id, user id, and role only from the service-returned row, then verifies those values against the requested Project, Workspace, and principal before evaluating role grants.
+- Tests added: malformed membership rows with mismatched `projectId`, mismatched `organizationId`, mismatched `userId`, missing `role`, invalid `role`, and forged caller-supplied `project.role`.
+- Full `npm test` and `npm run test:dynaxis` were not rerun for this amendment to avoid re-triggering the known host PostgreSQL shared-memory exhaustion path; the affected authorization-only validation was rerun and passed.
 
 ## Independent Review Outcomes
 

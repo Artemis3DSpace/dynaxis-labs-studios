@@ -258,6 +258,84 @@ test('Project policy ignores caller-supplied membership shortcuts', async () => 
   });
   assert.equal(forgedProjectFlags.reason, NOT_PROJECT_MEMBER);
   assert.equal(forgedProjectFlags.allowed, false);
+
+  const forgedProjectRole = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ role: 'owner' }),
+    projectMembershipService: createMembershipService({ role: 'viewer' }),
+  });
+  assert.equal(forgedProjectRole.reason, INSUFFICIENT_PROJECT_ROLE);
+  assert.equal(forgedProjectRole.allowed, false);
+  assert.equal(forgedProjectRole.role, 'viewer');
+});
+
+test('Project policy rejects malformed service-returned membership rows', async () => {
+  const projectMismatch = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ projectId: 'target-project', role: 'owner' }),
+    projectMembershipService: createMembershipService({
+      row: membership('owner', { projectId: 'other-project' }),
+    }),
+  });
+  assert.equal(projectMismatch.reason, RESOURCE_SCOPE_MISMATCH);
+  assert.equal(projectMismatch.status, 404);
+  assert.equal(projectMismatch.allowed, false);
+
+  const organizationMismatch = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ role: 'owner' }),
+    projectMembershipService: createMembershipService({
+      row: membership('owner', { organizationId: 'org-2' }),
+    }),
+  });
+  assert.equal(organizationMismatch.reason, RESOURCE_SCOPE_MISMATCH);
+  assert.equal(organizationMismatch.status, 404);
+  assert.equal(organizationMismatch.allowed, false);
+
+  const userMismatch = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ role: 'owner' }),
+    projectMembershipService: createMembershipService({
+      row: membership('owner', { userId: 'victim-user' }),
+    }),
+  });
+  assert.equal(userMismatch.reason, NOT_PROJECT_MEMBER);
+  assert.equal(userMismatch.status, 403);
+  assert.equal(userMismatch.allowed, false);
+
+  const missingRole = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ role: 'owner' }),
+    projectMembershipService: createMembershipService({
+      row: membership(undefined, { role: undefined }),
+    }),
+  });
+  assert.equal(missingRole.reason, NOT_PROJECT_MEMBER);
+  assert.equal(missingRole.status, 403);
+  assert.equal(missingRole.allowed, false);
+
+  const invalidRole = await authorizeProjectPolicy({
+    permission: 'project.delete',
+    principal: HUMAN,
+    workspace: workspace(),
+    project: project({ role: 'owner' }),
+    projectMembershipService: createMembershipService({
+      row: membership('superuser'),
+    }),
+  });
+  assert.equal(invalidRole.reason, NOT_PROJECT_MEMBER);
+  assert.equal(invalidRole.status, 403);
+  assert.equal(invalidRole.allowed, false);
 });
 
 test('Project policy distinguishes safe not-found and forbidden outcomes', async () => {
