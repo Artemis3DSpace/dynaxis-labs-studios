@@ -258,7 +258,7 @@ test('Workspace roles do not imply Project roles', () => {
   );
 });
 
-test('Project and resource-inherited policies deny by default pending WP-7C-10', () => {
+test('Base evaluator leaves Project and inherited-resource grants to WP-7C-10 adapters', () => {
   assert.equal(
     authorize('project.read', {
       project: project({ isMember: false }),
@@ -332,7 +332,7 @@ test('Workspace-scoped settings follow the canonical Workspace role matrix', () 
   }
 });
 
-test('Project-scoped settings never grant from Workspace role pending WP-7C-10', () => {
+test('Project-scoped settings never grant from Workspace role in the base evaluator', () => {
   const readDecision = authorize('settings.read', {
     workspace: workspace('owner'),
     project: project(),
