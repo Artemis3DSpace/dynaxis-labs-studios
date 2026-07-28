@@ -5,6 +5,7 @@
 - Branch: `phase-7e/job-state-machine-spec`
 - Worktree: `/Users/sotiratrifourki/Documents/dynaxis-labs-studios-July-26/dynaxis-labs-studios-phase-7e-job-state-machine-spec`
 - Starting SHA: `b94e912db858cf7e1ce915f6ceae5e968726e488`
+- Ending SHA: branch HEAD at final handoff; exact amendment SHA is reported in the final integration response because a commit cannot embed its own hash.
 
 ## Scope Completed
 
@@ -26,10 +27,25 @@
 - WP-7E-03 owns event schema detail.
 - WP-7E-04 owns schema migration, persistence, indexes, transition guards, attempts, leases, idempotency, and callback lookup.
 - WP-7E-05 owns queue implementation and dispatcher behavior.
+- WP-7E-06 owns worker lifecycle, heartbeat, cancellation observation, artifact reporting, and provider handoff implementation.
 - WP-7E-07 owns webhook ingress and verification.
 - WP-7E-08 owns retry, timeout, cancellation, and idempotency implementation.
 - WP-7E-09 owns recovery reconciliation and observability implementation.
 
+## Validation Evidence
+
+- `npm run program:status`
+- `git diff --check`
+- `git diff --cached --check`
+
 ## Migration Status
 
 No migration. WP-7E-01 is specification-only.
+
+## Deviations
+
+- None. Scope remained documentation-only under `docs/dynaxis/**`.
+
+## Clean Tree Status
+
+- Clean after commit and push.

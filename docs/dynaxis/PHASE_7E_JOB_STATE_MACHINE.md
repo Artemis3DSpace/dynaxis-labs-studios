@@ -451,6 +451,10 @@ It must enforce or service-guard:
 
 WP-7E-05 must treat queue messages as delivery hints. Durable state, lease validity, retry budget, cancellation, and terminal-state checks live in the Job Engine.
 
+### WP-7E-06 Worker Runtime and Provider Worker Adapter
+
+WP-7E-06 must implement worker lifecycle behavior without making workers lifecycle authorities. Workers may lease Jobs, heartbeat active attempts, submit/retrieve/cancel through provider adapters, and report artifacts or provider evidence back to the Job Engine. Heartbeat expiry, cancellation observation, artifact reporting, provider handoff, and provider response normalization must all pass through Job Engine transition validation before mutating Job, Generation, Asset, attempt, or audit state.
+
 ### WP-7E-07 Webhook Ingress and Verification
 
 WP-7E-07 must verify provider webhook authenticity and delivery idempotency before passing evidence to the Job Engine. A valid webhook is not sufficient to mutate a Job unless correlation and transition validation pass.
@@ -490,4 +494,4 @@ WP-7E-01 is complete when reviewers can confirm:
 - Provider metadata is scoped, sanitized, and non-authoritative.
 - Failure, cancellation, timeout, retry, and reconciliation semantics are specified.
 - The Job Engine authority boundary is explicit.
-- WP-7E-03, WP-7E-04, WP-7E-05, WP-7E-07, WP-7E-08, and WP-7E-09 have enough contract detail to proceed without inventing the state architecture.
+- WP-7E-03, WP-7E-04, WP-7E-05, WP-7E-06, WP-7E-07, WP-7E-08, and WP-7E-09 have enough contract detail to proceed without inventing the state architecture.
