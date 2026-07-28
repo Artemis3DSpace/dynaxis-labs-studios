@@ -13,6 +13,10 @@ import {
   AUTH_CONTEXT_ERROR_CODES,
 } from '../lib/dynaxis/auth/auth-context.js';
 import {
+  PROJECT_MEMBERSHIP_ERROR_CODES,
+  ProjectMembershipServiceError,
+} from '../lib/dynaxis/identity/project-membership.js';
+import {
   DYNAXIS_ROUTE_AUTH_ERROR_CODES as API_ROUTE_AUTH_ERROR_CODES,
   jsonError,
   withAuthContextRoute as withApiAuthContextRoute,
@@ -61,6 +65,17 @@ function projectMembershipService(role = 'editor') {
         userId: USER_ID,
         role,
       };
+    },
+  };
+}
+
+function failingProjectMembershipService(code, status = 409) {
+  return {
+    async get() {
+      throw new ProjectMembershipServiceError('Project membership lookup failed with hidden scope data', {
+        code,
+        status,
+      });
     },
   };
 }
@@ -374,6 +389,63 @@ test('route helper preserves not-found-shaped authorization denials without scop
   assert.deepEqual(resourceRepository.calls, [{ type: 'asset', id: 'asset-1' }]);
   assert.doesNotMatch(JSON.stringify(body), /RESOURCE_SCOPE_MISMATCH/);
   assert.doesNotMatch(JSON.stringify(body), /55555555/);
+});
+
+test('route helper maps missing Project lookup failures to bounded not-found JSON', async () => {
+  const request = new Request('https://dynaxis.test/api/dynaxis/projects/missing-project');
+
+  const response = await withAuthContextRoute(
+    request,
+    async () => Response.json({ ok: true }),
+    {
+      permission: 'project.read',
+      projectId: PROJECT_ID,
+      sessionLoader: async () => sessionPayload(),
+      workspaceResolver: async () => workspace({ role: 'admin' }),
+      projectMembershipService: failingProjectMembershipService(
+        PROJECT_MEMBERSHIP_ERROR_CODES.PROJECT_NOT_FOUND,
+        404
+      ),
+    }
+  );
+  const body = await responseJson(response);
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(body, {
+    error: 'Not found',
+    code: DYNAXIS_ROUTE_AUTH_ERROR_CODES.NOT_FOUND,
+  });
+  assert.doesNotMatch(JSON.stringify(body), /PROJECT_NOT_FOUND/);
+  assert.doesNotMatch(JSON.stringify(body), /hidden scope data/);
+});
+
+test('route helper maps cross-workspace Project lookup failures to bounded not-found JSON', async () => {
+  const request = new Request('https://dynaxis.test/api/dynaxis/projects/cross-workspace');
+
+  const response = await withAuthContextRoute(
+    request,
+    async () => Response.json({ ok: true }),
+    {
+      permission: 'asset.read',
+      projectId: PROJECT_ID,
+      resource: { type: 'asset', id: 'asset-1', projectId: PROJECT_ID },
+      sessionLoader: async () => sessionPayload(),
+      workspaceResolver: async () => workspace({ role: 'admin' }),
+      projectMembershipService: failingProjectMembershipService(
+        PROJECT_MEMBERSHIP_ERROR_CODES.WORKSPACE_MISMATCH,
+        409
+      ),
+    }
+  );
+  const body = await responseJson(response);
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(body, {
+    error: 'Not found',
+    code: DYNAXIS_ROUTE_AUTH_ERROR_CODES.NOT_FOUND,
+  });
+  assert.doesNotMatch(JSON.stringify(body), /WORKSPACE_MISMATCH/);
+  assert.doesNotMatch(JSON.stringify(body), /hidden scope data/);
 });
 
 test('API helper re-exports route helpers and maps AuthContext errors through jsonError', async () => {

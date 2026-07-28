@@ -25,6 +25,7 @@
 - `withAuthContextRoute()` wraps Next.js route handlers and maps AuthContext failures to bounded JSON responses.
 - Project-scoped permissions resolve Project context at the route boundary and use a per-request cached Project membership service so AuthContext project projection and authorization decisions come from the same underlying membership lookup.
 - Resource inheritance helpers pass through `resource`, `resourceId`, `resourceType`, and `resourceRepository` so later route packages can authorize canonical resource ownership metadata without trusting route parameters.
+- Project membership lookup failures raised while resolving route AuthContext Project context are mapped to bounded route-auth JSON before leaving `withAuthContextRoute()`.
 
 ## Error Mapping
 
@@ -36,7 +37,7 @@ Public route-auth JSON responses are intentionally small:
 - 403 Workspace helper failures: `DYNAXIS_ROUTE_AUTH_WORKSPACE_REQUIRED`
 - 404: `DYNAXIS_ROUTE_AUTH_NOT_FOUND`
 
-Not-found-shaped denials omit resource scope mismatch details, membership rows, raw headers, and authorization decision internals.
+Not-found-shaped denials omit resource scope mismatch details, membership rows, raw headers, Project lookup error codes, and authorization decision internals. `PROJECT_NOT_FOUND`, `PROJECT_WORKSPACE_UNRESOLVED`, and cross-workspace `WORKSPACE_MISMATCH` membership lookup failures all surface as the same public 404 response to avoid leaking Project existence across Workspace boundaries.
 
 ## Legacy Compatibility
 
@@ -51,10 +52,10 @@ Not-found-shaped denials omit resource scope mismatch details, membership rows, 
 
 - Focused AuthContext route helper tests:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import /private/tmp/dynaxis-worktree-deps-register.mjs --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-auth-context*.test.mjs`
-  - Result after review repairs: 23 passed / 23 total.
+  - Result after blocking review repair: 25 passed / 25 total.
 - AuthContext plus relevant authorization tests:
   - `NODE_ENV=test DYNAXIS_PLATFORM_DRIVER=memory DYNAXIS_ALLOW_MEMORY_STORE=1 DYNAXIS_ASSET_STORAGE=memory node --import /private/tmp/dynaxis-worktree-deps-register.mjs --import ./tests/setup/allow-server-only.mjs --test tests/dynaxis-auth-context*.test.mjs tests/dynaxis-authorization-policy.test.mjs tests/dynaxis-authorization-project-policy.test.mjs`
-  - Result after review repairs: 62 passed / 62 total.
+  - Result after blocking review repair: 64 passed / 64 total.
 - Full Dynaxis suite:
   - `NODE_OPTIONS="--import /private/tmp/dynaxis-worktree-deps-register.mjs" npm run test:dynaxis`
   - Result after review repairs: 382 passed / 385 total; 3 PostgreSQL tests failed before assertions because `initdb` could not create a System V shared-memory segment.
@@ -78,6 +79,7 @@ Not-found-shaped denials omit resource scope mismatch details, membership rows, 
 
 ## Independent Review Outcomes
 
+- Blocking final review: repaired escaping `ProjectMembershipServiceError` failures from route Project resolution. Missing Project and cross-workspace lookup failures now map through `withAuthContextRoute()` to `DYNAXIS_ROUTE_AUTH_NOT_FOUND` without leaking service codes or hidden scope details.
 - Route-helper contract correctness: repaired anonymous project-scoped permission mapping to 401, added resource repository pass-through, and added per-request membership lookup caching to avoid inconsistent Project projection versus authorization state.
 - Security and error disclosure: repaired unsafe migration-guide resource example so later route packages use trusted canonical resource metadata; no raw `x-api-key` disclosure was found.
 - Legacy compatibility and auditability: repaired non-boolean `legacyCompatibility` truthiness so only explicit boolean `true` enables legacy identity.
