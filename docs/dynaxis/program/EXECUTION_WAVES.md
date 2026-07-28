@@ -40,7 +40,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 ## Wave E - Completed Phase 7C AuthContext Work
 
 - Specification packages: -
-- Implementation packages: WP-7C-12
+- Implementation packages: WP-7C-12, WP-7C-13
 - Review / integration gates: -
 - Migration owner constraints: complete
 - Packages that may run after dependencies and conflict checks: -
@@ -48,18 +48,20 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 ## Wave F - Ready Phase 7C Follow-On Work
 
 - Specification packages: -
-- Implementation packages: WP-7C-13, WP-7C-18
+- Implementation packages: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-18
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-13, WP-7C-18
+- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-18
+- Dependency note: WP-7C-15 is ready because WP-7C-10 and WP-7C-13 are integrated.
 
 ## Later Wave 6
 
 - Specification packages: -
-- Implementation packages: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-19
+- Implementation packages: WP-7C-19
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-19
+- Packages that may run after dependencies and conflict checks: WP-7C-19
+- Dependency note: WP-7C-19 remains backlog until WP-7C-18 is integrated.
 
 ## Later Wave 7
 

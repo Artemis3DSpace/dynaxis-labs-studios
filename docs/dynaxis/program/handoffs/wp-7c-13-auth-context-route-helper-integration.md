@@ -8,7 +8,7 @@
 - Starting SHA: `373ab597b0ee66359d490b37876478ce8075cb50`
 - Migration owner: false
 - Migration status: no migration added
-- Status: implementation validated locally with independent read-only review findings repaired; awaiting integration
+- Status: integrated on `main`
 
 ## Implementation Summary
 
@@ -16,7 +16,7 @@
 - Extended `lib/dynaxis/api.js` to re-export the AuthContext route helper surface while preserving `withPlatformAuth()` and `requireOwnerFromRequest()` legacy behavior unchanged.
 - Added focused route-helper coverage in `tests/dynaxis-auth-context-route-context.test.mjs`.
 - Added migration guidance in `docs/dynaxis/AUTH_CONTEXT_ROUTE_HELPER_MIGRATION.md`.
-- Updated WP-7C-13 programme metadata to `in_progress`; WP-7C-14 through WP-7C-17 remain backlog.
+- Updated WP-7C-13 programme metadata to `done`; WP-7C-14 through WP-7C-17 are ready for route migration work after integration.
 
 ## Route Helper Contract
 
@@ -88,7 +88,6 @@ Not-found-shaped denials omit resource scope mismatch details, membership rows, 
 
 ## Integration Gate
 
-- Leave branch unmerged.
-- Do not mark WP-7C-13 done until integration is complete.
-- Do not start or make WP-7C-14, WP-7C-15, WP-7C-16, or WP-7C-17 ready before WP-7C-13 integration.
-- User or integration owner is the final merge authority.
+- Integrated by fast-forwarding `main` to `phase-7c/auth-context-route-helper`.
+- WP-7C-14, WP-7C-15, WP-7C-16, and WP-7C-17 are ready after integration.
+- WP-7C-19 remains backlog until WP-7C-18 is integrated.
