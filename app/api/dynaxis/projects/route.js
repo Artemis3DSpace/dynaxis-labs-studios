@@ -11,10 +11,6 @@ import {
   listProjectsForRoute,
 } from '@/lib/dynaxis/services/projects.js';
 
-function isLegacyAuthContext(authContext) {
-  return authContext?.subject?.type === 'legacy';
-}
-
 export async function GET(request) {
   return withAuthContextRoute(
     request,

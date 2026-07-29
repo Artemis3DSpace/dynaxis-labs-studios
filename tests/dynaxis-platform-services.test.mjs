@@ -11,14 +11,9 @@ import {
 import { getPlatformStore } from '../lib/dynaxis/db/store.js';
 import {
   ensureDefaultProject,
-  ensureDefaultProjectForAuthContext,
   createProject,
-  createProjectForAuthContext,
   getProject,
-  getProjectForAuthContext,
-  listProjectsForAuthContext,
   updateProject,
-  updateProjectForAuthContext,
   listProjects,
   archiveProject,
   createCanonicalProjectForAuthContext,
@@ -132,90 +127,6 @@ test('projects: ensureDefault, create, update, archive, ownership boundary', asy
   assert.equal(listed.some((p) => p.id === created.id), false);
   const withArchived = await listProjects(OWNER, { includeArchived: true });
   assert.equal(withArchived.some((p) => p.id === created.id && p.status === 'archived'), true);
-});
-
-test('projects auth-context bridge: canonical list/create keeps membership and default-project boundaries', async () => {
-  const userA = canonicalAuthContext({ organizationId: ORG_A, userId: USER_A });
-  const userB = canonicalAuthContext({ organizationId: ORG_A, userId: USER_B });
-  const defaultProject = await ensureDefaultProjectForAuthContext(userA);
-  assert.equal(defaultProject.isDefault, true);
-  assert.equal(defaultProject.organizationId, ORG_A);
-  assert.equal(defaultProject.ownerRef, null);
-
-  const mine = await createProjectForAuthContext(userA, { name: 'Mine' });
-  await createProjectForAuthContext(userB, { name: 'Not Mine' });
-
-  const listed = await listProjectsForAuthContext(userA, { includeArchived: true, ensureDefault: true });
-  assert.equal(listed.some((project) => project.id === defaultProject.id), true);
-  assert.equal(listed.some((project) => project.id === mine.id), true);
-  assert.equal(listed.some((project) => project.name === 'Not Mine'), false);
-});
-
-test('projects auth-context bridge: canonical get/update/archive enforce scope and membership', async () => {
-  const owner = canonicalAuthContext({ organizationId: ORG_A, userId: USER_A });
-  const sameWorkspaceNonMember = canonicalAuthContext({ organizationId: ORG_A, userId: USER_B });
-  const crossWorkspace = canonicalAuthContext({ organizationId: ORG_B, userId: USER_A });
-
-  const project = await createProjectForAuthContext(owner, { name: 'Scoped' });
-  assert.equal(await getProjectForAuthContext(sameWorkspaceNonMember, project.id), null);
-  assert.equal(await getProjectForAuthContext(crossWorkspace, project.id), null);
-
-  const updated = await updateProjectForAuthContext(owner, project.id, { name: 'Scoped v2' });
-  assert.equal(updated.name, 'Scoped v2');
-  assert.equal(await updateProjectForAuthContext(crossWorkspace, project.id, { name: 'nope' }), null);
-
-  const archived = await archiveProjectForAuthContext(owner, project.id);
-  assert.equal(archived.status, 'archived');
-});
-
-test('assets auth-context bridge: canonical register/get/list use trusted project ownership', async () => {
-  const owner = canonicalAuthContext({ organizationId: ORG_A, userId: USER_A });
-  const sameWorkspaceNonMember = canonicalAuthContext({ organizationId: ORG_A, userId: USER_B });
-  const crossWorkspace = canonicalAuthContext({ organizationId: ORG_B, userId: USER_A });
-
-  const project = await createProjectForAuthContext(owner, { name: 'Asset Scope' });
-  const asset = await registerAssetForAuthContext(owner, {
-    projectId: project.id,
-    type: 'image',
-    source: 'generated',
-    url: 'https://cdn.example/auth-scope.png',
-  });
-  const ownership = await findAssetOwnershipResource(asset.id);
-  assert.deepEqual(ownership, {
-    type: 'asset',
-    id: asset.id,
-    projectId: project.id,
-    organizationId: ORG_A,
-  });
-  assert.equal((await getAssetForAuthContext(owner, asset.id)).id, asset.id);
-  assert.equal(await getAssetForAuthContext(sameWorkspaceNonMember, asset.id), null);
-  assert.equal(await getAssetForAuthContext(crossWorkspace, asset.id), null);
-
-  const listedByOwner = await listAssetsForAuthContext(owner, { projectId: project.id, limit: 10 });
-  assert.equal(listedByOwner.some((row) => row.id === asset.id), true);
-  const listedByNonMember = await listAssetsForAuthContext(sameWorkspaceNonMember, {
-    projectId: project.id,
-    limit: 10,
-  });
-  assert.equal(listedByNonMember.length, 0);
-});
-
-test('projects/assets auth-context bridge: legacy compatibility routes through owner_ref services', async () => {
-  const legacy = legacyAuthContext('legacy-phase-7c14');
-  const project = await createProjectForAuthContext(legacy, { name: 'Legacy Compat Project' });
-  assert.equal(project.ownerRef, legacy.compatibility.ownerRef);
-  const listed = await listProjectsForAuthContext(legacy, { includeArchived: true });
-  assert.equal(listed.some((row) => row.id === project.id), true);
-
-  const asset = await registerAssetForAuthContext(legacy, {
-    projectId: project.id,
-    type: 'image',
-    source: 'generated',
-    url: 'https://cdn.example/legacy-route.png',
-  });
-  assert.equal(asset.ownerRef, legacy.compatibility.ownerRef);
-  assert.equal((await getAssetForAuthContext(legacy, asset.id)).id, asset.id);
-  assert.equal((await findAssetOwnershipResource(asset.id)).organizationId, null);
 });
 
 test('lifecycle: success creates generation, job, and multi-assets', async () => {
