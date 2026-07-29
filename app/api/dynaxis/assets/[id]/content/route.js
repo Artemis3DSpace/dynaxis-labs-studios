@@ -2,37 +2,50 @@
  * Authenticated delivery of Dynaxis-managed blob Assets (private / non-CDN URLs).
  */
 
-import { withAuthContextRoute, requireRoutePermission, jsonError } from '@/lib/dynaxis/api';
 import {
-  findAssetOwnershipResource,
-  getAssetForAuthContext,
+  DYNAXIS_ROUTE_AUTH_ERROR_CODES,
+  withAuthContextRoute,
+  requireRoutePermission,
+  jsonError,
+} from '@/lib/dynaxis/api';
+import {
+  findTrustedAssetOwnership,
+  getAssetForRoute,
 } from '@/lib/dynaxis/services/assets.js';
+import { isLegacyRouteCompatibility } from '@/lib/dynaxis/services/projects.js';
 import { resolveAssetBlobStore, parseBlobUrl } from '@/lib/dynaxis/storage/blob-store.js';
 
-function isLegacyAuthContext(authContext) {
-  return authContext?.subject?.type === 'legacy';
+function notFound(message = 'Asset not found') {
+  return Object.assign(new Error(message), {
+    status: 404,
+    code: DYNAXIS_ROUTE_AUTH_ERROR_CODES.NOT_FOUND,
+  });
 }
 
 export async function GET(request, { params }) {
   return withAuthContextRoute(
     request,
     async (routeContext) => {
-      const { authContext } = routeContext;
       try {
         const { id } = await params;
-        if (!isLegacyAuthContext(authContext)) {
-          const resource = await findAssetOwnershipResource(id);
+
+        if (!isLegacyRouteCompatibility(routeContext)) {
+          const ownership = await findTrustedAssetOwnership(id);
+          if (!ownership) {
+            return jsonError(notFound());
+          }
           await requireRoutePermission(routeContext, {
             permission: 'asset.read',
-            projectId: resource?.projectId,
-            resource: resource || null,
+            projectId: ownership.projectId,
+            resource: ownership,
             resourceType: 'asset',
             resourceId: id,
           });
         }
-        const asset = await getAssetForAuthContext(authContext, id);
+
+        const asset = await getAssetForRoute(routeContext, id);
         if (!asset) {
-          return jsonError(Object.assign(new Error('Asset not found'), { status: 404 }));
+          return jsonError(notFound());
         }
 
         const objectKey = asset.metadata?.storage?.objectKey;
@@ -93,8 +106,6 @@ export async function GET(request, { params }) {
         return jsonError(err);
       }
     },
-    {
-      legacyCompatibility: true,
-    }
+    { legacyCompatibility: true }
   );
 }
