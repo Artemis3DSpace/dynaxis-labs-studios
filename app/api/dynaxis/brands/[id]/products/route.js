@@ -1,47 +1,66 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
   listBrandProducts,
   linkBrandToProduct,
   unlinkBrandFromProduct,
+  resolveRouteServiceContext,
+  productOwnershipRepository,
 } from '@/lib/dynaxis/services/brands.js';
 
+const LEGACY_ROUTE = { legacyCompatibility: true };
+
 export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      return jsonOk(await listBrandProducts(ownerRef, id));
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        return jsonOk(await listBrandProducts(ctx, id));
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { permission: 'product.read', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }
 
 export async function POST(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const body = await request.json();
-      return jsonOk(await linkBrandToProduct(ownerRef, id, body), 201);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const body = await request.json();
+              return jsonOk(await linkBrandToProduct(ctx, id, body), 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { permission: 'product.update', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }
 
 export async function DELETE(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const { searchParams } = new URL(request.url);
-      const productId = searchParams.get('productId');
-      if (!productId) {
-        const err = new Error('productId query param required');
-        err.status = 400;
-        throw err;
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const { searchParams } = new URL(request.url);
+              const productId = searchParams.get('productId');
+              if (!productId) {
+                const err = new Error('productId query param required');
+                err.status = 400;
+                throw err;
+              }
+              return jsonOk(await unlinkBrandFromProduct(ctx, id, productId));
+      } catch (err) {
+        return jsonError(err);
       }
-      return jsonOk(await unlinkBrandFromProduct(ownerRef, id, productId));
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+    },
+    { permission: 'product.update', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }

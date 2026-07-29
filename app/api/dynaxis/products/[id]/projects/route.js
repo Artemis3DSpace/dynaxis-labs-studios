@@ -1,51 +1,97 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import {
+  withAuthContextRoute,
+  requireRoutePermission,
+  jsonOk,
+  jsonError,
+} from '@/lib/dynaxis/api';
 import {
   listProductProjects,
   linkProductToProject,
   unlinkProductFromProject,
+  resolveRouteServiceContext,
+  productOwnershipRepository,
 } from '@/lib/dynaxis/services/products.js';
 
+const LEGACY_ROUTE = { legacyCompatibility: true };
+
 export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const result = await listProductProjects(ownerRef, id);
-      return jsonOk(result);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const result = await listProductProjects(ctx, id);
+              return jsonOk(result);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { permission: 'product.read', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }
 
 export async function POST(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const body = await request.json();
-      const result = await linkProductToProject(ownerRef, id, body);
-      return jsonOk(result, 201);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  const { id } = await params;
+  const body = await request.json();
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        await requireRoutePermission(routeContext, {
+          permission: 'product.update',
+          projectId: body.projectId,
+          resource: {
+            type: 'project_product',
+            id: `${body.projectId}:${id}`,
+            projectId: body.projectId,
+          },
+          ...LEGACY_ROUTE,
+        });
+        const result = await linkProductToProject(ctx, id, body);
+              return jsonOk(result, 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { permission: 'product.update', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }
 
 export async function DELETE(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const { searchParams } = new URL(request.url);
-      const projectId = searchParams.get('projectId');
-      if (!projectId) {
-        const err = new Error('projectId query param required');
-        err.status = 400;
-        err.code = 'PROJECT_ID_REQUIRED';
-        throw err;
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const { searchParams } = new URL(request.url);
+        const projectId = searchParams.get('projectId');
+        if (!projectId) {
+          return jsonError(
+            Object.assign(new Error('projectId query required'), {
+              status: 400,
+              code: 'VALIDATION_ERROR',
+            })
+          );
+        }
+        await requireRoutePermission(routeContext, {
+          permission: 'product.update',
+          projectId,
+          resource: {
+            type: 'project_product',
+            id: `${projectId}:${id}`,
+            projectId,
+          },
+          ...LEGACY_ROUTE,
+        });
+        const result = await unlinkProductFromProject(ctx, id, projectId);
+              return jsonOk(result);
+      } catch (err) {
+        return jsonError(err);
       }
-      const result = await unlinkProductFromProject(ownerRef, id, projectId);
-      return jsonOk(result);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+    },
+    { permission: 'product.update', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }

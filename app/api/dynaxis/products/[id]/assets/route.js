@@ -1,54 +1,94 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
-  listProductAssets,
   addProductAsset,
   removeProductAsset,
+  listProductAssets,
   promoteAssetToProductReference,
+  resolveRouteServiceContext,
+  productOwnershipRepository,
 } from '@/lib/dynaxis/services/products.js';
 
+const LEGACY_ROUTE = { legacyCompatibility: true };
+
 export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const result = await listProductAssets(ownerRef, id);
-      return jsonOk(result);
-    } catch (err) {
-      return jsonError(err);
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const result = await listProductAssets(ctx, id);
+        return jsonOk(result);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    {
+      permission: 'product.read',
+      resourceId: id,
+      resourceType: 'product',
+      resourceRepository: productOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
 
 export async function POST(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const body = await request.json();
-      const result = body?.promote
-        ? await promoteAssetToProductReference(ownerRef, id, body)
-        : await addProductAsset(ownerRef, id, body);
-      return jsonOk(result, 201);
-    } catch (err) {
-      return jsonError(err);
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const body = await request.json();
+        if (body?.promote) {
+          const result = await promoteAssetToProductReference(ctx, id, body);
+          return jsonOk(result, 201);
+        }
+        const result = await addProductAsset(ctx, id, body);
+        return jsonOk(result, 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    {
+      permission: 'product.update',
+      resourceId: id,
+      resourceType: 'product',
+      resourceRepository: productOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
 
 export async function DELETE(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const { searchParams } = new URL(request.url);
-      const assetId = searchParams.get('assetId');
-      if (!assetId) {
-        const err = new Error('assetId query param required');
-        err.status = 400;
-        err.code = 'ASSET_ID_REQUIRED';
-        throw err;
+  const { id } = await params;
+  const assetId = new URL(request.url).searchParams.get('assetId');
+  if (!assetId) {
+    return jsonError(
+      Object.assign(new Error('assetId query required'), {
+        status: 400,
+        code: 'VALIDATION_ERROR',
+      })
+    );
+  }
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const result = await removeProductAsset(ctx, id, assetId);
+        return jsonOk(result);
+      } catch (err) {
+        return jsonError(err);
       }
-      const result = await removeProductAsset(ownerRef, id, assetId);
-      return jsonOk(result);
-    } catch (err) {
-      return jsonError(err);
+    },
+    {
+      permission: 'product.update',
+      resourceId: id,
+      resourceType: 'product',
+      resourceRepository: productOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
