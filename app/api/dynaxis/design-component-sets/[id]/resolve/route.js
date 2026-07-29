@@ -1,8 +1,15 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import { resolveDesignComponentSetVariant } from '@/lib/dynaxis/services/component-sets.js';
+import {
+  DESIGN_ROUTE_LEGACY_COMPAT,
+  resolveRouteOwnerRef,
+} from '@/lib/dynaxis/services/components.js';
 
 export async function POST(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      const ownerRef = resolveRouteOwnerRef(routeContext);
     try {
       const { id } = await params;
       const body = await request.json();
@@ -15,5 +22,7 @@ export async function POST(request, { params }) {
     } catch (err) {
       return jsonError(err);
     }
-  });
+    },
+    { ...DESIGN_ROUTE_LEGACY_COMPAT, permission: 'design_component_set.create', requireWorkspace: true }
+  );
 }
