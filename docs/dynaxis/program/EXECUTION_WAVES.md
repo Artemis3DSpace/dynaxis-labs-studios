@@ -51,8 +51,9 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Implementation packages: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-18
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-18
+- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-18
 - Dependency note: WP-7C-15 is ready because WP-7C-10 and WP-7C-13 are integrated.
+- Dependency note: WP-7C-14 is blocked on WP-7C-24 (Canonical Persistence Access Bridge, active Phase 7C migration owner for `0014`) and resumes after WP-7C-24 integrates.
 
 ## Later Wave 6
 
