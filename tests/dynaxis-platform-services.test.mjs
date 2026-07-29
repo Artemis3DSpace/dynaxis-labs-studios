@@ -10,8 +10,21 @@ import {
   updateProject,
   listProjects,
   archiveProject,
+  ensureCanonicalDefaultProject,
+  createCanonicalProjectForUser,
+  listCanonicalProjectsForUser,
+  getCanonicalProjectInWorkspace,
+  updateCanonicalProjectInWorkspace,
+  archiveCanonicalProjectInWorkspace,
 } from '../lib/dynaxis/services/projects.js';
-import { registerAsset, listAssets, listAssetsForGeneration } from '../lib/dynaxis/services/assets.js';
+import {
+  registerAsset,
+  listAssets,
+  listAssetsForGeneration,
+  registerCanonicalAsset,
+  listCanonicalAssetsForProject,
+  assetOwnershipRepository,
+} from '../lib/dynaxis/services/assets.js';
 import { createGeneration, getGeneration, listGenerations } from '../lib/dynaxis/services/generations.js';
 import {
   startLifecycle,
@@ -21,12 +34,103 @@ import {
 } from '../lib/dynaxis/services/lifecycle.js';
 import { importLocalHistory } from '../lib/dynaxis/services/history-compat.js';
 import { createJob, getJob } from '../lib/dynaxis/services/jobs.js';
+import { AUTH_CONTEXT_SUBJECT_TYPES } from '../lib/dynaxis/auth/auth-context.js';
+import { authorizeProjectPolicy } from '../lib/dynaxis/auth/project-policy.js';
+import { authorizeResourceInheritance } from '../lib/dynaxis/auth/resource-policy.js';
+import { authorizeDynaxis, ALLOW, INSUFFICIENT_PROJECT_ROLE, NOT_PROJECT_MEMBER, RESOURCE_SCOPE_MISMATCH } from '../lib/dynaxis/auth/policy.js';
+import {
+  PROJECT_MEMBERSHIP_ERROR_CODES,
+  ProjectMembershipServiceError,
+} from '../lib/dynaxis/identity/project-membership.js';
 
 process.env.NODE_ENV = 'test';
 process.env.DYNAXIS_PLATFORM_DRIVER = 'memory';
 process.env.DYNAXIS_ALLOW_MEMORY_STORE = '1';
 
 const OWNER = ownerRefFromApiKey('test-api-key-phase3');
+const ORG_ID = '11111111-1111-4111-8111-111111111111';
+const ORG_OTHER = '22222222-2222-4222-8222-222222222222';
+const USER_OWNER = 'aaaaaaaa-1111-4111-8111-111111111111';
+const USER_EDITOR = 'bbbbbbbb-2222-4222-8222-222222222222';
+const USER_VIEWER = 'cccccccc-3333-4333-8333-333333333333';
+const USER_FOREIGN = 'dddddddd-4444-4444-8444-444444444444';
+
+function sessionPayload(userId = USER_OWNER) {
+  return {
+    session: {
+      id: '22222222-2222-4222-8222-222222222222',
+      userId,
+      activeOrganizationId: ORG_ID,
+    },
+    user: { id: userId, email: 'user@example.test' },
+  };
+}
+
+function workspace(role = 'owner') {
+  return {
+    organizationId: ORG_ID,
+    role,
+    isMember: true,
+    isPersonal: false,
+  };
+}
+
+function projectMembershipService(role, projectId) {
+  return {
+    async get(input) {
+      if (input.organizationId !== ORG_ID) {
+        return null;
+      }
+      return {
+        projectId: input.projectId || projectId,
+        organizationId: ORG_ID,
+        userId: input.userId,
+        role,
+      };
+    },
+  };
+}
+
+function humanPrincipal(userId = USER_OWNER) {
+  return {
+    type: 'human',
+    principalId: `user:${userId}`,
+    userId,
+    authMethod: 'session',
+  };
+}
+
+function projectContext(projectId, role, isMember = true) {
+  return {
+    projectId,
+    organizationId: ORG_ID,
+    role,
+    isMember,
+  };
+}
+
+async function evaluateProjectPermission(permission, role, projectId, userId = USER_OWNER) {
+  return authorizeProjectPolicy({
+    permission,
+    principal: humanPrincipal(userId),
+    workspace: workspace('owner'),
+    project: projectContext(projectId, role),
+    projectMembershipService: projectMembershipService(role, projectId),
+  });
+}
+
+async function evaluateAssetPermission(permission, role, assetId, projectId, userId = USER_OWNER) {
+  return authorizeResourceInheritance({
+    permission,
+    principal: humanPrincipal(userId),
+    workspace: workspace('owner'),
+    project: projectContext(projectId, role),
+    resourceId: assetId,
+    resourceType: 'asset',
+    resourceRepository: assetOwnershipRepository,
+    projectMembershipService: projectMembershipService(role, projectId),
+  });
+}
 
 test.beforeEach(() => {
   resetMemoryStore();
@@ -265,4 +369,241 @@ test('history import dedupes by migrationKey and does not invent duplicates', as
   const gens = await listGenerations(OWNER);
   assert.equal(gens.length, 1);
   assert.equal(gens[0].status, 'succeeded');
+});
+
+test('canonical projects: default, create, list, update, archive, and cross-workspace isolation', async () => {
+  const def = await ensureCanonicalDefaultProject({ organizationId: ORG_ID, userId: USER_OWNER });
+  assert.equal(def.isDefault, true);
+  assert.equal(def.ownerRef, null);
+
+  const again = await ensureCanonicalDefaultProject({ organizationId: ORG_ID, userId: USER_OWNER });
+  assert.equal(again.id, def.id);
+
+  const created = await createCanonicalProjectForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+    input: { name: 'Canonical Campaign', description: 'ads' },
+  });
+  assert.equal(created.organizationId, ORG_ID);
+  assert.equal(created.isDefault, false);
+
+  const updated = await updateCanonicalProjectInWorkspace({
+    organizationId: ORG_ID,
+    projectId: created.id,
+    input: { name: 'Renamed Campaign' },
+  });
+  assert.equal(updated.name, 'Renamed Campaign');
+
+  const listed = await listCanonicalProjectsForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+  });
+  assert.equal(listed.some((p) => p.id === created.id), true);
+
+  const foreignList = await listCanonicalProjectsForUser({
+    organizationId: ORG_ID,
+    userId: USER_FOREIGN,
+  });
+  assert.equal(foreignList.some((p) => p.id === created.id), false);
+
+  assert.equal(
+    await getCanonicalProjectInWorkspace({ organizationId: ORG_OTHER, projectId: created.id }),
+    null
+  );
+
+  await archiveCanonicalProjectInWorkspace({ organizationId: ORG_ID, projectId: created.id });
+  const active = await listCanonicalProjectsForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+  });
+  assert.equal(active.some((p) => p.id === created.id), false);
+});
+
+test('canonical assets: register, list, and trusted ownership lookup', async () => {
+  const project = await createCanonicalProjectForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+    input: { name: 'Asset Project' },
+  });
+  const asset = await registerCanonicalAsset(
+    { organizationId: ORG_ID, userId: USER_OWNER, projectId: project.id },
+    {
+      projectId: project.id,
+      url: 'https://cdn.example/canonical.png',
+      type: 'image',
+      source: 'generated',
+    }
+  );
+  assert.equal(asset.ownerRef, null);
+  assert.equal(asset.projectId, project.id);
+
+  const listed = await listCanonicalAssetsForProject({ projectId: project.id });
+  assert.equal(listed.length, 1);
+  assert.equal(listed[0].id, asset.id);
+
+  const ownership = await assetOwnershipRepository.findResource({ type: 'asset', id: asset.id });
+  assert.deepEqual(ownership, {
+    type: 'asset',
+    id: asset.id,
+    projectId: project.id,
+    organizationId: ORG_ID,
+  });
+});
+
+test('project route authorization: owner/admin/editor/viewer and cross-workspace denial', async () => {
+  const project = await createCanonicalProjectForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+    input: { name: 'Auth Project' },
+  });
+
+  for (const role of ['owner', 'admin', 'editor', 'viewer']) {
+    const read = await evaluateProjectPermission('project.read', role, project.id);
+    assert.equal(read.allowed, true, `read ${role}`);
+  }
+
+  for (const role of ['owner', 'admin', 'editor']) {
+    const update = await evaluateProjectPermission('project.update', role, project.id);
+    assert.equal(update.allowed, true, `update ${role}`);
+  }
+
+  const viewerUpdate = await evaluateProjectPermission(
+    'project.update',
+    'viewer',
+    project.id,
+    USER_VIEWER
+  );
+  assert.equal(viewerUpdate.allowed, false);
+  assert.equal(viewerUpdate.reason, INSUFFICIENT_PROJECT_ROLE);
+
+  for (const role of ['owner', 'admin']) {
+    const archive = await evaluateProjectPermission('project.archive', role, project.id);
+    assert.equal(archive.allowed, true, `archive ${role}`);
+  }
+
+  const editorArchive = await evaluateProjectPermission(
+    'project.archive',
+    'editor',
+    project.id,
+    USER_EDITOR
+  );
+  assert.equal(editorArchive.allowed, false);
+  assert.equal(editorArchive.reason, INSUFFICIENT_PROJECT_ROLE);
+
+  const foreignRead = await authorizeProjectPolicy({
+    permission: 'project.read',
+    principal: humanPrincipal(USER_FOREIGN),
+    workspace: workspace('owner'),
+    project: projectContext(project.id, 'owner'),
+    projectMembershipService: {
+      async get() {
+        return null;
+      },
+    },
+  });
+  assert.equal(foreignRead.allowed, false);
+  assert.equal(foreignRead.reason, NOT_PROJECT_MEMBER);
+
+  const missingProject = await authorizeProjectPolicy({
+    permission: 'project.read',
+    principal: humanPrincipal(USER_OWNER),
+    workspace: workspace('owner'),
+    project: projectContext('99999999-9999-4999-8999-999999999999', 'owner'),
+    projectMembershipService: {
+      async get() {
+        throw new ProjectMembershipServiceError('Project not found', {
+          code: PROJECT_MEMBERSHIP_ERROR_CODES.PROJECT_NOT_FOUND,
+          status: 404,
+        });
+      },
+    },
+  });
+  assert.equal(missingProject.allowed, false);
+  assert.equal(missingProject.status, 404);
+});
+
+test('asset route authorization: owner/admin/editor/viewer and cross-workspace not-found', async () => {
+  const project = await createCanonicalProjectForUser({
+    organizationId: ORG_ID,
+    userId: USER_OWNER,
+    input: { name: 'Asset Auth Project' },
+  });
+  const asset = await registerCanonicalAsset(
+    { organizationId: ORG_ID, userId: USER_OWNER, projectId: project.id },
+    {
+      projectId: project.id,
+      url: 'https://cdn.example/auth.png',
+      type: 'image',
+    }
+  );
+
+  for (const role of ['owner', 'admin', 'editor', 'viewer']) {
+    const read = await evaluateAssetPermission('asset.read', role, asset.id, project.id);
+    assert.equal(read.allowed, true, `asset.read ${role}`);
+  }
+
+  for (const role of ['owner', 'admin', 'editor']) {
+    const create = await evaluateProjectPermission('asset.create', role, project.id);
+    assert.equal(create.allowed, true, `asset.create ${role}`);
+  }
+
+  const viewerCreate = await evaluateProjectPermission(
+    'asset.create',
+    'viewer',
+    project.id,
+    USER_VIEWER
+  );
+  assert.equal(viewerCreate.allowed, false);
+  assert.equal(viewerCreate.reason, INSUFFICIENT_PROJECT_ROLE);
+
+  const crossWorkspace = await authorizeResourceInheritance({
+    permission: 'asset.read',
+    principal: humanPrincipal(USER_OWNER),
+    workspace: workspace('owner'),
+    project: projectContext(project.id, 'owner'),
+    resourceId: asset.id,
+    resourceType: 'asset',
+    resourceRepository: {
+      async findResource() {
+        return {
+          type: 'asset',
+          id: asset.id,
+          projectId: '99999999-9999-4999-8999-999999999999',
+          organizationId: ORG_OTHER,
+        };
+      },
+    },
+    projectMembershipService: projectMembershipService('owner', project.id),
+  });
+  assert.equal(crossWorkspace.allowed, false);
+  assert.equal(crossWorkspace.reason, RESOURCE_SCOPE_MISMATCH);
+  assert.equal(crossWorkspace.status, 404);
+});
+
+test('project create authorization requires workspace admin role', async () => {
+  const allowed = authorizeDynaxis({
+    permission: 'project.create',
+    principal: humanPrincipal(USER_OWNER),
+    workspace: workspace('admin'),
+  });
+  assert.equal(allowed.reason, ALLOW);
+
+  const denied = authorizeDynaxis({
+    permission: 'project.create',
+    principal: humanPrincipal(USER_EDITOR),
+    workspace: workspace('member'),
+  });
+  assert.equal(denied.allowed, false);
+});
+
+test('legacy compatibility preserves ownerRef audit metadata without raw key disclosure', async () => {
+  const rawKey = 'MUAPI_PLATFORM_SERVICES_LEGACY';
+  const { createLegacyAuthContextFromRequest } = await import('../lib/dynaxis/auth/auth-context.js');
+  const request = new Request('https://dynaxis.test/api/dynaxis/projects', {
+    headers: { 'x-api-key': rawKey },
+  });
+  const authContext = createLegacyAuthContextFromRequest(request);
+  assert.equal(authContext.subject.type, AUTH_CONTEXT_SUBJECT_TYPES.LEGACY);
+  assert.equal(authContext.compatibility.ownerRef, ownerRefFromApiKey(rawKey));
+  assert.doesNotMatch(JSON.stringify(authContext), new RegExp(rawKey));
 });
