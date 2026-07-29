@@ -25,6 +25,12 @@ Phase 7C with parallel specification-only planning.
 
 (none)
 
+## In Review
+
+- WP-7C-14 Route Migration: Projects and Assets — AuthContext + WP-7C-24
+  canonical persistence for Projects and Assets routes only. Branch:
+  `phase-7c/route-migration-projects-assets`.
+
 Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
@@ -33,7 +39,6 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 
 ## Ready Work Packages
 
-- WP-7C-14 Route Migration: Projects and Assets
 - WP-7C-15 Route Migration: Generations Jobs and Lifecycle
 - WP-7C-16 Route Migration: Characters Products Brands Campaigns
 - WP-7C-17 Route Migration: Design APIs and Mini App Execution
