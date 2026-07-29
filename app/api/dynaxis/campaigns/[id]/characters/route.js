@@ -1,47 +1,84 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
   listCampaignCharacters,
   linkCampaignCharacter,
   unlinkCampaignCharacter,
+  resolveRouteServiceContext,
+  campaignOwnershipRepository,
 } from '@/lib/dynaxis/services/campaigns.js';
 
+const LEGACY_ROUTE = { legacyCompatibility: true };
+
 export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      return jsonOk(await listCampaignCharacters(ownerRef, id));
-    } catch (err) {
-      return jsonError(err);
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        return jsonOk(await listCampaignCharacters(ctx, id));
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    {
+      permission: 'campaign.read',
+      resourceId: id,
+      resourceType: 'campaign',
+      resourceRepository: campaignOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
 
 export async function POST(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const body = await request.json();
-      return jsonOk(await linkCampaignCharacter(ownerRef, id, body), 201);
-    } catch (err) {
-      return jsonError(err);
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const body = await request.json();
+        return jsonOk(await linkCampaignCharacter(ctx, id, body), 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    {
+      permission: 'campaign.update',
+      resourceId: id,
+      resourceType: 'campaign',
+      resourceRepository: campaignOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
 
 export async function DELETE(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const { searchParams } = new URL(request.url);
-      const characterId = searchParams.get('characterId');
-      if (!characterId) {
-        const err = new Error('characterId query param required');
-        err.status = 400;
-        throw err;
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const { searchParams } = new URL(request.url);
+        const characterId = searchParams.get('characterId');
+        if (!characterId) {
+          const err = new Error('characterId query param required');
+          err.status = 400;
+          throw err;
+        }
+        return jsonOk(await unlinkCampaignCharacter(ctx, id, characterId));
+      } catch (err) {
+        return jsonError(err);
       }
-      return jsonOk(await unlinkCampaignCharacter(ownerRef, id, characterId));
-    } catch (err) {
-      return jsonError(err);
+    },
+    {
+      permission: 'campaign.update',
+      resourceId: id,
+      resourceType: 'campaign',
+      resourceRepository: campaignOwnershipRepository,
+      ...LEGACY_ROUTE,
     }
-  });
+  );
 }
