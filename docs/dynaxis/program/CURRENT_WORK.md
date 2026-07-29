@@ -19,23 +19,21 @@ Phase 7C with parallel specification-only planning.
 - WP-7C-11 Authorization Regression Test Suite
 - WP-7C-12 Canonical AuthContext Contract
 - WP-7C-13 AuthContext Route Helper Integration
+- WP-7C-24 Canonical Persistence Access Bridge (migration owner: 0014)
 
 ## In Progress
 
-- WP-7C-24 Canonical Persistence Access Bridge (migration owner: 0014) —
-  minimum persistence correction that unblocks WP-7C-14 by giving canonical
-  Workspace/Project-scoped create/read/list/update access to Projects and
-  Assets without the legacy `owner_ref` partition. Projects and Assets only.
-  See `docs/dynaxis/program/handoffs/wp-7c-24-canonical-persistence-access-bridge.md`.
+(none)
 
 Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementation history are preserved on main.
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
-Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. Route migration packages are ready; no Phase 7C migration owner is active.
+Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration packages are ready; no Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
+- WP-7C-14 Route Migration: Projects and Assets
 - WP-7C-15 Route Migration: Generations Jobs and Lifecycle
 - WP-7C-16 Route Migration: Characters Products Brands Campaigns
 - WP-7C-17 Route Migration: Design APIs and Mini App Execution
@@ -60,9 +58,7 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Blocked Runtime Implementation
 
-`WP-7C-15` through `WP-7C-17` are ready after `WP-7C-13` integration. `WP-7C-15` is ready because both programme dependencies, `WP-7C-10` and `WP-7C-13`, are integrated. `WP-7C-19` remains backlog until `WP-7C-18` is integrated.
-
-`WP-7C-14` is **blocked** on `WP-7C-24`: the Projects/Assets persistence layer was `owner_ref`-partitioned with `owner_ref NOT NULL` and exposed no canonical Workspace/Project-scoped access, so a canonical Better Auth user could not create or discover Projects and Assets. `WP-7C-24` (migration owner: 0014) supplies that access for Projects and Assets only. `WP-7C-14` resumes once `WP-7C-24` is integrated.
+`WP-7C-14` through `WP-7C-17` are ready after `WP-7C-13` and `WP-7C-24` integration. `WP-7C-14` is ready because both programme dependencies, `WP-7C-13` and `WP-7C-24`, are integrated. `WP-7C-15` is ready because both programme dependencies, `WP-7C-10` and `WP-7C-13`, are integrated. `WP-7C-19` remains backlog until `WP-7C-18` is integrated.
 
 ## Next Sequential Identity Tasks
 
