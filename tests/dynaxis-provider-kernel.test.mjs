@@ -548,3 +548,146 @@ test('normaliseProviderStatus compatibility export remains available', () => {
   assert.equal(normaliseProviderStatus('completed'), 'succeeded');
   assert.equal(normaliseProviderStatus('weird'), 'unknown');
 });
+
+test('generation route helpers distinguish legacy compatibility from canonical auth', async () => {
+  const { isLegacyRouteCompatibility, legacyOwnerRefFromRoute } = await import(
+    '../lib/dynaxis/services/generations.js'
+  );
+  const ownerRef = 'ak_sha256:test-legacy-owner';
+  const legacyContext = {
+    legacyCompatibility: { used: true, ownerRef },
+    authContext: { subject: { type: 'legacy' } },
+  };
+  const canonicalContext = {
+    legacyCompatibility: { used: false },
+    authContext: {
+      subject: { type: 'user', userId: 'user-1' },
+      workspace: { organizationId: 'org-1', isMember: true },
+    },
+  };
+
+  assert.equal(isLegacyRouteCompatibility(legacyContext), true);
+  assert.equal(isLegacyRouteCompatibility(canonicalContext), false);
+  assert.equal(legacyOwnerRefFromRoute(legacyContext), ownerRef);
+  assert.equal(legacyOwnerRefFromRoute(canonicalContext), null);
+});
+
+test('lifecycle route flow registers trusted ownership for in-flight generation and job pairs', async () => {
+  const { ownerRefFromApiKey } = await import('../lib/dynaxis/ownership.js');
+  const {
+    findTrustedGenerationOwnership,
+    clearTrustedGenerationOwnership,
+  } = await import('../lib/dynaxis/services/generations.js');
+  const { findTrustedJobOwnership, clearTrustedJobOwnership } = await import(
+    '../lib/dynaxis/services/jobs.js'
+  );
+  const { startLifecycle, attachProviderJobIdForRoute, completeLifecycleForRoute } = await import(
+    '../lib/dynaxis/services/lifecycle.js'
+  );
+
+  const ownerRef = ownerRefFromApiKey('provider-kernel-lifecycle-key');
+  const routeContext = {
+    legacyCompatibility: { used: true, ownerRef },
+    authContext: { subject: { type: 'legacy' } },
+  };
+
+  const started = await startLifecycle(ownerRef, {
+    endpoint: 'flux',
+    prompt: 'route migration regression',
+  });
+  assert.ok(started.generation?.id);
+  assert.ok(started.job?.id);
+
+  const generationOwnership = await findTrustedGenerationOwnership(started.generation.id);
+  const jobOwnership = await findTrustedJobOwnership(started.job.id);
+  assert.equal(generationOwnership?.projectId, started.project.id);
+  assert.equal(jobOwnership?.projectId, started.project.id);
+
+  await attachProviderJobIdForRoute(routeContext, {
+    generationId: started.generation.id,
+    jobId: started.job.id,
+    providerJobId: 'provider_job_route_1',
+  });
+
+  const done = await completeLifecycleForRoute(routeContext, {
+    generationId: started.generation.id,
+    jobId: started.job.id,
+    urls: ['https://cdn.example/route-migration.png'],
+  });
+  assert.equal(done.generation.status, 'succeeded');
+  assert.equal(done.job.status, 'succeeded');
+  assert.equal(done.assets.length, 1);
+
+  clearTrustedGenerationOwnership(started.generation.id);
+  clearTrustedJobOwnership(started.job.id);
+});
+
+test('lifecycle route helpers reject stale job and missing generation pairs', async () => {
+  const { ownerRefFromApiKey } = await import('../lib/dynaxis/ownership.js');
+  const { startLifecycle, attachProviderJobIdForRoute } = await import(
+    '../lib/dynaxis/services/lifecycle.js'
+  );
+
+  const ownerRef = ownerRefFromApiKey('provider-kernel-stale-job-key');
+  const routeContext = {
+    legacyCompatibility: { used: true, ownerRef },
+    authContext: { subject: { type: 'legacy' } },
+  };
+  const a = await startLifecycle(ownerRef, { endpoint: 'a' });
+  const b = await startLifecycle(ownerRef, { endpoint: 'b' });
+
+  await assert.rejects(
+    () =>
+      attachProviderJobIdForRoute(routeContext, {
+        generationId: a.generation.id,
+        jobId: b.job.id,
+        providerJobId: 'stale',
+      }),
+    (err) => {
+      assert.equal(err.code, 'JOB_GENERATION_MISMATCH');
+      return true;
+    }
+  );
+
+  await assert.rejects(
+    () =>
+      attachProviderJobIdForRoute(routeContext, {
+        generationId: '11111111-1111-4111-8111-111111111111',
+        jobId: '22222222-2222-4222-8222-222222222222',
+        providerJobId: 'missing',
+      }),
+    (err) => {
+      assert.equal(err.code, 'GENERATION_JOB_NOT_FOUND');
+      return true;
+    }
+  );
+});
+
+test('canonical generation mutations are denied until persistence bridge exists', async () => {
+  const { createGenerationForRoute } = await import('../lib/dynaxis/services/generations.js');
+  const { AuthContextError } = await import('../lib/dynaxis/auth/auth-context.js');
+
+  const routeContext = {
+    legacyCompatibility: { used: false },
+    authContext: {
+      subject: { type: 'user', userId: '11111111-1111-4111-8111-111111111111' },
+      workspace: {
+        organizationId: '33333333-3333-4333-8333-333333333333',
+        isMember: true,
+      },
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      createGenerationForRoute(routeContext, {
+        projectId: '44444444-4444-4444-8444-444444444444',
+        prompt: 'blocked canonical create',
+      }),
+    (err) => {
+      assert.ok(err instanceof AuthContextError);
+      assert.match(err.message, /persistence bridge/);
+      return true;
+    }
+  );
+});
