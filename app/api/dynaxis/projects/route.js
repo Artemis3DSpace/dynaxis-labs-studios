@@ -1,35 +1,62 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import { withAuthContextRoute, requireRoutePermission, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
-  createProject,
-  listProjects,
-  ensureDefaultProject,
+  createProjectForAuthContext,
+  listProjectsForAuthContext,
 } from '@/lib/dynaxis/services/projects.js';
 
+function isLegacyAuthContext(authContext) {
+  return authContext?.subject?.type === 'legacy';
+}
+
 export async function GET(request) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { searchParams } = new URL(request.url);
-      const includeArchived = searchParams.get('includeArchived') === 'true';
-      const ensureDefault = searchParams.get('ensureDefault') !== 'false';
-      if (ensureDefault) {
-        await ensureDefaultProject(ownerRef);
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      const { authContext } = routeContext;
+      try {
+        const { searchParams } = new URL(request.url);
+        const includeArchived = searchParams.get('includeArchived') === 'true';
+        const ensureDefault = searchParams.get('ensureDefault') !== 'false';
+        if (!isLegacyAuthContext(authContext)) {
+          await requireRoutePermission(routeContext, {
+            permission: 'workspace.read',
+          });
+        }
+        const projects = await listProjectsForAuthContext(authContext, {
+          includeArchived,
+          ensureDefault,
+        });
+        return jsonOk({ projects });
+      } catch (err) {
+        return jsonError(err);
       }
-      const projects = await listProjects(ownerRef, { includeArchived });
-      return jsonOk({ projects });
-    } catch (err) {
-      return jsonError(err);
+    },
+    {
+      legacyCompatibility: true,
     }
-  });
+  );
 }
 
 export async function POST(request) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const body = await request.json();
-      const project = await createProject(ownerRef, body);
-      return jsonOk({ project }, 201);
-    } catch (err) {
-      return jsonError(err);
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      const { authContext } = routeContext;
+      try {
+        if (!isLegacyAuthContext(authContext)) {
+          await requireRoutePermission(routeContext, {
+            permission: 'project.create',
+          });
+        }
+        const body = await request.json();
+        const project = await createProjectForAuthContext(authContext, body);
+        return jsonOk({ project }, 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    {
+      legacyCompatibility: true,
     }
-  });
+  );
 }
