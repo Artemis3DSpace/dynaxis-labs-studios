@@ -1,40 +1,82 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
-import { getProject, updateProject, archiveProject } from '@/lib/dynaxis/services/projects.js';
+import {
+  DYNAXIS_ROUTE_AUTH_ERROR_CODES,
+  withAuthContextRoute,
+  requireRoutePermission,
+  jsonOk,
+  jsonError,
+} from '@/lib/dynaxis/api';
+import {
+  archiveProjectForRoute,
+  getProjectForRoute,
+  isLegacyRouteCompatibility,
+  updateProjectForRoute,
+} from '@/lib/dynaxis/services/projects.js';
 
-export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const project = await getProject(ownerRef, id);
-      if (!project) {
-        return jsonError(Object.assign(new Error('Project not found'), { status: 404, code: 'NOT_FOUND' }));
-      }
-      return jsonOk({ project });
-    } catch (err) {
-      return jsonError(err);
-    }
+function notFound() {
+  return Object.assign(new Error('Project not found'), {
+    status: 404,
+    code: DYNAXIS_ROUTE_AUTH_ERROR_CODES.NOT_FOUND,
   });
 }
 
-export async function PATCH(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const body = await request.json();
-      if (body?.status === 'archived' && Object.keys(body).length === 1) {
-        const project = await archiveProject(ownerRef, id);
+export async function GET(request, { params }) {
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const { id } = await params;
+        if (!isLegacyRouteCompatibility(routeContext)) {
+          await requireRoutePermission(routeContext, {
+            permission: 'project.read',
+            projectId: id,
+          });
+        }
+        const project = await getProjectForRoute(routeContext, id);
         if (!project) {
-          return jsonError(Object.assign(new Error('Project not found'), { status: 404 }));
+          return jsonError(notFound());
         }
         return jsonOk({ project });
+      } catch (err) {
+        return jsonError(err);
       }
-      const project = await updateProject(ownerRef, id, body);
-      if (!project) {
-        return jsonError(Object.assign(new Error('Project not found'), { status: 404 }));
+    },
+    { legacyCompatibility: true }
+  );
+}
+
+export async function PATCH(request, { params }) {
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const { id } = await params;
+        const body = await request.json();
+        const archiveOnly = body?.status === 'archived' && Object.keys(body).length === 1;
+
+        if (!isLegacyRouteCompatibility(routeContext)) {
+          await requireRoutePermission(routeContext, {
+            permission: archiveOnly ? 'project.archive' : 'project.update',
+            projectId: id,
+          });
+        }
+
+        if (archiveOnly) {
+          const project = await archiveProjectForRoute(routeContext, id);
+          if (!project) {
+            return jsonError(notFound());
+          }
+          return jsonOk({ project });
+        }
+
+        const project = await updateProjectForRoute(routeContext, id, body);
+        if (!project) {
+          return jsonError(notFound());
+        }
+        return jsonOk({ project });
+      } catch (err) {
+        return jsonError(err);
       }
-      return jsonOk({ project });
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+    },
+    { legacyCompatibility: true }
+  );
 }

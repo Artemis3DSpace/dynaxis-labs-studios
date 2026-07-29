@@ -1,35 +1,55 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
-  createProject,
-  listProjects,
-  ensureDefaultProject,
+  withAuthContextRoute,
+  requireRoutePermission,
+  requireRouteWorkspace,
+  jsonOk,
+  jsonError,
+} from '@/lib/dynaxis/api';
+import {
+  createProjectForRoute,
+  isLegacyRouteCompatibility,
+  listProjectsForRoute,
 } from '@/lib/dynaxis/services/projects.js';
 
 export async function GET(request) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { searchParams } = new URL(request.url);
-      const includeArchived = searchParams.get('includeArchived') === 'true';
-      const ensureDefault = searchParams.get('ensureDefault') !== 'false';
-      if (ensureDefault) {
-        await ensureDefaultProject(ownerRef);
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        if (!isLegacyRouteCompatibility(routeContext)) {
+          await requireRouteWorkspace(routeContext);
+        }
+        const { searchParams } = new URL(request.url);
+        const includeArchived = searchParams.get('includeArchived') === 'true';
+        const ensureDefault = searchParams.get('ensureDefault') !== 'false';
+        const projects = await listProjectsForRoute(routeContext, {
+          includeArchived,
+          ensureDefault,
+        });
+        return jsonOk({ projects });
+      } catch (err) {
+        return jsonError(err);
       }
-      const projects = await listProjects(ownerRef, { includeArchived });
-      return jsonOk({ projects });
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+    },
+    { legacyCompatibility: true }
+  );
 }
 
 export async function POST(request) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const body = await request.json();
-      const project = await createProject(ownerRef, body);
-      return jsonOk({ project }, 201);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        if (!isLegacyRouteCompatibility(routeContext)) {
+          await requireRoutePermission(routeContext, { permission: 'project.create' });
+        }
+        const body = await request.json();
+        const project = await createProjectForRoute(routeContext, body);
+        return jsonOk({ project }, 201);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { legacyCompatibility: true }
+  );
 }
