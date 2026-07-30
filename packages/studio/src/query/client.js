@@ -37,7 +37,7 @@ export function createDynaxisQueryClient(overrides = {}) {
 let defaultClient;
 
 /**
- * Singleton used by Studio shell until WP-7C-19 introduces explicit provider wiring.
+ * Singleton used by Studio shell; prefer DynaxisSessionProvider for session-aware wiring.
  */
 export function getDynaxisQueryClient() {
   if (!defaultClient) {
