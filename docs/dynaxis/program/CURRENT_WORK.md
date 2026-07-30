@@ -20,15 +20,14 @@ Phase 7C with parallel specification-only planning.
 - WP-7C-12 Canonical AuthContext Contract
 - WP-7C-13 AuthContext Route Helper Integration
 - WP-7C-24 Canonical Persistence Access Bridge (migration owner: 0014)
-
-## In Review
-
 - WP-7C-14 Route Migration: Projects and Assets
 - WP-7C-15 Route Migration: Generations Jobs and Lifecycle
 - WP-7C-16 Route Migration: Characters Products Brands Campaigns
 - WP-7C-17 Route Migration: Design APIs and Mini App Execution
 
-Integration branch: `integration/phase-7c-route-migration-wave` (base `4f496ff`). Source branches merged in order: `phase-7c/route-migration-projects-assets`, `phase-7c/route-migration-generations-jobs`, `phase-7c/route-migration-characters-products-brands-campaigns`, `phase-7c/route-migration-design-mini-app`.
+## In Review
+
+(none)
 
 ## In Progress
 
@@ -38,7 +37,7 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
-Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration wave `WP-7C-14` through `WP-7C-17` is merged on `integration/phase-7c-route-migration-wave` and awaiting review before main integration; no Phase 7C migration owner is active.
+Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration wave `WP-7C-14` through `WP-7C-17` is integrated from `integration/phase-7c-route-migration-wave`; no Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
@@ -63,11 +62,10 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Blocked Runtime Implementation
 
-`WP-7C-19` remains backlog until `WP-7C-18` is integrated. Route migration packages `WP-7C-14` through `WP-7C-17` are in review on `integration/phase-7c-route-migration-wave` and are not marked done until main integration.
+`WP-7C-19` remains backlog until `WP-7C-18` is integrated. `WP-7C-18` TanStack Query Foundation and Query Keys is ready and not started.
 
 ## Next Sequential Identity Tasks
 
-1. Route Migration
-2. TanStack Query Foundation and Query Keys
-3. Client/Session Migration
-5. Identity/Security Hardening
+1. TanStack Query Foundation and Query Keys
+2. Client/Session Migration
+3. Identity/Security Hardening

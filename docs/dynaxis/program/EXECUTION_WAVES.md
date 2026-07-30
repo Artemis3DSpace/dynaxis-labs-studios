@@ -45,14 +45,13 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: complete
 - Packages that may run after dependencies and conflict checks: -
 
-## Wave F - Phase 7C Route Migration Review
+## Wave F - Completed Phase 7C Route Migration Work
 
 - Specification packages: -
-- Implementation packages: -
-- Review / integration gates: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17
+- Implementation packages: WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17
+- Review / integration gates: -
 - Migration owner constraints: complete
-- Integration branch: `integration/phase-7c-route-migration-wave`
-- Rule: merged sequentially from `phase-7c/route-migration-projects-assets`, `phase-7c/route-migration-generations-jobs`, `phase-7c/route-migration-characters-products-brands-campaigns`, and `phase-7c/route-migration-design-mini-app`; awaiting review before main integration.
+- Rule: integrated from `integration/phase-7c-route-migration-wave` through source branches `phase-7c/route-migration-projects-assets`, `phase-7c/route-migration-generations-jobs`, `phase-7c/route-migration-characters-products-brands-campaigns`, and `phase-7c/route-migration-design-mini-app`.
 
 ## Wave G - Ready Phase 7C Follow-On Work
 
@@ -61,7 +60,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run after dependencies and conflict checks: WP-7C-18
-- Dependency note: WP-7C-18 depends on WP-7C-12 (integrated). Do not start until route migration review completes or is explicitly authorized from the integration branch.
+- Dependency note: WP-7C-18 depends on WP-7C-12 (integrated).
 - Migration owner constraints: WP-7C-24 (migration `0014`) is integrated; no Phase 7C migration owner is active.
 
 ## Later Wave 6
