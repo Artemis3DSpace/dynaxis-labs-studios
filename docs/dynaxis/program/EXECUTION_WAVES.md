@@ -53,14 +53,13 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: complete
 - Rule: integrated from `integration/phase-7c-route-migration-wave` through source branches `phase-7c/route-migration-projects-assets`, `phase-7c/route-migration-generations-jobs`, `phase-7c/route-migration-characters-products-brands-campaigns`, and `phase-7c/route-migration-design-mini-app`.
 
-## Wave G - Phase 7C TanStack Query Foundation Review
+## Wave G - Completed Phase 7C TanStack Query Foundation Work
 
 - Specification packages: -
-- Implementation packages: -
-- Review / integration gates: WP-7C-18
+- Implementation packages: WP-7C-18
+- Review / integration gates: -
 - Migration owner constraints: complete
-- Branch: `phase-7c/tanstack-query-foundation`
-- Rule: query key registry and client foundation only; no Studio screen migration (WP-7C-19) and no TanStack Router/Start.
+- Rule: integrated from `phase-7c/tanstack-query-foundation`; query key registry and client foundation only.
 
 ## Later Wave 6
 
@@ -69,7 +68,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run after dependencies and conflict checks: WP-7C-19
-- Dependency note: WP-7C-19 remains backlog until WP-7C-18 is integrated.
+- Dependency note: WP-7C-19 depends on WP-7C-12 and WP-7C-18 (both integrated).
 
 ## Later Wave 7
 
