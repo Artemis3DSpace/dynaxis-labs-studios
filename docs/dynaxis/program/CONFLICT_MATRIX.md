@@ -4,7 +4,7 @@ HARD means tasks must be serialized unless explicitly coordinated. SOFT means pa
 
 | Shared Area | Conflict | Packages / Phases | Reason | Coordination Rule |
 |---|---|---|---|---|
-| `lib/dynaxis/identity/schema.js`, `lib/dynaxis/db/schema.js`, `drizzle/**` | HARD | WP-7C-04, WP-7C-05 | 7C.4 workspace ownership and 7C.5 project membership schema migrations are integrated. | No Phase 7C migration owner is active; WP-7C-09 through WP-7C-13 are integrated and WP-7C-12 plus WP-7C-13 have `migration_owner: false`. |
+| `lib/dynaxis/identity/schema.js`, `lib/dynaxis/db/schema.js`, `drizzle/**` | HARD | WP-7C-04, WP-7C-05, WP-7C-24 | 7C.4 workspace ownership, 7C.5 project membership, and WP-7C-24 canonical persistence bridge (migration `0014`) are integrated. | No Phase 7C migration owner is active; later packages must claim an explicit new migration owner before editing schema/drizzle. |
 | Provider connection persistence and secrets | HARD | WP-7D-03 | ProviderConnection schema and encrypted-secret references are one persistence boundary. | No other 7D package owns schema migration. |
 | Job Engine persistence | HARD | WP-7E-04 | Job attempts, events, leases, and idempotency tables form one durable execution schema. | Runtime queue/worker packages depend on WP-7E-04. |
 | Project Graph and Memory persistence | HARD | WP-7F-02, WP-7F-03 | Graph edges land before memory/knowledge/decision records that cite graph nodes. | WP-7F-03 is serialized after WP-7F-02. |

@@ -1,14 +1,25 @@
-import { withPlatformAuth, jsonOk, jsonError } from '@/lib/dynaxis/api';
-import { listProductRevisions } from '@/lib/dynaxis/services/products.js';
+import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
+import {
+  listProductRevisions,
+  resolveRouteServiceContext,
+  productOwnershipRepository,
+} from '@/lib/dynaxis/services/products.js';
+
+const LEGACY_ROUTE = { legacyCompatibility: true };
 
 export async function GET(request, { params }) {
-  return withPlatformAuth(request, async ({ ownerRef }) => {
-    try {
-      const { id } = await params;
-      const result = await listProductRevisions(ownerRef, id);
-      return jsonOk(result);
-    } catch (err) {
-      return jsonError(err);
-    }
-  });
+  const { id } = await params;
+  return withAuthContextRoute(
+    request,
+    async (routeContext) => {
+      try {
+        const ctx = await resolveRouteServiceContext(routeContext);
+        const result = await listProductRevisions(ctx, id);
+              return jsonOk(result);
+      } catch (err) {
+        return jsonError(err);
+      }
+    },
+    { permission: 'product.read', resourceId: id, resourceType: 'product', resourceRepository: productOwnershipRepository, ...LEGACY_ROUTE }
+  );
 }

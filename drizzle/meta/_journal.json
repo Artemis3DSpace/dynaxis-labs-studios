@@ -99,6 +99,13 @@
       "when": 1784831600000,
       "tag": "0013_phase_7c_5_project_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785225600000,
+      "tag": "0014_phase_7c_24_canonical_persistence_bridge",
+      "breakpoints": true
     }
   ]
 }

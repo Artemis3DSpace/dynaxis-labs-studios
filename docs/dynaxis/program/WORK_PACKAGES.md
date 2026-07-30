@@ -16,16 +16,17 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-11 | 7C | Authorization Regression Test Suite | review | codex | done | WP-7C-09, WP-7C-10 | no |
 | WP-7C-12 | 7C | Canonical AuthContext Contract | implementation | codex | done | WP-7C-10 | no |
 | WP-7C-13 | 7C | AuthContext Route Helper Integration | implementation | codex | done | WP-7C-12 | no |
-| WP-7C-14 | 7C | Route Migration: Projects and Assets | implementation | codex | ready | WP-7C-13 | no |
-| WP-7C-15 | 7C | Route Migration: Generations Jobs and Lifecycle | implementation | codex | ready | WP-7C-10, WP-7C-13 | no |
-| WP-7C-16 | 7C | Route Migration: Characters Products Brands Campaigns | implementation | codex | ready | WP-7C-13 | no |
-| WP-7C-17 | 7C | Route Migration: Design APIs and Mini App Execution | implementation | codex | ready | WP-7C-13 | no |
+| WP-7C-14 | 7C | Route Migration: Projects and Assets | implementation | codex | review | WP-7C-13, WP-7C-24 | no |
+| WP-7C-15 | 7C | Route Migration: Generations Jobs and Lifecycle | implementation | codex | review | WP-7C-10, WP-7C-13 | no |
+| WP-7C-16 | 7C | Route Migration: Characters Products Brands Campaigns | implementation | codex | review | WP-7C-13 | no |
+| WP-7C-17 | 7C | Route Migration: Design APIs and Mini App Execution | implementation | codex | review | WP-7C-13 | no |
 | WP-7C-18 | 7C | TanStack Query Foundation and Query Keys | implementation | cursor | ready | WP-7C-12 | no |
 | WP-7C-19 | 7C | Client Session and Workspace Switching | implementation | cursor | backlog | WP-7C-12, WP-7C-18 | no |
 | WP-7C-20 | 7C | Project Queries and Studio Migration | implementation | cursor | backlog | WP-7C-14, WP-7C-19 | no |
 | WP-7C-21 | 7C | Identity Signup Provisioning and Recovery Hardening | implementation | claude | backlog | WP-7C-12, WP-7C-20 | no |
 | WP-7C-22 | 7C | Session Rate Limit Abuse and Security Tests | review | claude | backlog | WP-7C-11, WP-7C-21 | no |
 | WP-7C-23 | 7C | Identity Integration Gate | integration | codex | backlog | WP-7C-07, WP-7C-11, WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-20, WP-7C-22 | no |
+| WP-7C-24 | 7C | Canonical Persistence Access Bridge | implementation | claude | done | WP-7C-13 | yes |
 
 ## Phase 7D - Provider Connections / Secrets
 
