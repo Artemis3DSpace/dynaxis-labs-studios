@@ -61,14 +61,14 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: complete
 - Rule: integrated from `phase-7c/tanstack-query-foundation`; query key registry and client foundation only.
 
-## Later Wave 6
+## Later Wave 6 - Phase 7C Client Session Review
 
 - Specification packages: -
-- Implementation packages: WP-7C-19
-- Review / integration gates: -
-- Migration owner constraints: -
-- Packages that may run after dependencies and conflict checks: WP-7C-19
-- Dependency note: WP-7C-19 depends on WP-7C-12 and WP-7C-18 (both integrated).
+- Implementation packages: -
+- Review / integration gates: WP-7C-19
+- Migration owner constraints: complete
+- Branch: `phase-7c/client-session-workspace-switching`
+- Rule: client session/workspace switching foundation only; no Studio screen migration (WP-7C-20).
 
 ## Later Wave 7
 

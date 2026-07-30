@@ -21,7 +21,7 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-16 | 7C | Route Migration: Characters Products Brands Campaigns | implementation | codex | done | WP-7C-13 | no |
 | WP-7C-17 | 7C | Route Migration: Design APIs and Mini App Execution | implementation | codex | done | WP-7C-13 | no |
 | WP-7C-18 | 7C | TanStack Query Foundation and Query Keys | implementation | cursor | done | WP-7C-12 | no |
-| WP-7C-19 | 7C | Client Session and Workspace Switching | implementation | cursor | ready | WP-7C-12, WP-7C-18 | no |
+| WP-7C-19 | 7C | Client Session and Workspace Switching | implementation | cursor | review | WP-7C-12, WP-7C-18 | no |
 | WP-7C-20 | 7C | Project Queries and Studio Migration | implementation | cursor | backlog | WP-7C-14, WP-7C-19 | no |
 | WP-7C-21 | 7C | Identity Signup Provisioning and Recovery Hardening | implementation | claude | backlog | WP-7C-12, WP-7C-20 | no |
 | WP-7C-22 | 7C | Session Rate Limit Abuse and Security Tests | review | claude | backlog | WP-7C-11, WP-7C-21 | no |

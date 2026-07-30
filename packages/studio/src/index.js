@@ -17,3 +17,4 @@ export { default as McpCliStudio } from './components/McpCliStudio';
 export { default as AiInfluencerStudio } from './components/AiInfluencerStudio';
 export * from './muapi';
 export * from './query/index.js';
+export * from './session/index.js';
