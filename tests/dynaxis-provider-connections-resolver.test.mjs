@@ -312,6 +312,47 @@ test('WP-7D-05 unauthorized actors cannot resolve or dispatch', async () => {
   );
 });
 
+test('WP-7D-05 selection alone cannot disclose another owner ProviderConnection', async () => {
+  const harness = createHarness();
+  const victim = await migrateMuapiKey(harness);
+  const intruder = humanContext({ userId: OTHER_USER_ID, workspace: workspaceAccess('owner', OTHER_ORG_ID) });
+
+  // Selection returns persisted rows carrying secretRef/keyRef, so it must gate
+  // on provider_connection.read rather than deferring to materialization.
+  // Passing a foreign organizationId must not confirm a connection exists.
+  await assert.rejects(
+    selectProviderConnection(intruder, {
+      service: harness.service,
+      providerId: DYNAXIS_MUAPI_PROVIDER_ID,
+      organizationId: ORG_ID,
+    }),
+    (err) => err.code === PROVIDER_CONNECTION_ERROR_CODES.NOT_FOUND
+  );
+
+  // A foreign connectionId must be refused rather than returned.
+  await assert.rejects(
+    selectProviderConnection(intruder, {
+      service: harness.service,
+      providerId: DYNAXIS_MUAPI_PROVIDER_ID,
+      connectionId: victim.id,
+    }),
+    (err) =>
+      [
+        PROVIDER_CONNECTION_ERROR_CODES.OWNER_MISMATCH,
+        PROVIDER_CONNECTION_ERROR_CODES.FORBIDDEN,
+      ].includes(err.code)
+  );
+
+  // The owner is unaffected.
+  const owner = humanContext({ workspace: workspaceAccess('viewer') });
+  const selected = await selectProviderConnection(owner, {
+    service: harness.service,
+    providerId: DYNAXIS_MUAPI_PROVIDER_ID,
+    organizationId: ORG_ID,
+  });
+  assert.equal(selected.id, victim.id);
+});
+
 test('WP-7D-05 lifecycle states fail closed through the resolver', async () => {
   const cases = [
     ['disabled', { status: 'disabled' }, PROVIDER_CONNECTION_ERROR_CODES.INACTIVE],

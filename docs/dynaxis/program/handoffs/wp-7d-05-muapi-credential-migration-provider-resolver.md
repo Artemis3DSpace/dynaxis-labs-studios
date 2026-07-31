@@ -100,6 +100,30 @@ material would require a reversible or comparable stored form, which the secret
 boundary forbids. A test asserts the signature mentions no credential parameter
 and that the module never fingerprint-compares.
 
+## Authorization on Selection (defect found in review, fixed on this branch)
+
+Integration review found that `selectProviderConnection` originally performed
+only a principal-*type* check and no ownership check. Because it returns the
+persisted row — which carries `secretRef` and `keyRef` — any authenticated user
+could read another Workspace's connection metadata by passing a foreign
+`organizationId` or `connectionId`. Dispatch still failed closed, so no
+plaintext leaked and the suite passed, but it was cross-tenant disclosure of
+fields WP-7D-02 forbids exposing even to the owning browser.
+
+Fixed on this branch:
+
+- the explicit-`connectionId` path now calls `assertReadableConnection()`,
+  which enforces `provider_connection.read` and raises `OWNER_MISMATCH` /
+  `FORBIDDEN`;
+- the default-selection path **filters** unreadable rows instead of asserting,
+  so a foreign `organizationId` yields `NOT_FOUND` rather than confirming a
+  connection exists (enumeration-safe);
+- the misleading docstring ("an unauthorized caller still cannot act on the
+  row" — true for acting, false for reading) was corrected.
+
+Regression test: `WP-7D-05 selection alone cannot disclose another owner
+ProviderConnection`, covering both paths plus an owner-still-works control.
+
 ## Fail-Closed Behaviour
 
 Covered and tested: no matching connection, unknown `connectionId`,
@@ -123,7 +147,7 @@ audit output.
 
 ## Tests Added
 
-`tests/dynaxis-provider-connections-resolver.test.mjs` — 17 tests covering
+`tests/dynaxis-provider-connections-resolver.test.mjs` — 18 tests covering
 migration with no raw persistence, canonical resolution and plaintext scoping,
 explicit-over-default selection, legacy principal denial across four entry
 points, non-human principal denial, missing connection, `providerId` mismatch,
@@ -172,7 +196,7 @@ Per instruction, these were **not** silently solved:
 - `git status --short` — only WP-7D-05 files; clean after commit
 - `git diff --check` — clean
 - `npm run program:status` — valid; WP-7D-05 under `review`
-- `npm run test:dynaxis` — **493 passed / 494** (baseline 476/477; +17 new).
+- `npm run test:dynaxis` — **494 passed / 495** (baseline 476/477; +18 new).
   Known baseline failure unchanged:
   `tests/dynaxis-auth-context-route-context.test.mjs`,
   `ERR_MODULE_NOT_FOUND` for `next/server`.
