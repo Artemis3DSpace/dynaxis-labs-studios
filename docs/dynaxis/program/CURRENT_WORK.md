@@ -34,16 +34,11 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7D-03 Provider Connection Schema and Migration (migration owner: 0015)
 - WP-7D-04 Provider Connection Services and Permissions
+- WP-7D-05 MuAPI Credential Migration and Provider Resolver
 
 ## In Review
 
-- WP-7D-05 MuAPI Credential Migration and Provider Resolver (branch:
-  `phase-7d/muapi-credential-migration-provider-resolver`, base
-  `86620a278e8bf58aceffa0928cf096a380458c0b`, migration owner: false) — not
-  integrated. Provider Resolver and MuAPI credential migration path on top of
-  the integrated WP-7D-04 runtime. No new schema or migration; no route
-  rewiring. See
-  `docs/dynaxis/program/handoffs/wp-7d-05-muapi-credential-migration-provider-resolver.md`.
+(none)
 
 ## In Progress
 
@@ -58,6 +53,8 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 `WP-7D-03` Provider Connection Schema and Migration is **completed** and integrated from `phase-7d/provider-connection-schema-migration`. Migration `0015` (`0015_phase_7d_3_provider_connections.sql`) is integrated on main, adding `dynaxis_provider_connections` and `dynaxis_provider_secret_envelopes` as storage shape only. No Phase 7D migration owner is active.
 
 `WP-7D-04` Provider Connection Services and Permissions is **completed** and integrated from `phase-7d/provider-connection-services-permissions`. It delivers the server-only ProviderConnection service layer, the seven `provider_connection.*` permission checks, AES-256-GCM secret envelope encryption/decryption with AAD binding, the key-management boundary (production KMS interface that fails closed, environment-only local dev keys, deterministic test keys gated to `NODE_ENV=test`), the server-only unwrap/materialization boundary, fail-closed runtime behavior, and runtime audit logging. It added no schema and no migration.
+
+`WP-7D-05` MuAPI Credential Migration and Provider Resolver is **completed** and integrated from `phase-7d/muapi-credential-migration-provider-resolver`. The Provider Resolver and the MuAPI credential migration path are integrated: MuAPI credential use now routes through the ProviderConnection runtime boundary (`selectProviderConnection` -> `useProviderCredential` -> `service.resolveForUse` -> unwrap -> adapter), with `providerId` pinned and re-asserted after materialization. Provider adapters remain pure — `lib/dynaxis/providers/**` was not modified and imports neither ProviderConnection nor secret internals. Legacy `x-api-key` remains a compatibility principal only: it does not become a ProviderConnection credential and grants no ProviderConnection authority. Selection gates on `provider_connection.read`, so an unauthorized caller cannot expose `secretRef`/`keyRef`. No OAuth, no UI, no schema, and no migration were added.
 
 ## Ready Work Packages
 
@@ -80,18 +77,36 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-(none)
+- WP-7D-06 Connection Health Rotation UI and Audit — **ready, not started**
 
-`WP-7D-05` is implemented and in review on
-`phase-7d/muapi-credential-migration-provider-resolver`, not yet integrated.
-It preserves the WP-7D-02 secret storage architecture. Legacy `x-api-key`
-remains a server compatibility principal only: it is not a ProviderConnection
-credential and grants no ProviderConnection authority.
+`WP-7D-06` may now build connection health, rotation UI, and audit surfaces on
+the integrated ProviderConnection runtime. It must enforce the WP-7D-02 browser
+redaction rules: no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD,
+ciphertext, or plaintext may reach a browser.
 
 ## Blocked Runtime Implementation
 
-`WP-7D-06` remains backlog until `WP-7D-05` is integrated. `WP-7D-07` remains backlog until `WP-7D-03` through `WP-7D-06` are integrated.
+`WP-7D-07` remains backlog until `WP-7D-06` is integrated.
+
+## Phase 7D Follow-Ups (recorded, not addressed)
+
+- `WP-7D-07` should add broader resolver-selection regression tests beyond the
+  fixed blocker test, covering user-owned foreign explicit id, foreign
+  `ownerUserId` default spoof, and null workspace context plus foreign
+  `organizationId`.
+- `WP-7D-07` should explicitly document AuthContext as the Phase 7C/7D trust
+  root.
+- Service-principal allowlist remains undefined and fail-closed. WP-7E job and
+  worker dispatch must not use ProviderConnections until an explicit allowlist
+  exists.
+- Canonical `provider_connection.*` permission merge into
+  `lib/dynaxis/auth/permissions.js` remains future work.
+- Durable audit sink remains future work; the current sink is in-memory.
+- KMS wiring remains future work; the production adapter fails closed until
+  configured.
+- Route migration (`app/api/**`, `lib/dynaxis/api.js`) and the repository
+  default-flag write in `importLegacyMuapiCredential` remain future work.
 
 ## Next Sequential Phase Tasks
 
-1. Connection Health Rotation UI and Audit (Phase 7D implementation; `WP-7D-06` remains backlog until `WP-7D-05` integrates)
+1. Connection Health Rotation UI and Audit (Phase 7D implementation; `WP-7D-06` ready but not started)

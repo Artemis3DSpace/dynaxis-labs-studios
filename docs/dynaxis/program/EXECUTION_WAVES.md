@@ -136,24 +136,28 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Scope note: WP-7D-04 added no schema and no migration; it builds on the integrated `0015` shape. No OAuth flow, no Studio UI, and no provider-specific adapter implementation.
 - Serialization note: no Phase 7D migration owner is active. WP-8F-02 remains the migration owner for its own phase line and is unaffected.
 
-## Later Wave 15 - Phase 7D MuAPI Credential Migration (in review)
+## Later Wave 15 - Completed Phase 7D MuAPI Credential Migration
 
 - Specification packages: -
 - Implementation packages: WP-7D-05
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7D-05
-- Dependency note: WP-7D-05 depends on WP-7D-04 (integrated). It is implemented and **in review** on `phase-7d/muapi-credential-migration-provider-resolver`; not yet integrated.
-- Scope note: WP-7D-05 adds the Provider Resolver and the MuAPI credential migration path on top of the integrated WP-7D-04 runtime. It preserves the WP-7D-02 secret storage architecture, adds no schema and no migration, and rewires no existing route. Legacy `x-api-key` remains a server compatibility principal and grants no ProviderConnection authority.
-- Serialization note: WP-7D-06 remains backlog until WP-7D-05 is integrated; WP-7D-07 remains backlog until WP-7D-03 through WP-7D-06 are integrated.
+- Rule: WP-7D-05 MuAPI Credential Migration and Provider Resolver is **completed** and integrated from `phase-7d/muapi-credential-migration-provider-resolver`. The Provider Resolver and the MuAPI credential migration path are integrated, and MuAPI credential use now routes through the ProviderConnection runtime boundary.
+- Boundary note: provider adapters remain pure — `lib/dynaxis/providers/**` was not modified and imports neither ProviderConnection nor secret internals. Selection gates on `provider_connection.read`, so an unauthorized caller cannot expose `secretRef`/`keyRef`.
+- Legacy note: legacy `x-api-key` remains a compatibility principal only. It does not become a ProviderConnection credential and grants no ProviderConnection authority.
+- Scope note: no OAuth, no UI, no schema, and no migration were added; no existing route was rewired.
+- Serialization note: no Phase 7D migration owner is active. WP-7D-07 remains backlog until WP-7D-06 is integrated.
 
-## Later Wave 16
+## Later Wave 16 - Ready Phase 7D Connection Health Rotation UI and Audit
 
 - Specification packages: -
 - Implementation packages: WP-7D-06
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-06
+- Dependency note: WP-7D-06 depends on WP-7D-04 and WP-7D-05 (both integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
+- Scope note: WP-7D-06 must enforce the WP-7D-02 browser redaction rules — no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD, ciphertext, or plaintext may reach a browser.
+- Serialization note: WP-7D-07 remains backlog until WP-7D-06 is integrated.
 
 ## Later Wave 17
 
