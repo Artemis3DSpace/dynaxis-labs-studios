@@ -136,15 +136,15 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Scope note: WP-7D-04 added no schema and no migration; it builds on the integrated `0015` shape. No OAuth flow, no Studio UI, and no provider-specific adapter implementation.
 - Serialization note: no Phase 7D migration owner is active. WP-8F-02 remains the migration owner for its own phase line and is unaffected.
 
-## Later Wave 15 - Ready Phase 7D MuAPI Credential Migration
+## Later Wave 15 - Phase 7D MuAPI Credential Migration (in review)
 
 - Specification packages: -
 - Implementation packages: WP-7D-05
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-05
-- Dependency note: WP-7D-05 depends on WP-7D-04 (integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
-- Scope note: WP-7D-05 must preserve the WP-7D-02 secret storage architecture and must not weaken existing credential security. Legacy `x-api-key` remains a server compatibility principal and grants no ProviderConnection authority.
+- Dependency note: WP-7D-05 depends on WP-7D-04 (integrated). It is implemented and **in review** on `phase-7d/muapi-credential-migration-provider-resolver`; not yet integrated.
+- Scope note: WP-7D-05 adds the Provider Resolver and the MuAPI credential migration path on top of the integrated WP-7D-04 runtime. It preserves the WP-7D-02 secret storage architecture, adds no schema and no migration, and rewires no existing route. Legacy `x-api-key` remains a server compatibility principal and grants no ProviderConnection authority.
 - Serialization note: WP-7D-06 remains backlog until WP-7D-05 is integrated; WP-7D-07 remains backlog until WP-7D-03 through WP-7D-06 are integrated.
 
 ## Later Wave 16

@@ -37,7 +37,13 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-05 MuAPI Credential Migration and Provider Resolver (branch:
+  `phase-7d/muapi-credential-migration-provider-resolver`, base
+  `86620a278e8bf58aceffa0928cf096a380458c0b`, migration owner: false) — not
+  integrated. Provider Resolver and MuAPI credential migration path on top of
+  the integrated WP-7D-04 runtime. No new schema or migration; no route
+  rewiring. See
+  `docs/dynaxis/program/handoffs/wp-7d-05-muapi-credential-migration-provider-resolver.md`.
 
 ## In Progress
 
@@ -74,18 +80,18 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-05 MuAPI Credential Migration and Provider Resolver — **ready, not started**
+(none)
 
-`WP-7D-05` may migrate MuAPI credential behavior into ProviderConnection now
-that `WP-7D-04` is integrated. It must preserve the WP-7D-02 secret storage
-architecture and must not weaken existing credential security. Legacy
-`x-api-key` remains a server compatibility principal only: it is not a
-ProviderConnection credential and grants no ProviderConnection authority.
+`WP-7D-05` is implemented and in review on
+`phase-7d/muapi-credential-migration-provider-resolver`, not yet integrated.
+It preserves the WP-7D-02 secret storage architecture. Legacy `x-api-key`
+remains a server compatibility principal only: it is not a ProviderConnection
+credential and grants no ProviderConnection authority.
 
 ## Blocked Runtime Implementation
 
-`WP-7D-06` remains backlog until `WP-7D-04` and `WP-7D-05` are integrated. `WP-7D-07` remains backlog until `WP-7D-03` through `WP-7D-06` are integrated.
+`WP-7D-06` remains backlog until `WP-7D-05` is integrated. `WP-7D-07` remains backlog until `WP-7D-03` through `WP-7D-06` are integrated.
 
 ## Next Sequential Phase Tasks
 
-1. MuAPI Credential Migration and Provider Resolver (Phase 7D implementation; `WP-7D-05` ready but not started)
+1. Connection Health Rotation UI and Audit (Phase 7D implementation; `WP-7D-06` remains backlog until `WP-7D-05` integrates)
