@@ -3,7 +3,7 @@
 import React from 'react';
 import { DynaxisQueryProvider } from '../query/provider.jsx';
 import { DynaxisSessionProvider } from '../session/hooks.jsx';
-import { ProjectSessionBridge } from './ProjectSessionBridge.jsx';
+import { ProjectSessionBridge } from '../projects/ProjectSessionBridge.jsx';
 
 /**
  * @param {{

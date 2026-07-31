@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { dynaxisQueryKeys } from '../packages/studio/src/query/keys.js';
 import { assertNoOwnerRefScope } from '../packages/studio/src/query/scope.js';
@@ -199,4 +202,23 @@ test('cross-workspace stale project rows are not treated as current workspace da
     ORG_B
   );
   assert.deepEqual(stale, []);
+});
+
+test('DynaxisStudioProviders imports ProjectSessionBridge from projects module path', () => {
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const providersFile = join(
+    repoRoot,
+    'packages/studio/src/providers/DynaxisStudioProviders.jsx'
+  );
+  const bridgeFile = join(repoRoot, 'packages/studio/src/projects/ProjectSessionBridge.jsx');
+  const studioIndexFile = join(repoRoot, 'packages/studio/src/index.js');
+
+  const source = readFileSync(providersFile, 'utf8');
+  assert.match(source, /from '\.\.\/projects\/ProjectSessionBridge\.jsx'/);
+  assert.doesNotMatch(source, /from '\.\/ProjectSessionBridge\.jsx'/);
+  assert.ok(existsSync(bridgeFile));
+
+  const indexSource = readFileSync(studioIndexFile, 'utf8');
+  assert.match(indexSource, /export \{ DynaxisStudioProviders \} from '\.\/providers\/DynaxisStudioProviders\.jsx'/);
+  assert.match(source, /export function DynaxisStudioProviders/);
 });
