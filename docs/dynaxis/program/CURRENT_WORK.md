@@ -48,7 +48,7 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 
 ## Ready Work Packages
 
-- WP-7D-02 Secret Storage and Key Management Architecture
+
 - WP-7E-01 Job State Machine Specification
 - WP-7E-02 Queue Abstraction and Selection
 - WP-7E-03 Job Event Model and Audit Timeline
@@ -75,4 +75,4 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Next Sequential Phase Tasks
 
-1. Secret Storage and Key Management Architecture (Phase 7D specification; WP-7D-02 ready)
+1. Provider Connection Schema and Migration (Phase 7D implementation; blocked on WP-7D-02 integration)
