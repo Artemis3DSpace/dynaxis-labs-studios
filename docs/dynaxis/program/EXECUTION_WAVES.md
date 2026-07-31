@@ -126,25 +126,26 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Rule: integrated from `phase-7d/provider-connection-schema-migration`. WP-7D-03 Provider Connection Schema and Migration is **completed**; migration `0015` (`0015_phase_7d_3_provider_connections.sql`) is integrated on main, adding `dynaxis_provider_connections` and `dynaxis_provider_secret_envelopes`. No Phase 7D migration owner is active.
 - Scope note: storage shape only. No encryption/decryption runtime, unwrap, AAD runtime validation, key generation, KMS/local/test key runtime, provider adapter materialization, provider services, OAuth, or UI was introduced. No ProviderConnection runtime implementation has started.
 
-## Later Wave 14 - Phase 7D Provider Connection Services and Permissions (in review)
+## Later Wave 14 - Completed Phase 7D Provider Connection Services and Permissions
 
 - Specification packages: -
 - Implementation packages: WP-7D-04, WP-8F-02
 - Review / integration gates: -
 - Migration owner constraints: WP-8F-02
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7D-04, WP-8F-02
-- Dependency note: WP-7D-04 depends on WP-7D-03 (integrated). It is implemented and **in review** on `phase-7d/provider-connection-services-permissions`; not yet integrated.
-- Ownership note: WP-7D-04 owns runtime ProviderConnection services and permissions, encryption/decryption services, secret unwrap, AAD runtime validation, key management integration (KMS boundary, local dev, test), the provider adapter materialization boundary, and runtime audit logging.
-- Scope note: WP-7D-04 adds no schema and no migration; it builds on the integrated `0015` shape. No OAuth flow, no Studio UI, and no provider-specific adapter implementation.
-- Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave. WP-7D-05 remains backlog until WP-7D-04 is integrated.
+- Rule: WP-7D-04 integrated from `phase-7d/provider-connection-services-permissions`. It delivers the server-only ProviderConnection service layer, the seven `provider_connection.*` permission checks, AES-256-GCM envelope encryption/decryption with AAD binding, the key-management boundary, the unwrap/materialization boundary, fail-closed runtime behavior, and runtime audit logging.
+- Scope note: WP-7D-04 added no schema and no migration; it builds on the integrated `0015` shape. No OAuth flow, no Studio UI, and no provider-specific adapter implementation.
+- Serialization note: no Phase 7D migration owner is active. WP-8F-02 remains the migration owner for its own phase line and is unaffected.
 
-## Later Wave 15
+## Later Wave 15 - Ready Phase 7D MuAPI Credential Migration
 
 - Specification packages: -
 - Implementation packages: WP-7D-05
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-05
+- Dependency note: WP-7D-05 depends on WP-7D-04 (integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
+- Scope note: WP-7D-05 must preserve the WP-7D-02 secret storage architecture and must not weaken existing credential security. Legacy `x-api-key` remains a server compatibility principal and grants no ProviderConnection authority.
+- Serialization note: WP-7D-06 remains backlog until WP-7D-05 is integrated; WP-7D-07 remains backlog until WP-7D-03 through WP-7D-06 are integrated.
 
 ## Later Wave 16
 
