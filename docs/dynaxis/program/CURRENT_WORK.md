@@ -32,7 +32,7 @@ Phase 7C with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7C-23 Identity Integration Gate (branch: `phase-7c/identity-integration-gate`, base `7968ada6c2401502358a753e96fc5cbe72f027f1`, migration owner: false) — not integrated. See `docs/dynaxis/program/handoffs/wp-7c-23-identity-integration-gate.md`.
 
 ## In Progress
 
@@ -66,7 +66,7 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7C-23 Identity Integration Gate
+(none)
 
 ## Blocked Runtime Implementation
 
@@ -74,4 +74,4 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Next Sequential Identity Tasks
 
-1. Identity Integration Gate
+1. Identity Integration Gate (in review)

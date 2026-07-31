@@ -93,7 +93,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: integrated from `phase-7c/session-rate-limit-abuse-security-tests`; session rate-limit, abuse, and security test coverage only. No production code changes.
 
-## Later Wave 10 - Ready Phase 7C Identity Integration Gate
+## Later Wave 10 - Phase 7C Identity Integration Gate (in review)
 
 - Specification packages: -
 - Implementation packages: -
@@ -101,6 +101,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7C-23
 - Dependency note: WP-7C-23 depends on WP-7C-07, WP-7C-11, WP-7C-14 through WP-7C-17, WP-7C-20, and WP-7C-22 (all integrated).
+- Status: WP-7C-23 is in review on `phase-7c/identity-integration-gate`; not yet integrated on main.
 
 ## Later Wave 11
 
