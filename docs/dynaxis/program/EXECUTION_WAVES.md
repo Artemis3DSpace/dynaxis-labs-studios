@@ -85,23 +85,22 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: integrated from `phase-7c/identity-signup-provisioning-recovery-hardening`; personal workspace provisioning/recovery hardening only. Rate-limit and abuse hardening remain for WP-7C-22.
 
-## Later Wave 9 - Phase 7C Session Security Work (in review)
+## Later Wave 9 - Completed Phase 7C Session Security Work
 
 - Specification packages: -
 - Implementation packages: -
 - Review / integration gates: WP-7C-22
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7C-22
-- Dependency note: WP-7C-22 depends on WP-7C-11 and WP-7C-21 (both integrated).
-- Status: WP-7C-22 is in review on `phase-7c/session-rate-limit-abuse-security-tests`; not yet integrated on main.
+- Rule: integrated from `phase-7c/session-rate-limit-abuse-security-tests`; session rate-limit, abuse, and security test coverage only. No production code changes.
 
-## Later Wave 10
+## Later Wave 10 - Ready Phase 7C Identity Integration Gate
 
 - Specification packages: -
 - Implementation packages: -
 - Review / integration gates: WP-7C-23
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7C-23
+- Dependency note: WP-7C-23 depends on WP-7C-07, WP-7C-11, WP-7C-14 through WP-7C-17, WP-7C-20, and WP-7C-22 (all integrated).
 
 ## Later Wave 11
 

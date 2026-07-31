@@ -28,14 +28,11 @@ Phase 7C with parallel specification-only planning.
 - WP-7C-19 Client Session and Workspace Switching
 - WP-7C-20 Project Queries and Studio Migration
 - WP-7C-21 Identity Signup Provisioning and Recovery Hardening
+- WP-7C-22 Session Rate Limit Abuse and Security Tests
 
 ## In Review
 
-- WP-7C-22 Session Rate Limit Abuse and Security Tests (branch:
-  `phase-7c/session-rate-limit-abuse-security-tests`, base
-  `ef80ee31056b3383238e9cb90772964104940cd4`, migration owner: false) — not
-  integrated. See
-  `docs/dynaxis/program/handoffs/wp-7c-22-session-rate-limit-abuse-security-tests.md`.
+(none)
 
 ## In Progress
 
@@ -45,7 +42,7 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
-Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration wave `WP-7C-14` through `WP-7C-17` is integrated on main. `WP-7C-18` TanStack Query Foundation is integrated from `phase-7c/tanstack-query-foundation`. `WP-7C-19` Client Session and Workspace Switching is integrated from `phase-7c/client-session-workspace-switching`. `WP-7C-20` Project Queries and Studio Migration is integrated from `phase-7c/project-queries-studio-migration`. `WP-7C-21` Identity Signup Provisioning and Recovery Hardening is integrated from `phase-7c/identity-signup-provisioning-recovery-hardening`; no Phase 7C migration owner is active. `WP-7C-22` Session Rate Limit Abuse and Security Tests is in review on `phase-7c/session-rate-limit-abuse-security-tests`, not yet integrated.
+Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration wave `WP-7C-14` through `WP-7C-17` is integrated on main. `WP-7C-18` TanStack Query Foundation is integrated from `phase-7c/tanstack-query-foundation`. `WP-7C-19` Client Session and Workspace Switching is integrated from `phase-7c/client-session-workspace-switching`. `WP-7C-20` Project Queries and Studio Migration is integrated from `phase-7c/project-queries-studio-migration`. `WP-7C-21` Identity Signup Provisioning and Recovery Hardening is integrated from `phase-7c/identity-signup-provisioning-recovery-hardening`. `WP-7C-22` Session Rate Limit Abuse and Security Tests is integrated from `phase-7c/session-rate-limit-abuse-security-tests`; no Phase 7C migration owner is active.
 
 ## Ready Work Packages
 
@@ -69,13 +66,12 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-(none)
+- WP-7C-23 Identity Integration Gate
 
 ## Blocked Runtime Implementation
 
-`WP-7C-23` remains backlog until `WP-7C-22` is integrated.
+(none)
 
 ## Next Sequential Identity Tasks
 
-1. Session Rate Limit Abuse and Security Tests
-2. Identity Integration Gate
+1. Identity Integration Gate

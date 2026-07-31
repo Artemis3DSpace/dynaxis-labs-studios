@@ -24,8 +24,8 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7C-19 | 7C | Client Session and Workspace Switching | implementation | cursor | done | WP-7C-12, WP-7C-18 | no |
 | WP-7C-20 | 7C | Project Queries and Studio Migration | implementation | cursor | done | WP-7C-14, WP-7C-19 | no |
 | WP-7C-21 | 7C | Identity Signup Provisioning and Recovery Hardening | implementation | claude | done | WP-7C-12, WP-7C-20 | no |
-| WP-7C-22 | 7C | Session Rate Limit Abuse and Security Tests | review | claude | review | WP-7C-11, WP-7C-21 | no |
-| WP-7C-23 | 7C | Identity Integration Gate | integration | codex | backlog | WP-7C-07, WP-7C-11, WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-20, WP-7C-22 | no |
+| WP-7C-22 | 7C | Session Rate Limit Abuse and Security Tests | review | claude | done | WP-7C-11, WP-7C-21 | no |
+| WP-7C-23 | 7C | Identity Integration Gate | integration | codex | ready | WP-7C-07, WP-7C-11, WP-7C-14, WP-7C-15, WP-7C-16, WP-7C-17, WP-7C-20, WP-7C-22 | no |
 | WP-7C-24 | 7C | Canonical Persistence Access Bridge | implementation | claude | done | WP-7C-13 | yes |
 
 ## Phase 7D - Provider Connections / Secrets
