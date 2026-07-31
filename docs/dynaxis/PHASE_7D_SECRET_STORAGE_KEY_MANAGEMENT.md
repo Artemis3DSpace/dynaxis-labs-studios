@@ -12,7 +12,7 @@ This document does not implement runtime code, add database migrations, implemen
 
 ProviderConnection metadata and encrypted secret envelopes must be completely separated:
 
-- **ProviderConnection records** store only metadata and secret references (`secretRef`, `secretVersion`, `keyRef`)  
+- **ProviderConnection records** store only metadata and secret references (`secretRef`, `secretVersion`, `keyRef`)
 - **Secret envelopes** store only encrypted payloads and cryptographic metadata
 - **Raw secret material** must never appear in ProviderConnection tables, logs, API responses, or analytics
 
@@ -21,7 +21,7 @@ ProviderConnection metadata and encrypted secret envelopes must be completely se
 Each secret envelope contains:
 
 - `envelopeId`: unique identifier for this encrypted envelope (UUID)
-- `secretVersion`: monotonic version for rotation tracking  
+- `secretVersion`: monotonic version for rotation tracking
 - `keyRef`: reference to the encryption key used (production KMS key alias, local dev key id)
 - `algorithm`: encryption algorithm used (required: AES-256-GCM or equivalent AEAD)
 - `encryptedPayload`: authenticated encrypted secret material
@@ -34,7 +34,7 @@ Each secret envelope contains:
 ### Authenticated Encryption Requirements
 
 - **Algorithm**: AES-256-GCM or equivalent Authenticated Encryption with Associated Data (AEAD)
-- **Key size**: 256-bit minimum  
+- **Key size**: 256-bit minimum
 - **IV/Nonce**: 96-bit minimum, cryptographically random, unique per encryption
 - **Authentication**: AEAD must authenticate both ciphertext and Additional Authenticated Data (AAD)
 
@@ -47,7 +47,7 @@ AAD = ownerType || ":" || ownerId || ":" || providerId || ":" || credentialKind 
 ```
 
 Where:
-- `ownerType`: "user" or "workspace"  
+- `ownerType`: "user" or "workspace"
 - `ownerId`: `ownerUserId` or `ownerWorkspaceId` from ProviderConnection
 - `providerId`: provider registry id (e.g., "muapi", "replicate")
 - `credentialKind`: credential type (e.g., "api_key", "oauth_access_refresh_token")
@@ -55,7 +55,7 @@ Where:
 
 This prevents:
 - Cross-owner envelope attacks
-- Cross-provider envelope attacks  
+- Cross-provider envelope attacks
 - Cross-credential-kind envelope attacks
 - Envelope replay after rotation
 
@@ -131,7 +131,7 @@ Master Key (KMS/HSM)
 **Raw Secret Material (FORBIDDEN):**
 - API keys (full or partial beyond fingerprint)
 - Bearer tokens
-- OAuth access tokens  
+- OAuth access tokens
 - OAuth refresh tokens
 - OAuth client secrets
 - Service account JSON (full or fields)
@@ -172,7 +172,7 @@ Master Key (KMS/HSM)
 **Scenario**: Envelope ciphertext fails authentication or decryption
 
 **Behavior:**
-- Unwrap operations must fail immediately  
+- Unwrap operations must fail immediately
 - Error logged with envelope id and correlation id
 - ProviderConnection marked as `secretStatus: "corrupted"`
 - Provider dispatch blocked until secret rotation
@@ -195,7 +195,7 @@ Master Key (KMS/HSM)
 
 **Never return to browsers:**
 - `secretRef` (envelope references)
-- `keyRef` (key references)  
+- `keyRef` (key references)
 - Raw secret material
 - Envelope metadata (creation time, rotation history)
 - Decrypted credential payloads
@@ -220,7 +220,7 @@ Master Key (KMS/HSM)
 
 **Provider adapters must NOT:**
 - Store received credentials beyond request lifetime
-- Log received credentials  
+- Log received credentials
 - Cache credentials across requests
 - Access envelope operations or key management
 - Decrypt envelopes themselves
@@ -240,10 +240,10 @@ Master Key (KMS/HSM)
 
 **WP-7D-03 must NOT implement:**
 - Encryption/decryption runtime logic (deferred to WP-7D-04)
-- Key generation or rotation services (deferred to WP-7D-04)  
+- Key generation or rotation services (deferred to WP-7D-04)
 - Provider adapter integration (deferred to WP-7D-04)
 
-### WP-7D-04 Provider Connection Services Handoff  
+### WP-7D-04 Provider Connection Services Handoff
 
 **WP-7D-04 must implement:**
 - Secret envelope encryption/decryption services
@@ -271,5 +271,5 @@ Master Key (KMS/HSM)
 
 **WP-7E must preserve:**
 - Worker/job dispatch boundary (no direct secret access)
-- Provider adapter materialization boundary  
+- Provider adapter materialization boundary
 - Audit correlation for credential usage tracking

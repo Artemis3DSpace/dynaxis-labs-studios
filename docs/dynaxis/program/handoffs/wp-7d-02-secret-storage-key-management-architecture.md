@@ -61,7 +61,7 @@ WP-7D-02 delivers the complete secret storage and key management architecture sp
 ## Validation Evidence
 
 - Complete secret envelope contract specified
-- Key management architecture covers all deployment environments  
+- Key management architecture covers all deployment environments
 - Fail-closed security model defined for all failure modes
 - Clear separation between metadata and secret storage
 - Comprehensive audit requirements specified
