@@ -4,8 +4,8 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 
 ## Wave A - Ready Specification Work That Can Run Now
 
-- Packages: WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
-- Specification packages: WP-7D-02, WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Packages: WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Specification packages: WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
 - Implementation packages: -
 - Review / integration gates: -
 - Migration owner constraints: -
@@ -107,19 +107,27 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Implementation packages: -
 - Review / integration gates: -
 - Migration owner constraints: -
-- Rule: integrated from `phase-7d/providerconnection-contract-threat-model`; ProviderConnection contract and threat model specification only. WP-7D-02 Secret Storage and Key Management Architecture is the next Phase 7D specification work.
+- Rule: integrated from `phase-7d/providerconnection-contract-threat-model`; ProviderConnection contract and threat model specification only.
 
-## Later Wave 12 - Blocked Phase 7D Provider Connection Schema and Migration
+## Later Wave 12 - Completed Phase 7D Secret Storage and Key Management Architecture
+
+- Specification packages: WP-7D-02
+- Implementation packages: -
+- Review / integration gates: -
+- Migration owner constraints: -
+- Rule: integrated from `phase-7d/secret-storage-key-management-architecture`; secret storage and key-management architecture specification only. WP-7D-03 Provider Connection Schema and Migration is the next ready Phase 7D implementation work.
+
+## Later Wave 13 - Ready Phase 7D Provider Connection Schema and Migration
 
 - Specification packages: -
 - Implementation packages: WP-7D-03
 - Review / integration gates: -
-- Migration owner constraints: -
+- Migration owner constraints: WP-7D-03
 - Packages that may run simultaneously after dependencies and conflict checks: -
-- Dependency note: WP-7D-03 depends on WP-7C-23 (integrated) and WP-7D-02 (not integrated).
-- Serialization note: blocked until WP-7D-02 is integrated; no migration owner is active; no Phase 7D runtime implementation has started.
+- Dependency note: WP-7D-03 depends on WP-7C-23 (integrated) and WP-7D-02 (integrated).
+- Serialization note: WP-7D-03 is the active next migration-owner candidate and is ready but not started; no Phase 7D runtime implementation has started; WP-7D-04 remains backlog until WP-7D-03 is integrated.
 
-## Later Wave 13
+## Later Wave 14
 
 - Specification packages: -
 - Implementation packages: WP-7D-04, WP-8F-02
@@ -128,7 +136,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-04, WP-8F-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 14
+## Later Wave 15
 
 - Specification packages: -
 - Implementation packages: WP-7D-05
@@ -136,7 +144,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-05
 
-## Later Wave 15
+## Later Wave 16
 
 - Specification packages: -
 - Implementation packages: WP-7D-06
@@ -144,7 +152,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-06
 
-## Later Wave 16
+## Later Wave 17
 
 - Specification packages: -
 - Implementation packages: -
@@ -152,7 +160,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-07
 
-## Later Wave 17
+## Later Wave 18
 
 - Specification packages: -
 - Implementation packages: WP-7E-04
@@ -161,7 +169,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 18
+## Later Wave 19
 
 - Specification packages: -
 - Implementation packages: WP-7E-05
@@ -169,7 +177,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-05
 
-## Later Wave 19
+## Later Wave 20
 
 - Specification packages: -
 - Implementation packages: WP-7E-06
@@ -177,7 +185,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-06
 
-## Later Wave 20
+## Later Wave 21
 
 - Specification packages: -
 - Implementation packages: WP-7E-07
@@ -185,7 +193,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-07
 
-## Later Wave 21
+## Later Wave 22
 
 - Specification packages: -
 - Implementation packages: WP-7E-08
@@ -193,7 +201,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-08
 
-## Later Wave 22
+## Later Wave 23
 
 - Specification packages: -
 - Implementation packages: WP-7E-09
@@ -201,7 +209,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-09
 
-## Later Wave 23
+## Later Wave 24
 
 - Specification packages: -
 - Implementation packages: -
@@ -209,7 +217,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-10
 
-## Later Wave 24
+## Later Wave 25
 
 - Specification packages: -
 - Implementation packages: WP-7F-02
@@ -218,7 +226,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7F-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 25
+## Later Wave 26
 
 - Specification packages: -
 - Implementation packages: WP-7F-03
@@ -227,7 +235,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7F-03
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 26
+## Later Wave 27
 
 - Specification packages: -
 - Implementation packages: WP-7F-04, WP-8F-03
@@ -236,7 +244,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7F-04, WP-8F-03
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 27
+## Later Wave 28
 
 - Specification packages: -
 - Implementation packages: WP-7F-05, WP-7F-06, WP-8F-04
@@ -244,7 +252,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7F-05, WP-7F-06, WP-8F-04
 
-## Later Wave 28
+## Later Wave 29
 
 - Specification packages: -
 - Implementation packages: WP-8F-05
@@ -252,7 +260,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7F-07, WP-8F-05
 
-## Later Wave 29
+## Later Wave 30
 
 - Specification packages: -
 - Implementation packages: WP-7G-02
@@ -261,7 +269,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7G-02, WP-8F-06
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 30
+## Later Wave 31
 
 - Specification packages: -
 - Implementation packages: WP-7G-03, WP-7I-02, WP-10-03
@@ -270,7 +278,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7G-03, WP-7I-02, WP-10-03
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 31
+## Later Wave 32
 
 - Specification packages: -
 - Implementation packages: WP-7G-04, WP-7I-03, WP-7I-04, WP-10-01
@@ -279,7 +287,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7G-04, WP-7I-03, WP-7I-04, WP-10-01
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 32
+## Later Wave 33
 
 - Specification packages: -
 - Implementation packages: WP-7G-05, WP-10-04
@@ -288,7 +296,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7G-05, WP-7I-05, WP-10-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 33
+## Later Wave 34
 
 - Specification packages: -
 - Implementation packages: WP-7H-02
@@ -297,7 +305,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7H-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 34
+## Later Wave 35
 
 - Specification packages: -
 - Implementation packages: WP-7H-03, WP-8A-02
@@ -306,7 +314,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7H-03, WP-8A-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 35
+## Later Wave 36
 
 - Specification packages: -
 - Implementation packages: WP-7H-04, WP-8A-03
@@ -315,7 +323,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7H-04, WP-8A-03
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 36
+## Later Wave 37
 
 - Specification packages: -
 - Implementation packages: WP-7H-05, WP-8A-04
@@ -324,7 +332,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7H-05, WP-8A-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 37
+## Later Wave 38
 
 - Specification packages: -
 - Implementation packages: WP-8A-05
@@ -333,7 +341,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8A-05
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 38
+## Later Wave 39
 
 - Specification packages: -
 - Implementation packages: WP-8A-06, WP-8C-02
@@ -342,7 +350,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8A-06, WP-8C-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 39
+## Later Wave 40
 
 - Specification packages: -
 - Implementation packages: WP-8C-03, WP-8C-04, WP-8C-05, WP-8E-02
@@ -351,7 +359,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8A-07, WP-8C-03, WP-8C-04, WP-8C-05, WP-8E-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 40
+## Later Wave 41
 
 - Specification packages: -
 - Implementation packages: WP-8B-02, WP-8C-06, WP-8D-02, WP-8E-03
@@ -360,7 +368,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-02, WP-8C-06, WP-8D-02, WP-8E-03
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 41
+## Later Wave 42
 
 - Specification packages: -
 - Implementation packages: WP-8B-03, WP-8D-03, WP-8E-04
@@ -369,7 +377,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-03, WP-8C-07, WP-8D-03, WP-8E-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 42
+## Later Wave 43
 
 - Specification packages: -
 - Implementation packages: WP-8B-04, WP-8D-04, WP-8D-05, WP-10-05
@@ -378,7 +386,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-04, WP-8D-04, WP-8D-05, WP-8E-05, WP-10-05
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 43
+## Later Wave 44
 
 - Specification packages: -
 - Implementation packages: WP-8B-05, WP-8G-02, WP-9-02, WP-10-06
@@ -387,7 +395,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-05, WP-8D-06, WP-8G-02, WP-9-02, WP-10-06
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 44
+## Later Wave 45
 
 - Specification packages: -
 - Implementation packages: WP-8B-06, WP-8G-03, WP-9-03, WP-10-07
@@ -395,7 +403,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-06, WP-8G-03, WP-9-03, WP-10-07
 
-## Later Wave 45
+## Later Wave 46
 
 - Specification packages: -
 - Implementation packages: WP-8G-04, WP-9-04, WP-10-08
@@ -404,7 +412,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8B-07, WP-8G-04, WP-9-04, WP-10-08
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 46
+## Later Wave 47
 
 - Specification packages: -
 - Implementation packages: WP-9-05
@@ -412,7 +420,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8G-05, WP-9-05
 
-## Later Wave 47
+## Later Wave 48
 
 - Specification packages: -
 - Implementation packages: WP-8H-02, WP-9-06
@@ -421,7 +429,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-02, WP-9-06
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 48
+## Later Wave 49
 
 - Specification packages: -
 - Implementation packages: WP-8H-03
@@ -430,7 +438,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-03, WP-9-07
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 49
+## Later Wave 50
 
 - Specification packages: -
 - Implementation packages: WP-8H-04
@@ -439,7 +447,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 50
+## Later Wave 51
 
 - Specification packages: -
 - Implementation packages: WP-8H-05
@@ -447,7 +455,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-05
 
-## Later Wave 51
+## Later Wave 52
 
 - Specification packages: -
 - Implementation packages: WP-8H-06
@@ -455,7 +463,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-06
 
-## Later Wave 52
+## Later Wave 53
 
 - Specification packages: -
 - Implementation packages: -
@@ -463,7 +471,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-8H-07
 
-## Later Wave 53
+## Later Wave 54
 
 - Specification packages: -
 - Implementation packages: WP-10-02
@@ -472,7 +480,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Packages that may run simultaneously after dependencies and conflict checks: WP-10-02
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
 
-## Later Wave 54
+## Later Wave 55
 
 - Specification packages: -
 - Implementation packages: -
