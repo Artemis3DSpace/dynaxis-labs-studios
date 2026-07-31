@@ -33,7 +33,7 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-01 ProviderConnection Contract and Threat Model
 
 ## In Progress
 
@@ -47,7 +47,6 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 
 ## Ready Work Packages
 
-- WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
 - WP-7E-01 Job State Machine Specification
 - WP-7E-02 Queue Abstraction and Selection
@@ -67,11 +66,11 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-03 Provider Connection Schema and Migration
+(none)
 
 ## Blocked Runtime Implementation
 
-(none)
+- WP-7D-03 Provider Connection Schema and Migration (blocked on WP-7D-02)
 
 ## Next Sequential Phase Tasks
 
