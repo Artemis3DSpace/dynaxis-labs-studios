@@ -22,6 +22,7 @@ import { createDynaxisAuthOptions } from '../lib/dynaxis/auth/options.js';
 import { DYNAXIS_IDENTITY_DRIZZLE_SCHEMA, dynaxisPersonalWorkspaces } from '../lib/dynaxis/identity/schema.js';
 import {
   DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE,
+  DYNAXIS_PERSONAL_WORKSPACE_ORGANIZATION_MISSING_CODE,
   ensurePersonalWorkspaceForUser,
   personalWorkspaceSlugForUserId,
 } from '../lib/dynaxis/identity/personal-workspace.js';
@@ -121,6 +122,22 @@ function createFakeDb({ users = [], mappings = [], organizations = [], members =
         },
         async returning() {
           return pushRow(table, row);
+        },
+      };
+    },
+    update(table) {
+      return {
+        set(patch) {
+          return {
+            async where() {
+              if (tableKey(table) === tableKey(member)) {
+                for (const row of state.members) {
+                  Object.assign(row, patch);
+                }
+              }
+              return [];
+            },
+          };
         },
       };
     },
@@ -224,6 +241,79 @@ test('personal workspace provisioning rereads mapping when a concurrent insert w
   assert.equal(workspace.organizationId, organizationId);
 });
 
+test('personal workspace provisioning repairs a missing owner membership row', async () => {
+  const userId = '88888888-8888-4888-8888-888888888888';
+  const organizationId = '99999999-9999-4999-8999-999999999999';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Drift', email: 'drift@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [{ id: organizationId, slug: personalWorkspaceSlugForUserId(userId) }],
+    members: [],
+  });
+
+  const workspace = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Drift' }, { db });
+
+  assert.equal(workspace.organizationId, organizationId);
+  assert.equal(db.state.members.length, 1);
+  assert.equal(db.state.members[0].userId, userId);
+  assert.equal(db.state.members[0].organizationId, organizationId);
+  assert.equal(db.state.members[0].role, DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE);
+});
+
+test('personal workspace provisioning restores a downgraded owner role', async () => {
+  const userId = '10101010-1010-4101-8101-101010101010';
+  const organizationId = '20202020-2020-4202-8202-202020202020';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Downgraded', email: 'downgraded@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [{ id: organizationId, slug: personalWorkspaceSlugForUserId(userId) }],
+    members: [{ id: 'member-1', organizationId, userId, role: 'member', createdAt: new Date() }],
+  });
+
+  await ensurePersonalWorkspaceForUser({ id: userId, name: 'Downgraded' }, { db });
+
+  assert.equal(db.state.members.length, 1);
+  assert.equal(db.state.members[0].role, DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE);
+});
+
+test('personal workspace provisioning fails closed when the mapped organization is missing', async () => {
+  const userId = '30303030-3030-4303-8303-303030303030';
+  const organizationId = '40404040-4040-4404-8404-404040404040';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Orphan', email: 'orphan@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [],
+    members: [],
+  });
+
+  await assert.rejects(
+    ensurePersonalWorkspaceForUser({ id: userId, name: 'Orphan' }, { db }),
+    (err) => err.code === DYNAXIS_PERSONAL_WORKSPACE_ORGANIZATION_MISSING_CODE
+  );
+});
+
+test('personal workspace provisioning converges safely across repeated calls after a repair', async () => {
+  const userId = '50505050-5050-4505-8505-505050505050';
+  const organizationId = '60606060-6060-4606-8606-606060606060';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Repeat', email: 'repeat@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [{ id: organizationId, slug: personalWorkspaceSlugForUserId(userId) }],
+    members: [],
+  });
+
+  const first = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Repeat' }, { db });
+  const second = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Repeat' }, { db });
+  const third = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Repeat' }, { db });
+
+  assert.equal(first.organizationId, organizationId);
+  assert.equal(second.organizationId, organizationId);
+  assert.equal(third.organizationId, organizationId);
+  assert.equal(db.state.organizations.length, 1);
+  assert.equal(db.state.members.length, 1);
+  assert.equal(db.state.mappings.length, 1);
+});
+
 test('personal workspace protections reject member and invitation mutations', async () => {
   const personalOrganizationId = '44444444-4444-4444-8444-444444444444';
   const db = createFakeDb({
@@ -266,6 +356,8 @@ test('session workspace hook initializes missing active organization to personal
   const db = createFakeDb({
     users: [{ id: userId, name: 'Session', email: 'session@example.test' }],
     mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [{ id: organizationId, slug: personalWorkspaceSlugForUserId(userId) }],
+    members: [{ id: 'member-session', organizationId, userId, role: DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE, createdAt: new Date() }],
   });
 
   const session = await resolveSessionActiveOrganization({ id: 'session-id', userId }, { db });
@@ -276,4 +368,11 @@ test('Phase 7C.2 does not add provider connections, project auth, or runtime UI 
   assert.doesNotMatch(source('lib/dynaxis/identity/personal-workspace.js'), /provider connection/i);
   assert.doesNotMatch(source('lib/dynaxis/identity/personal-workspace.js'), /project membership/i);
   assert.doesNotMatch(source('lib/dynaxis/auth/client.js'), /localStorage|cookie/i);
+});
+
+test('WP-7C-21 personal and session workspace provisioning never treat owner_ref as identity authority', () => {
+  const personalWorkspaceSource = source('lib/dynaxis/identity/personal-workspace.js');
+  const sessionWorkspaceSource = source('lib/dynaxis/identity/session-workspace.js');
+  assert.doesNotMatch(personalWorkspaceSource, /owner_ref|ownerRef/);
+  assert.doesNotMatch(sessionWorkspaceSource, /owner_ref|ownerRef/);
 });
