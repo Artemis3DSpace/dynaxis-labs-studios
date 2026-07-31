@@ -232,26 +232,34 @@ Master Key (KMS/HSM)
 
 **WP-7D-03 must implement:**
 - ProviderConnection table columns per persistence rules above
-- Secret envelope storage (separate from metadata)
-- Key reference storage and validation
-- AAD binding validation during unwrap operations
-- Fail-closed behavior for all secret operation failures
+- Separate secret envelope storage shape
+- SecretRef/secretVersion/keyRef metadata fields
+- Envelope status fields and rotation metadata
+- AAD context fields required for later runtime validation
+- Database constraints/indexes for metadata consistency
 - Migration tests proving no raw secret persistence
 
 **WP-7D-03 must NOT implement:**
-- Encryption/decryption runtime logic (deferred to WP-7D-04)
-- Key generation or rotation services (deferred to WP-7D-04)
-- Provider adapter integration (deferred to WP-7D-04)
+- Encryption/decryption services
+- Secret unwrap operations
+- AAD runtime validation during unwrap
+- Fail-closed runtime behavior for secret operation failures
+- Key generation or KMS integration
+- Local/test key runtime or provider services
+- Provider adapter materialization
 
 ### WP-7D-04 Provider Connection Services Handoff
 
 **WP-7D-04 must implement:**
 - Secret envelope encryption/decryption services
+- Secret unwrap operations
+- AAD runtime validation during unwrap
+- Fail-closed runtime behavior for secret operation failures
 - Key management integration (production KMS, local dev, test)
 - ProviderConnection CRUD operations with secret lifecycle
 - Authorization integration per WP-7D-01 permission boundary
 - Provider adapter secret materialization boundary
-- Audit logging for all secret operations
+- Audit logging for runtime secret operations
 
 ### WP-7D-05 MuAPI Credential Migration Handoff
 

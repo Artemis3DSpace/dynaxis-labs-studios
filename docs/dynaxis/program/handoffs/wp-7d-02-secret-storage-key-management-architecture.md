@@ -43,20 +43,32 @@ WP-7D-02 delivers the complete secret storage and key management architecture sp
 **Must Implement:**
 - ProviderConnection metadata columns per specification
 - Separate secret envelope storage system
-- AAD binding validation during unwrap operations
-- Fail-closed behavior for all secret failures
+- SecretRef/secretVersion/keyRef metadata fields
+- Envelope status fields and rotation metadata
+- AAD context fields required for later runtime validation
+- Database constraints/indexes for metadata consistency
+- Migration tests proving no raw secret persistence
 
 **Must NOT Implement:**
-- Encryption/decryption runtime (deferred to WP-7D-04)
-- Key management services (deferred to WP-7D-04)
-- Provider adapter integration (deferred to WP-7D-04)
+- Encryption/decryption runtime
+- Secret unwrap operations
+- AAD runtime validation during unwrap
+- Fail-closed runtime behavior for secret operation failures
+- Key generation or KMS integration
+- Local/test key runtime or provider services
+- Provider adapter materialization
 
 ### WP-7D-04: Services and Runtime
 **Must Implement:**
 - Complete secret envelope encryption/decryption services
+- Secret unwrap operations
+- AAD runtime validation during unwrap
+- Fail-closed runtime behavior for secret operation failures
 - Key management integration (KMS, local dev, test)
+- ProviderConnection CRUD operations with secret lifecycle
 - Authorization integration per WP-7D-01 boundaries
-- Audit logging for all secret operations
+- Provider adapter secret materialization boundary
+- Audit logging for runtime secret operations
 
 ## Validation Evidence
 
