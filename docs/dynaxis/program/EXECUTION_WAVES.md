@@ -117,7 +117,7 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: integrated from `phase-7d/secret-storage-key-management-architecture`; secret storage and key-management architecture specification only. WP-7D-03 Provider Connection Schema and Migration is the next ready Phase 7D implementation work.
 
-## Later Wave 13 - Ready Phase 7D Provider Connection Schema and Migration
+## Later Wave 13 - Phase 7D Provider Connection Schema and Migration (in review)
 
 - Specification packages: -
 - Implementation packages: WP-7D-03
@@ -125,7 +125,8 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: WP-7D-03
 - Packages that may run simultaneously after dependencies and conflict checks: -
 - Dependency note: WP-7D-03 depends on WP-7C-23 (integrated) and WP-7D-02 (integrated).
-- Serialization note: WP-7D-03 is the active next migration-owner candidate and is ready but not started; no Phase 7D runtime implementation has started; WP-7D-04 remains backlog until WP-7D-03 is integrated.
+- Serialization note: WP-7D-03 is the active Phase 7D migration owner and owns migration `0015`; it is in review on `phase-7d/provider-connection-schema-migration` and not yet integrated. No other Phase 7D package may own a schema migration until WP-7D-03 integrates. WP-7D-04 remains backlog until WP-7D-03 is integrated.
+- Scope note: schema and migration only. No encryption/decryption runtime, unwrap, AAD runtime validation, key generation, KMS/local/test key runtime, provider services, OAuth, or UI — all deferred to WP-7D-04.
 
 ## Later Wave 14
 
