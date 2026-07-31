@@ -29,6 +29,7 @@ import {
 import {
   DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE,
   assertPersonalWorkspaceMutationAllowed,
+  createDynaxisWorkspaceOrganizationHooks,
 } from '../lib/dynaxis/identity/workspace-protection.js';
 import { resolveSessionActiveOrganization } from '../lib/dynaxis/identity/session-workspace.js';
 import { DRIZZLE_SCHEMA } from '../lib/dynaxis/db/client.js';
@@ -314,6 +315,28 @@ test('personal workspace provisioning converges safely across repeated calls aft
   assert.equal(db.state.mappings.length, 1);
 });
 
+test('WP-7C-22 personal workspace provisioning resists repeated membership-drop abuse by repairing every time', async () => {
+  const userId = '70707070-7070-4707-8707-707070707070';
+  const organizationId = '80808080-8080-4808-8808-808080808080';
+  const db = createFakeDb({
+    users: [{ id: userId, name: 'Repeated Drop', email: 'repeated-drop@example.test' }],
+    mappings: [{ userId, organizationId, createdAt: new Date() }],
+    organizations: [{ id: organizationId, slug: personalWorkspaceSlugForUserId(userId) }],
+    members: [],
+  });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const workspace = await ensurePersonalWorkspaceForUser({ id: userId, name: 'Repeated Drop' }, { db });
+    assert.equal(workspace.organizationId, organizationId);
+    assert.equal(db.state.members.length, 1);
+    assert.equal(db.state.members[0].role, DYNAXIS_PERSONAL_WORKSPACE_OWNER_ROLE);
+    db.state.members.length = 0;
+  }
+
+  assert.equal(db.state.organizations.length, 1);
+  assert.equal(db.state.mappings.length, 1);
+});
+
 test('personal workspace protections reject member and invitation mutations', async () => {
   const personalOrganizationId = '44444444-4444-4444-8444-444444444444';
   const db = createFakeDb({
@@ -350,6 +373,61 @@ test('personal workspace protections reject member and invitation mutations', as
   );
 });
 
+test('WP-7C-22 personal workspace organization hooks reject every governance mutation entry point', async () => {
+  const personalOrganizationId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const db = createFakeDb({
+    mappings: [
+      { userId: 'user-hooked', organizationId: personalOrganizationId, createdAt: new Date() },
+    ],
+  });
+  const hooks = createDynaxisWorkspaceOrganizationHooks({ db });
+
+  await assert.rejects(
+    hooks.beforeDeleteOrganization({ organization: { id: personalOrganizationId } }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+  await assert.rejects(
+    hooks.beforeAddMember({ member: { organizationId: personalOrganizationId } }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+  await assert.rejects(
+    hooks.beforeRemoveMember({ member: { organizationId: personalOrganizationId, role: 'owner' } }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+  await assert.rejects(
+    hooks.beforeUpdateMemberRole({
+      member: { organizationId: personalOrganizationId, role: 'owner' },
+      newRole: 'member',
+    }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+  await assert.rejects(
+    hooks.beforeCreateInvitation({ invitation: { organizationId: personalOrganizationId } }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+  await assert.rejects(
+    hooks.beforeAcceptInvitation({ invitation: { organizationId: personalOrganizationId } }),
+    (err) => err.body?.code === DYNAXIS_PERSONAL_WORKSPACE_PROTECTED_CODE
+  );
+});
+
+test('WP-7C-22 personal workspace member role update hook allows role changes that keep ownership', async () => {
+  const personalOrganizationId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const db = createFakeDb({
+    mappings: [
+      { userId: 'user-kept-owner', organizationId: personalOrganizationId, createdAt: new Date() },
+    ],
+  });
+  const hooks = createDynaxisWorkspaceOrganizationHooks({ db });
+
+  await assert.doesNotReject(
+    hooks.beforeUpdateMemberRole({
+      member: { organizationId: personalOrganizationId, role: 'owner' },
+      newRole: 'owner,admin',
+    })
+  );
+});
+
 test('session workspace hook initializes missing active organization to personal workspace', async () => {
   const userId = '66666666-6666-4666-8666-666666666666';
   const organizationId = '77777777-7777-4777-8777-777777777777';
@@ -375,4 +453,8 @@ test('WP-7C-21 personal and session workspace provisioning never treat owner_ref
   const sessionWorkspaceSource = source('lib/dynaxis/identity/session-workspace.js');
   assert.doesNotMatch(personalWorkspaceSource, /owner_ref|ownerRef/);
   assert.doesNotMatch(sessionWorkspaceSource, /owner_ref|ownerRef/);
+});
+
+test('WP-7C-22 personal workspace organization hooks never treat owner_ref as identity authority', () => {
+  assert.doesNotMatch(source('lib/dynaxis/identity/workspace-protection.js'), /owner_ref|ownerRef/);
 });

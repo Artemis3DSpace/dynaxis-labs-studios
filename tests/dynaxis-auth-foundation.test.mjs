@@ -16,6 +16,11 @@ import {
   summarizeDynaxisAuthOptions,
 } from '../lib/dynaxis/auth/options.js';
 import { DYNAXIS_AUTH_APP_NAME, DYNAXIS_AUTH_BASE_PATH } from '../lib/dynaxis/auth/constants.js';
+import {
+  AUTH_CONTEXT_ERROR_CODES,
+  createUserAuthContextFromSession,
+  requireAuthContextWorkspace,
+} from '../lib/dynaxis/auth/auth-context.js';
 import { DRIZZLE_SCHEMA } from '../lib/dynaxis/db/client.js';
 import {
   LOCAL_PREVIEW_KEY,
@@ -191,4 +196,48 @@ test('legacy x-api-key auth bridge remains unchanged', () => {
   assert.match(apiSource, /requireOwnerFromRequest/);
   assert.match(apiSource, /ownerRef/);
   assert.match(apiSource, /apiKey/);
+});
+
+test('WP-7C-22 security-critical auth options stay fixed regardless of attempted environment overrides', () => {
+  const maliciousEnv = {
+    NODE_ENV: 'production',
+    BETTER_AUTH_SECRET: 'prod-secret-value',
+    BETTER_AUTH_URL: 'https://dynaxis.example.com',
+    EMAIL_AND_PASSWORD_DISABLE_SIGN_UP: 'false',
+    RATE_LIMIT_ENABLED: 'false',
+    RATE_LIMIT_MAX: '999999',
+    RATE_LIMIT_WINDOW: '0',
+    ACCOUNT_LINKING_ENABLED: 'true',
+  };
+  const options = createDynaxisAuthOptions({ database: { id: 'test-adapter' }, env: maliciousEnv });
+
+  assert.equal(options.emailAndPassword.disableSignUp, true);
+  assert.equal(options.account.accountLinking.enabled, false);
+  assert.equal(options.rateLimit.enabled, true);
+  assert.equal(options.rateLimit.storage, 'database');
+  assert.equal(options.rateLimit.window, 10);
+  assert.equal(options.rateLimit.max, 100);
+});
+
+test('WP-7C-22 user session with a stale active organization fails closed instead of granting workspace access', async () => {
+  const context = await createUserAuthContextFromSession(
+    {
+      session: { id: 'session-stale', userId: 'user-stale', activeOrganizationId: 'org-stale' },
+      user: { id: 'user-stale' },
+    },
+    {
+      workspaceResolver: async () => ({
+        organizationId: 'org-stale',
+        isMember: false,
+        isPersonal: false,
+      }),
+    }
+  );
+
+  assert.equal(context.workspace.organizationId, 'org-stale');
+  assert.equal(context.workspace.isMember, false);
+  assert.throws(
+    () => requireAuthContextWorkspace(context),
+    (err) => err.code === AUTH_CONTEXT_ERROR_CODES.WORKSPACE_REQUIRED
+  );
 });

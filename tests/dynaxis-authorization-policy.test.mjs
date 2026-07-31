@@ -240,6 +240,38 @@ test('personal Workspace governance mutations are explicitly denied for owners',
   );
 });
 
+test('WP-7C-22 personal Workspace governance mutations stay denied for every role that would otherwise pass the role gate', () => {
+  const deniedPermissions = [
+    'workspace.members.invite',
+    'workspace.members.update',
+    'workspace.members.remove',
+    'workspace.transfer',
+  ];
+
+  for (const permission of deniedPermissions) {
+    const definition = getPermissionDefinition(permission);
+    for (const role of WORKSPACE_ROLES) {
+      const decision = authorize(permission, {
+        workspace: workspace(role, { isPersonal: true }),
+      });
+      assert.equal(decision.allowed, false, `${permission} ${role}`);
+      if (definition.workspaceRoles.includes(role)) {
+        assert.equal(decision.reason, EXPLICIT_DENY, `${permission} ${role}`);
+      } else {
+        assert.equal(decision.reason, INSUFFICIENT_WORKSPACE_ROLE, `${permission} ${role}`);
+      }
+    }
+  }
+});
+
+test('WP-7C-22 membership loss denies personal Workspace governance mutations before the personal-workspace explicit deny is reached', () => {
+  const decision = authorize('workspace.members.remove', {
+    workspace: workspace('owner', { isPersonal: true, isMember: false }),
+  });
+  assert.equal(decision.allowed, false);
+  assert.equal(decision.reason, NOT_WORKSPACE_MEMBER);
+});
+
 test('Workspace roles do not imply Project roles', () => {
   assert.equal(authorize('project.read').reason, NO_PROJECT);
   assert.equal(
