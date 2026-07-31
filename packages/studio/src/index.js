@@ -18,3 +18,5 @@ export { default as AiInfluencerStudio } from './components/AiInfluencerStudio';
 export * from './muapi';
 export * from './query/index.js';
 export * from './session/index.js';
+export * from './projects/index.js';
+export { DynaxisStudioProviders } from './providers/DynaxisStudioProviders.jsx';
