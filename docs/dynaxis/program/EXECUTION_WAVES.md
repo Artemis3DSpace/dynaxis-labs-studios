@@ -69,22 +69,22 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: complete
 - Rule: integrated from `phase-7c/client-session-workspace-switching`; client session/workspace switching foundation only.
 
-## Later Wave 7 - Phase 7C Project Queries Review
+## Later Wave 7 - Completed Phase 7C Project Queries Work
 
 - Specification packages: -
-- Implementation packages: -
-- Review / integration gates: WP-7C-20
+- Implementation packages: WP-7C-20
+- Review / integration gates: -
 - Migration owner constraints: complete
-- Branch: `phase-7c/project-queries-studio-migration`
-- Rule: project query hooks and minimal Studio migration only; no identity hardening (WP-7C-21/22/23).
+- Rule: integrated from `phase-7c/project-queries-studio-migration`; project query hooks and minimal Studio migration only.
 
-## Later Wave 8
+## Later Wave 8 - Ready Phase 7C Identity Hardening Work
 
 - Specification packages: -
 - Implementation packages: WP-7C-21
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7C-21
+- Dependency note: WP-7C-21 depends on WP-7C-12 and WP-7C-20 (both integrated).
 
 ## Later Wave 9
 
