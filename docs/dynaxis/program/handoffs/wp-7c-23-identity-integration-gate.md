@@ -32,8 +32,8 @@ All WP-7C-23 dependencies are **DONE** and integrated on main:
 ### Programme State Verification
 
 - **In Progress:** (none) ✅
-- **Review:** (none) ✅  
-- **WP-7C-23:** ready ✅
+- **Review:** WP-7C-23 Identity Integration Gate ✅
+- **WP-7C-23:** review (not done) ✅
 - **Phase 7D:** not started (WP-7D-03 remains backlog) ✅
 - **Route migration packages:** all done ✅
 - **Migration owner conflicts:** none (WP-7C-24 migration 0014 integrated) ✅
@@ -64,7 +64,7 @@ All WP-7C-23 dependencies are **DONE** and integrated on main:
 ## Validation Evidence
 
 - `git diff --check`: clean ✅
-- `npm run program:status`: valid; WP-7C-23 ready; no in_progress or review packages ✅
+- `npm run program:status`: valid; WP-7C-23 in review; no in_progress packages ✅
 - `npm run test:dynaxis`: **438 passed / 439** ✅
 
 ### Known Baseline Failure
