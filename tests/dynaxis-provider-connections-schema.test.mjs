@@ -421,11 +421,18 @@ test('WP-7D-03 migration and schema declare the same indexes and uniqueness', ()
   );
 });
 
-test('WP-7D-03 adds no encryption, decryption, unwrap, or key management runtime', () => {
-  const providerConnectionFiles = readdirSync(new URL('lib/dynaxis/provider-connections/', ROOT));
-  const secretFiles = readdirSync(new URL('lib/dynaxis/secrets/', ROOT));
-  assert.deepEqual(providerConnectionFiles.sort(), ['schema.js']);
-  assert.deepEqual(secretFiles.sort(), ['schema.js']);
+/**
+ * WP-7D-03 originally asserted that `lib/dynaxis/provider-connections/` and
+ * `lib/dynaxis/secrets/` contained nothing but `schema.js`. WP-7D-04 is
+ * chartered to add the runtime those directories were reserved for, so the
+ * file-inventory form of this assertion is obsolete. The durable invariant —
+ * and the one that actually protects the boundary — is that the *schema
+ * modules themselves* stay declarative: no crypto, no key management, no
+ * OAuth. That is what is asserted below, unchanged in strength.
+ */
+test('WP-7D-03 schema modules stay declarative with no encryption, unwrap, or key management runtime', () => {
+  assert.ok(existsSync(new URL('lib/dynaxis/provider-connections/schema.js', ROOT)));
+  assert.ok(existsSync(new URL('lib/dynaxis/secrets/schema.js', ROOT)));
 
   const runtimeForbidden = [
     /node:crypto/,
@@ -448,10 +455,23 @@ test('WP-7D-03 adds no encryption, decryption, unwrap, or key management runtime
   }
 });
 
-test('WP-7D-03 adds no provider connection services, routes, or UI', () => {
+/**
+ * `service.js`, `secrets/envelope.js`, and `secrets/keys.js` are WP-7D-04
+ * runtime and now legitimately exist, so asserting their absence is obsolete.
+ * What must remain true is that no HTTP route or Studio UI surface exists for
+ * ProviderConnections, and that the schema layer never depends on the runtime
+ * layer — keeping storage shape independent of secret handling.
+ */
+test('WP-7D-03 storage layer stays independent of routes, UI, and secret runtime', () => {
   assert.equal(existsSync(new URL('app/api/dynaxis/provider-connections', ROOT)), false);
-  assert.equal(existsSync(new URL('lib/dynaxis/provider-connections/service.js', ROOT)), false);
-  assert.equal(existsSync(new URL('lib/dynaxis/secrets/envelope.js', ROOT)), false);
-  assert.equal(existsSync(new URL('lib/dynaxis/secrets/keys.js', ROOT)), false);
   assert.equal(existsSync(new URL('packages/studio/src/provider-connections', ROOT)), false);
+
+  for (const file of [
+    'lib/dynaxis/provider-connections/schema.js',
+    'lib/dynaxis/secrets/schema.js',
+  ]) {
+    const body = codeWithoutComments(source(file));
+    assert.doesNotMatch(body, /from '\.\/service\.js'|from '\.\/materialization\.js'/, file);
+    assert.doesNotMatch(body, /envelope\.js|keys\.js/, `${file} must not depend on secret runtime`);
+  }
 });

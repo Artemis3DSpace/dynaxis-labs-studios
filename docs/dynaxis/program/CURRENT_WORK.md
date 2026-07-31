@@ -36,7 +36,13 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-04 Provider Connection Services and Permissions (branch:
+  `phase-7d/provider-connection-services-permissions`, base
+  `d186757591f9e7085328bf3b06107a1f2c486f40`, migration owner: false) — not
+  integrated. Runtime services, permissions, AEAD secret envelope
+  encryption/decryption, key-management boundary, unwrap/materialization, and
+  runtime audit. No new schema or migration. See
+  `docs/dynaxis/program/handoffs/wp-7d-04-provider-connection-services-permissions.md`.
 
 ## In Progress
 
@@ -71,13 +77,14 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-04 Provider Connection Services and Permissions — **ready, not started**
+(none)
 
 `WP-7D-04` owns all ProviderConnection runtime: services and permissions,
 encryption/decryption services, secret unwrap, AAD runtime validation, key
-management integration (KMS, local dev, test), the provider adapter
-materialization boundary, and runtime audit logging. None of that exists yet;
-`WP-7D-03` delivered storage shape only.
+management integration (KMS boundary, local dev, test), the provider adapter
+materialization boundary, and runtime audit logging. It is implemented and in
+review on `phase-7d/provider-connection-services-permissions`, not yet
+integrated.
 
 ## Blocked Runtime Implementation
 
@@ -85,4 +92,4 @@ materialization boundary, and runtime audit logging. None of that exists yet;
 
 ## Next Sequential Phase Tasks
 
-1. Provider Connection Services and Permissions (Phase 7D implementation; `WP-7D-04` ready but not started; owns all ProviderConnection runtime secret lifecycle)
+1. MuAPI Credential Migration and Provider Resolver (Phase 7D implementation; `WP-7D-05` remains backlog until `WP-7D-04` integrates)

@@ -126,15 +126,16 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Rule: integrated from `phase-7d/provider-connection-schema-migration`. WP-7D-03 Provider Connection Schema and Migration is **completed**; migration `0015` (`0015_phase_7d_3_provider_connections.sql`) is integrated on main, adding `dynaxis_provider_connections` and `dynaxis_provider_secret_envelopes`. No Phase 7D migration owner is active.
 - Scope note: storage shape only. No encryption/decryption runtime, unwrap, AAD runtime validation, key generation, KMS/local/test key runtime, provider adapter materialization, provider services, OAuth, or UI was introduced. No ProviderConnection runtime implementation has started.
 
-## Later Wave 14 - Ready Phase 7D Provider Connection Services and Permissions
+## Later Wave 14 - Phase 7D Provider Connection Services and Permissions (in review)
 
 - Specification packages: -
 - Implementation packages: WP-7D-04, WP-8F-02
 - Review / integration gates: -
 - Migration owner constraints: WP-8F-02
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-04, WP-8F-02
-- Dependency note: WP-7D-04 depends on WP-7D-03 (integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
-- Ownership note: WP-7D-04 owns runtime ProviderConnection services and permissions, encryption/decryption services, secret unwrap, AAD runtime validation, key management integration (KMS, local dev, test), the provider adapter materialization boundary, and runtime audit logging.
+- Dependency note: WP-7D-04 depends on WP-7D-03 (integrated). It is implemented and **in review** on `phase-7d/provider-connection-services-permissions`; not yet integrated.
+- Ownership note: WP-7D-04 owns runtime ProviderConnection services and permissions, encryption/decryption services, secret unwrap, AAD runtime validation, key management integration (KMS boundary, local dev, test), the provider adapter materialization boundary, and runtime audit logging.
+- Scope note: WP-7D-04 adds no schema and no migration; it builds on the integrated `0015` shape. No OAuth flow, no Studio UI, and no provider-specific adapter implementation.
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave. WP-7D-05 remains backlog until WP-7D-04 is integrated.
 
 ## Later Wave 15
