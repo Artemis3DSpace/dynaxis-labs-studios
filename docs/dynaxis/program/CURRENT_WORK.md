@@ -35,7 +35,12 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-03 Provider Connection Schema and Migration (branch:
+  `phase-7d/provider-connection-schema-migration`, base
+  `67e12951d06765d6b20b946f4fc84becf4235a18`, migration owner: true, migration
+  `0015`) — not integrated. Schema and migration only; all ProviderConnection
+  secret runtime remains with WP-7D-04. See
+  `docs/dynaxis/program/handoffs/wp-7d-03-provider-connection-schema-migration.md`.
 
 ## In Progress
 
@@ -68,12 +73,12 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-03 Provider Connection Schema and Migration
+(none)
 
 ## Blocked Runtime Implementation
 
-(none)
+`WP-7D-04` remains backlog until `WP-7D-03` is integrated. `WP-7D-05`, `WP-7D-06`, and `WP-7D-07` remain backlog behind `WP-7D-04`.
 
 ## Next Sequential Phase Tasks
 
-1. Provider Connection Schema and Migration (Phase 7D implementation; WP-7D-03 ready; migration owner not started)
+1. Provider Connection Services and Permissions (Phase 7D implementation; `WP-7D-04` backlog until `WP-7D-03` integrates; owns all ProviderConnection secret runtime)

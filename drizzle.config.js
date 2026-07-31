@@ -11,6 +11,8 @@ export default defineConfig({
     './lib/dynaxis/db/schema.js',
     './lib/dynaxis/auth/schema.js',
     './lib/dynaxis/identity/schema.js',
+    './lib/dynaxis/provider-connections/schema.js',
+    './lib/dynaxis/secrets/schema.js',
   ],
   out: './drizzle',
   dialect: 'postgresql',
