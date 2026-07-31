@@ -32,15 +32,11 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 - WP-7C-23 Identity Integration Gate
 - WP-7D-01 ProviderConnection Contract and Threat Model
 - WP-7D-02 Secret Storage and Key Management Architecture
+- WP-7D-03 Provider Connection Schema and Migration (migration owner: 0015)
 
 ## In Review
 
-- WP-7D-03 Provider Connection Schema and Migration (branch:
-  `phase-7d/provider-connection-schema-migration`, base
-  `67e12951d06765d6b20b946f4fc84becf4235a18`, migration owner: true, migration
-  `0015`) — not integrated. Schema and migration only; all ProviderConnection
-  secret runtime remains with WP-7D-04. See
-  `docs/dynaxis/program/handoffs/wp-7d-03-provider-connection-schema-migration.md`.
+(none)
 
 ## In Progress
 
@@ -51,6 +47,8 @@ Phase 7C.5 is integrated. `WP-7C-05` is complete and its branch and implementati
 `WP-7C-06` is complete and its branch and implementation history are preserved on main. `WP-7C-07` Project Membership Tests and Fixtures is complete and integrated on main.
 
 Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorization Vocabulary/Policy Specification is complete on `phase-7c/authorization-spec`. Authorization Evaluator + Workspace Policy is complete on `phase-7c/authorization-workspace-policy`. `WP-7C-10` Project Policy and Resource Inheritance is integrated from `phase-7c/project-policy-resource-inheritance`. `WP-7C-11` Authorization Regression Test Suite is integrated from `phase-7c/authorization-regression-review`. `WP-7C-12` Canonical AuthContext Contract is integrated from `phase-7c/auth-context-contract`. `WP-7C-13` AuthContext Route Helper Integration is integrated from `phase-7c/auth-context-route-helper`. `WP-7C-24` Canonical Persistence Access Bridge is integrated from `phase-7c/canonical-persistence-access`. Route migration wave `WP-7C-14` through `WP-7C-17` is integrated on main. `WP-7C-18` TanStack Query Foundation is integrated from `phase-7c/tanstack-query-foundation`. `WP-7C-19` Client Session and Workspace Switching is integrated from `phase-7c/client-session-workspace-switching`. `WP-7C-20` Project Queries and Studio Migration is integrated from `phase-7c/project-queries-studio-migration`. `WP-7C-21` Identity Signup Provisioning and Recovery Hardening is integrated from `phase-7c/identity-signup-provisioning-recovery-hardening`. `WP-7C-22` Session Rate Limit Abuse and Security Tests is integrated from `phase-7c/session-rate-limit-abuse-security-tests`. `WP-7C-23` Identity Integration Gate is integrated from `phase-7c/identity-integration-gate`; Phase 7C identity work is complete.
+
+`WP-7D-03` Provider Connection Schema and Migration is **completed** and integrated from `phase-7d/provider-connection-schema-migration`. Migration `0015` (`0015_phase_7d_3_provider_connections.sql`) is integrated on main, adding `dynaxis_provider_connections` and `dynaxis_provider_secret_envelopes` as storage shape only. No Phase 7D migration owner is active. No ProviderConnection runtime implementation has started.
 
 ## Ready Work Packages
 
@@ -73,12 +71,18 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-(none)
+- WP-7D-04 Provider Connection Services and Permissions — **ready, not started**
+
+`WP-7D-04` owns all ProviderConnection runtime: services and permissions,
+encryption/decryption services, secret unwrap, AAD runtime validation, key
+management integration (KMS, local dev, test), the provider adapter
+materialization boundary, and runtime audit logging. None of that exists yet;
+`WP-7D-03` delivered storage shape only.
 
 ## Blocked Runtime Implementation
 
-`WP-7D-04` remains backlog until `WP-7D-03` is integrated. `WP-7D-05`, `WP-7D-06`, and `WP-7D-07` remain backlog behind `WP-7D-04`.
+`WP-7D-05` remains backlog until `WP-7D-04` is integrated. `WP-7D-06` and `WP-7D-07` remain backlog behind `WP-7D-04`.
 
 ## Next Sequential Phase Tasks
 
-1. Provider Connection Services and Permissions (Phase 7D implementation; `WP-7D-04` backlog until `WP-7D-03` integrates; owns all ProviderConnection secret runtime)
+1. Provider Connection Services and Permissions (Phase 7D implementation; `WP-7D-04` ready but not started; owns all ProviderConnection runtime secret lifecycle)

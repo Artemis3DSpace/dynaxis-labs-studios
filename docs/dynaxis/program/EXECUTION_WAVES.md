@@ -117,25 +117,25 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Migration owner constraints: -
 - Rule: integrated from `phase-7d/secret-storage-key-management-architecture`; secret storage and key-management architecture specification only. WP-7D-03 Provider Connection Schema and Migration is the next ready Phase 7D implementation work.
 
-## Later Wave 13 - Phase 7D Provider Connection Schema and Migration (in review)
+## Later Wave 13 - Completed Phase 7D Provider Connection Schema and Migration
 
 - Specification packages: -
 - Implementation packages: WP-7D-03
 - Review / integration gates: -
-- Migration owner constraints: WP-7D-03
-- Packages that may run simultaneously after dependencies and conflict checks: -
-- Dependency note: WP-7D-03 depends on WP-7C-23 (integrated) and WP-7D-02 (integrated).
-- Serialization note: WP-7D-03 is the active Phase 7D migration owner and owns migration `0015`; it is in review on `phase-7d/provider-connection-schema-migration` and not yet integrated. No other Phase 7D package may own a schema migration until WP-7D-03 integrates. WP-7D-04 remains backlog until WP-7D-03 is integrated.
-- Scope note: schema and migration only. No encryption/decryption runtime, unwrap, AAD runtime validation, key generation, KMS/local/test key runtime, provider services, OAuth, or UI — all deferred to WP-7D-04.
+- Migration owner constraints: complete
+- Rule: integrated from `phase-7d/provider-connection-schema-migration`. WP-7D-03 Provider Connection Schema and Migration is **completed**; migration `0015` (`0015_phase_7d_3_provider_connections.sql`) is integrated on main, adding `dynaxis_provider_connections` and `dynaxis_provider_secret_envelopes`. No Phase 7D migration owner is active.
+- Scope note: storage shape only. No encryption/decryption runtime, unwrap, AAD runtime validation, key generation, KMS/local/test key runtime, provider adapter materialization, provider services, OAuth, or UI was introduced. No ProviderConnection runtime implementation has started.
 
-## Later Wave 14
+## Later Wave 14 - Ready Phase 7D Provider Connection Services and Permissions
 
 - Specification packages: -
 - Implementation packages: WP-7D-04, WP-8F-02
 - Review / integration gates: -
 - Migration owner constraints: WP-8F-02
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-04, WP-8F-02
-- Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
+- Dependency note: WP-7D-04 depends on WP-7D-03 (integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
+- Ownership note: WP-7D-04 owns runtime ProviderConnection services and permissions, encryption/decryption services, secret unwrap, AAD runtime validation, key management integration (KMS, local dev, test), the provider adapter materialization boundary, and runtime audit logging.
+- Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave. WP-7D-05 remains backlog until WP-7D-04 is integrated.
 
 ## Later Wave 15
 
