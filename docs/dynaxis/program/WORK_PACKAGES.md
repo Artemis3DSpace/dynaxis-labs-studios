@@ -32,9 +32,9 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 
 | ID | Phase | Title | Type | Recommended Agent | Status | Depends On | Migration Owner |
 |---|---|---|---|---|---|---|---|
-| WP-7D-01 | 7D | ProviderConnection Contract and Threat Model | specification | claude | ready | - | no |
+| WP-7D-01 | 7D | ProviderConnection Contract and Threat Model | specification | claude | review | - | no |
 | WP-7D-02 | 7D | Secret Storage and Key Management Architecture | specification | claude | ready | WP-7D-01 | no |
-| WP-7D-03 | 7D | Provider Connection Schema and Migration | implementation | codex | ready | WP-7C-23, WP-7D-02 | yes |
+| WP-7D-03 | 7D | Provider Connection Schema and Migration | implementation | codex | backlog | WP-7C-23, WP-7D-02 | yes |
 | WP-7D-04 | 7D | Provider Connection Services and Permissions | implementation | codex | backlog | WP-7D-03 | no |
 | WP-7D-05 | 7D | MuAPI Credential Migration and Provider Resolver | implementation | codex | backlog | WP-7D-04 | no |
 | WP-7D-06 | 7D | Connection Health Rotation UI and Audit | implementation | cursor | backlog | WP-7D-04, WP-7D-05 | no |
