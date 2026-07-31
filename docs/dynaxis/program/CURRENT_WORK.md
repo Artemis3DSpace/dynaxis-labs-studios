@@ -30,10 +30,11 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 - WP-7C-21 Identity Signup Provisioning and Recovery Hardening
 - WP-7C-22 Session Rate Limit Abuse and Security Tests
 - WP-7C-23 Identity Integration Gate
+- WP-7D-01 ProviderConnection Contract and Threat Model
 
 ## In Review
 
-- WP-7D-01 ProviderConnection Contract and Threat Model
+(none)
 
 ## In Progress
 
@@ -74,4 +75,4 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Next Sequential Phase Tasks
 
-1. Provider Connection Schema and Migration (Phase 7D ready)
+1. Secret Storage and Key Management Architecture (Phase 7D specification; WP-7D-02 ready)
