@@ -2,7 +2,7 @@
 
 ## Current Programme
 
-Phase 7C complete. Phase 7D ready with parallel specification-only planning.
+Phase 7C complete. **Phase 7D Provider Connections is security-reviewed and complete.** Parallel specification-only planning continues.
 
 ## Completed
 
@@ -36,16 +36,11 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 - WP-7D-04 Provider Connection Services and Permissions
 - WP-7D-05 MuAPI Credential Migration and Provider Resolver
 - WP-7D-06 Connection Health Rotation UI and Audit
+- WP-7D-07 Provider Connection Security Review
 
 ## In Review
 
-- WP-7D-07 Provider Connection Security Review (branch:
-  `phase-7d/provider-connection-security-review`, base
-  `b3a3e1bb5947078cc713174a536d750cf10ff445`, migration owner: false) — not
-  integrated. Phase 7D security review gate: 25-item checklist, 18 negative
-  tests, three findings fixed, six residual risks accepted. No schema or
-  migration. See
-  `docs/dynaxis/program/handoffs/wp-7d-07-provider-connection-security-review.md`.
+(none)
 
 ## In Progress
 
@@ -64,6 +59,10 @@ Project Membership slice `WP-7C-05` through `WP-7C-07` is complete. Authorizatio
 `WP-7D-05` MuAPI Credential Migration and Provider Resolver is **completed** and integrated from `phase-7d/muapi-credential-migration-provider-resolver`. The Provider Resolver and the MuAPI credential migration path are integrated: MuAPI credential use now routes through the ProviderConnection runtime boundary (`selectProviderConnection` -> `useProviderCredential` -> `service.resolveForUse` -> unwrap -> adapter), with `providerId` pinned and re-asserted after materialization. Provider adapters remain pure — `lib/dynaxis/providers/**` was not modified and imports neither ProviderConnection nor secret internals. Legacy `x-api-key` remains a compatibility principal only: it does not become a ProviderConnection credential and grants no ProviderConnection authority. Selection gates on `provider_connection.read`, so an unauthorized caller cannot expose `secretRef`/`keyRef`. No OAuth, no UI, no schema, and no migration were added.
 
 `WP-7D-06` Connection Health Rotation UI and Audit is **completed** and integrated from `phase-7d/connection-health-rotation-ui-audit`. The connection health surface, the rotation/revoke/delete action boundaries, safe audit visibility, the ProviderConnection API routes under `app/api/dynaxis/provider-connections/**`, and a minimal Studio ProviderConnection panel are all integrated. Every browser/API projection is allowlist-based. The public audit projection strips `secretVersion`, `secretStatus`, and `previousSecretStatus`, while the server-side audit sink remains in-memory and retains those fields for server forensic metadata; no durable audit persistence was added. The Studio client fail-closed forbidden-field guard remains active. No OAuth implementation, no schema, no migration, and no provider adapter changes were made — `lib/dynaxis/providers/**` remains pure and imports neither ProviderConnection nor secret internals.
+
+`WP-7D-07` Provider Connection Security Review is **completed** and integrated from `phase-7d/provider-connection-security-review`. **Phase 7D Provider Connections is security-reviewed and complete.** The 25-item security checklist and 18 negative tests are integrated. Three findings were fixed: the detail-endpoint `FORBIDDEN` vs `NOT_FOUND` enumeration oracle, `assertCanonicalPrincipal` moved to the shared `route-guard.js` helper, and `algorithm` stripped from the public audit projection.
+
+Security posture recorded by the review: provider credentials are **not identity** — they never become Better Auth users, Dynaxis principals, workspace members, Project members, AuthContext subjects, or policy actors, and provider account metadata is never consulted for authorization. Legacy `x-api-key` grants **no** ProviderConnection authority. Service principals remain **fail-closed** at the route guard, the policy evaluator, and the resolver; **`WP-7E` worker dispatch must not use ProviderConnections until an explicit tested service-principal allowlist exists.** Browser redaction is **exception-free, including `algorithm`**: public browser/API/Studio projections expose no `secretRef`, `keyRef`, envelope internals, plaintext, raw credentials, `algorithm`, or key-management state. The Studio fail-closed forbidden-field guard remains active, and provider adapters remain pure. No OAuth implementation, no provider adapter implementation, no schema, and no migration were added. No durable audit sink was added; KMS remains unwired and the production adapter still fails closed until configured.
 
 ## Ready Work Packages
 
@@ -88,56 +87,42 @@ Specification-only Work Packages may continue in parallel under their documented
 
 (none)
 
-`WP-7D-07` is implemented and in review on
-`phase-7d/provider-connection-security-review`, not yet integrated. It worked
-through all eleven recorded follow-ups: five fixed, six accepted as documented
-residual risks.
+**Phase 7D Provider Connections is security-reviewed and complete.** All seven
+packages `WP-7D-01` through `WP-7D-07` are integrated.
 
 ## Blocked Runtime Implementation
 
-`WP-7E-04` and `WP-7G-02` remain backlog until `WP-7D-07` is integrated.
+`WP-7E-04` and `WP-7G-02` may now become eligible **according to their own
+dependency rules only** — `WP-7D-07` no longer blocks them, but each has
+further dependencies of its own and neither has been started.
 
-**`WP-7E-06` worker dispatch must not use ProviderConnections** until an
-explicit, tested service-principal allowlist exists. Service principals are
-currently fail-closed at three layers; this is residual risk R1 in the WP-7D-07
-review.
+**`WP-7E-06` ProviderConnection use remains blocked** until an explicit,
+tested service-principal allowlist exists. Service principals are fail-closed
+at the route guard, the policy evaluator, and the resolver. This is residual
+risk R1 below.
 
-## Phase 7D Follow-Ups (addressed by WP-7D-07)
+## Phase 7D Residual Risks (recorded, closed as follow-ups)
 
 All eleven were worked through by the WP-7D-07 security review: follow-ups 1,
 2, 4, 5, and 6 are **fixed**; 3, 7, 8, 9, 10, and 11 are **accepted residual
 risks** (R5, R1, R2, R3, R4, R6) with severity and blockers recorded in
 `docs/dynaxis/program/handoffs/wp-7d-07-provider-connection-security-review.md`.
-The list below is retained for traceability.
 
+The eleven Phase 7D follow-ups are **closed**: five were fixed by WP-7D-07
+(detail-endpoint enumeration oracle, `assertCanonicalPrincipal` shared helper,
+`algorithm` stripped from public audit, broader resolver-selection regression
+tests, AuthContext documented as trust root) and six were converted into the
+recorded residual risks below. They are no longer open follow-ups.
 
-
-- `WP-7D-07` should review whether detail endpoint responses should align
-  `FORBIDDEN` vs `NOT_FOUND` to reduce enumeration differences.
-- `WP-7D-07` should consider moving `assertCanonicalPrincipal` out of a route
-  module and into a small shared server helper.
-- `WP-7D-07` should add or restore executed route-handler coverage once the
-  known `next/server` test environment issue is fixed.
-- `WP-7D-07` should make a deliberate keep-or-strip decision on the audit
-  property `algorithm`: it is safe and publicly documented, but still resembles
-  envelope metadata.
-- `WP-7D-07` should add broader resolver-selection regression tests beyond the
-  fixed blocker test, covering user-owned foreign explicit id, foreign
-  `ownerUserId` default spoof, and null workspace context plus foreign
-  `organizationId`.
-- `WP-7D-07` should explicitly document AuthContext as the Phase 7C/7D trust
-  root.
-- Service-principal allowlist remains undefined and fail-closed. WP-7E job and
-  worker dispatch must not use ProviderConnections until an explicit allowlist
-  exists.
-- Canonical `provider_connection.*` permission merge into
-  `lib/dynaxis/auth/permissions.js` remains future work.
-- Durable audit sink remains future work; the current sink is in-memory.
-- KMS wiring remains future work; the production adapter fails closed until
-  configured.
-- Route migration (`app/api/**`, `lib/dynaxis/api.js`) and the repository
-  default-flag write in `importLegacyMuapiCredential` remain future work.
+| ID | Residual risk | Severity | Status |
+|---|---|---|---|
+| R1 | No service-principal allowlist; service principals fail-closed at guard, policy, and resolver | **Medium** | **Blocks `WP-7E-06` ProviderConnection use.** WP-7E must define and test an explicit allowlist first. |
+| R2 | `provider_connection.*` vocabulary is Phase-7D-local, not in the canonical registry | Low | Accepted — the canonical evaluator returns `UNKNOWN_PERMISSION` → deny, so the split is fail-closed. |
+| R3 | Audit sink is in-memory; events do not survive restart | **Medium** | Accepted — durable audit needs a migration owner. No durable audit sink was added. |
+| R4 | Production KMS unwired | **Medium** | Accepted — the adapter fails closed until configured; no silent fallback is possible. |
+| R5 | Route handlers not executed in tests (`next/server` unresolvable) | Low | Accepted — covered by source assertions plus direct helper tests. |
+| R6 | Legacy `x-api-key` routes un-migrated; repository default-flag write | Low | Accepted — legacy remains a compatibility principal with no ProviderConnection authority. |
 
 ## Next Sequential Phase Tasks
 
-1. Provider Connection Security Review (Phase 7D review gate; `WP-7D-07` ready but not started)
+1. Phase 7D is complete. `WP-7E-04` and `WP-7G-02` become eligible according to their own remaining dependencies; neither has been started. `WP-7E-06` ProviderConnection use stays blocked on residual risk R1.
