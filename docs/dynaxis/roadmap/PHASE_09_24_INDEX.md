@@ -11,6 +11,15 @@ It is **not** implementation work, does **not** change programme status, and doe
 - No runtime code, schema, drizzle, migration, auth, or secret-system changes are defined here.
 - Provider connection internals remain out of scope unless explicitly scheduled by a future Work Package.
 
+## Dependency Note
+
+- This roadmap is documentation scaffold only.
+- It does not mark any Phase 9-24 package ready.
+- Phase 9-24 work must not start until its dependency phase gates are complete.
+- Phase 9 depends on Phase 7E/7F/7G/7I and relevant Phase 8 foundations.
+- Any future Phase 9-24 work packages must be added through `docs/dynaxis/program/WORK_PACKAGES.md` and execution-wave updates in a separate programme-planning package.
+- This branch intentionally did not modify `docs/dynaxis/program/*`.
+
 ## Phase Scaffolds
 
 - [Phase 09 - Supercomputer Orchestration](./PHASE_09_SUPERCOMPUTER_ORCHESTRATION.md)
