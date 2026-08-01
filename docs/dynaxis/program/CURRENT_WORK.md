@@ -4,6 +4,47 @@
 
 Phase 7C complete. **Phase 7D Provider Connections is security-reviewed and complete.** Parallel specification-only planning continues.
 
+### Baseline on main
+
+| Field | Value |
+|---|---|
+| `origin/main` | `204e5ff051ea7306c4133cbe64f3f7ac561cb239` |
+| Test baseline | **664/664 passing** |
+| Migrations | `0008` - `0015` (no migration owner active) |
+| **Implemented runtime** | **Phases 7C and 7D only** |
+
+### Scaffold waves 1-4 - contracts only, not implementation
+
+Waves 1-4 integrated **thirteen scaffold / domain contract areas** under `lib/dynaxis/**`. They are contract-only — schemas, frozen constants, validators, pure helpers — with **no I/O, no persistence, and no runtime behaviour**.
+
+**No Work Package became `done` because of them.** Persistence, workers, provider use, app generation, publishing, deployment, and storage all remain **not implemented**.
+
+| Wave | `main` after | Tests | Domains |
+|---|---|---|---|
+| 1 | `39ba975` | 570/570 | jobs (7E), app-factory (8A), composer (8C) |
+| 2 | `839590d` | 603/603 | project-graph (7F), capabilities (7G), agents (7I), build-runtime (8B), layout (8D) |
+| 3 | `00c17ec` | 638/638 | workspace-intelligence, design-system, template-library |
+| 4 | `204e5ff` | 664/664 | assets, publish |
+
+Five of these domains (Waves 3-4) have **no owning Work Package** and their phase documents collide with the authoritative catalogue meanings of 7H, 8E, 8F, 8G, and 8H. Those catalogue meanings are **unchanged**. See **`SCAFFOLD_INVENTORY.md`** for the full inventory (`SD-01` - `SD-13`) and `handoffs/scaffold-waves-reconciliation.md` for the reconciliation record.
+
+### State vocabulary
+
+| State | Meaning | Where |
+|---|---|---|
+| **implemented runtime** | Work Package `done`, behaviour live | Phases 7C, 7D |
+| **scaffold present** | Domain contracts only; runtime not implemented; no schema/migration | `SD-01` - `SD-13` |
+| **spec only** | Specification Work Package `ready` or `done`; no code | 7E-01/02/03, 7F-01, 7G-01, 7H-01, 7I-01, 8A-01, 8C-01, 8F-01, 8G-01, 8H-01, 9-01 |
+| **requires future work-package ownership** | Scaffold on `main` with no owning Work Package | `SD-09` - `SD-13` |
+
+### Blocked - must not be touched yet
+
+- **`WP-7E-06` ProviderConnection worker use** — blocked by residual risk **R1** (no service-principal allowlist). Enforced in code: `assertWorkerProviderConnectionBlocked()` in `lib/dynaxis/jobs/contracts.js` throws `501` unconditionally.
+- **Durable audit persistence** — residual risk **R3**; needs a migration owner.
+- **Production KMS** — residual risk **R4**; adapter fails closed.
+- **Schema/migrations for any scaffold domain** — only the named persistence Work Package may open one, serialized per `CONFLICT_MATRIX.md`.
+- **`SD-09` - `SD-13` runtime** — no owning Work Package exists.
+
 ## Completed
 
 - 7C.1
