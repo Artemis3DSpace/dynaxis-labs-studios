@@ -148,24 +148,27 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Scope note: no OAuth, no UI, no schema, and no migration were added; no existing route was rewired.
 - Serialization note: no Phase 7D migration owner is active. WP-7D-07 remains backlog until WP-7D-06 is integrated.
 
-## Later Wave 16 - Phase 7D Connection Health Rotation UI and Audit (in review)
+## Later Wave 16 - Completed Phase 7D Connection Health Rotation UI and Audit
 
 - Specification packages: -
 - Implementation packages: WP-7D-06
 - Review / integration gates: -
 - Migration owner constraints: -
-- Packages that may run simultaneously after dependencies and conflict checks: WP-7D-06
-- Dependency note: WP-7D-06 depends on WP-7D-04 and WP-7D-05 (both integrated). It is implemented and **in review** on `phase-7d/connection-health-rotation-ui-audit`; not yet integrated.
-- Scope note: WP-7D-06 adds the health surface, rotation/revoke/delete action boundaries, audit visibility, API routes under `app/api/dynaxis/provider-connections/**`, and a minimal Studio panel. Every browser-facing projection is allowlist-based; no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD, ciphertext, or plaintext reaches a browser. No OAuth, no schema, no migration, and no provider adapter change.
-- Serialization note: WP-7D-07 remains backlog until WP-7D-06 is integrated.
+- Rule: WP-7D-06 Connection Health Rotation UI and Audit is **completed** and integrated from `phase-7d/connection-health-rotation-ui-audit`. The connection health surface, the rotation/revoke/delete action boundaries, safe audit visibility, the ProviderConnection API routes under `app/api/dynaxis/provider-connections/**`, and a minimal Studio ProviderConnection panel are all integrated.
+- Redaction note: every browser/API projection is allowlist-based. The public audit projection strips `secretVersion`, `secretStatus`, and `previousSecretStatus`; the Studio client fail-closed forbidden-field guard remains active. No `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD, ciphertext, or plaintext reaches a browser.
+- Audit note: the server-side audit sink remains in-memory and keeps server forensic metadata. No durable audit persistence was added.
+- Scope note: no OAuth implementation, no schema, no migration, and no provider adapter changes. `lib/dynaxis/providers/**` remains pure and imports neither ProviderConnection nor secret internals.
+- Serialization note: no Phase 7D migration owner is active.
 
-## Later Wave 17
+## Later Wave 17 - Ready Phase 7D Provider Connection Security Review
 
 - Specification packages: -
 - Implementation packages: -
 - Review / integration gates: WP-7D-07
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-07
+- Dependency note: WP-7D-07 depends on WP-7D-03 through WP-7D-06 (all integrated) and is now the next ready Phase 7D task. It is **ready but not started**; no branch exists.
+- Scope note: WP-7D-07 is the Phase 7D security review gate and should work through the recorded Phase 7D follow-ups in `CURRENT_WORK.md`.
 
 ## Later Wave 18
 
