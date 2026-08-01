@@ -777,8 +777,22 @@ test('WP-7D-04 adds no OAuth, UI, provider adapter, schema, or migration changes
 
   // No OAuth flow, no UI, no provider-specific adapter added by this package.
   assert.equal(existsSync(new URL('lib/dynaxis/provider-connections/oauth.js', ROOT)), false);
-  assert.equal(existsSync(new URL('app/api/dynaxis/provider-connections', ROOT)), false);
-  assert.equal(existsSync(new URL('packages/studio/src/provider-connections', ROOT)), false);
+
+  // WP-7D-06 legitimately adds route and Studio surfaces, so asserting their
+  // absence is obsolete. The durable invariant is that neither may reach into
+  // the secret runtime.
+  for (const surface of [
+    'app/api/dynaxis/provider-connections/route.js',
+    'packages/studio/src/provider-connections/api.js',
+  ]) {
+    if (existsSync(new URL(surface, ROOT))) {
+      assert.doesNotMatch(
+        source(surface),
+        /secrets\/(keys|envelope)\.js|openSecret|sealSecret|resolveKey/,
+        `${surface} must not reach the secret runtime`
+      );
+    }
+  }
 
   for (const file of [
     'lib/dynaxis/provider-connections/service.js',

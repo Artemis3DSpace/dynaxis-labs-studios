@@ -38,7 +38,13 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-06 Connection Health Rotation UI and Audit (branch:
+  `phase-7d/connection-health-rotation-ui-audit`, base
+  `15938784ad842a10822adff030f20bd4fe2ab725`, migration owner: false) — not
+  integrated. Health surface, rotation/revoke/delete action boundaries, audit
+  visibility, API routes, and a minimal Studio panel. Allowlist redaction
+  throughout; no schema or migration. See
+  `docs/dynaxis/program/handoffs/wp-7d-06-connection-health-rotation-ui-audit.md`.
 
 ## In Progress
 
@@ -77,12 +83,12 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-06 Connection Health Rotation UI and Audit — **ready, not started**
+(none)
 
-`WP-7D-06` may now build connection health, rotation UI, and audit surfaces on
-the integrated ProviderConnection runtime. It must enforce the WP-7D-02 browser
-redaction rules: no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD,
-ciphertext, or plaintext may reach a browser.
+`WP-7D-06` is implemented and in review on
+`phase-7d/connection-health-rotation-ui-audit`, not yet integrated. It enforces
+the WP-7D-02 browser redaction rules: no `secretRef`, `keyRef`, envelope
+metadata, IV, authTag, AAD, ciphertext, or plaintext reaches a browser.
 
 ## Blocked Runtime Implementation
 
@@ -109,4 +115,4 @@ ciphertext, or plaintext may reach a browser.
 
 ## Next Sequential Phase Tasks
 
-1. Connection Health Rotation UI and Audit (Phase 7D implementation; `WP-7D-06` ready but not started)
+1. Provider Connection Security Review (Phase 7D review gate; `WP-7D-07` remains backlog until `WP-7D-06` integrates)
