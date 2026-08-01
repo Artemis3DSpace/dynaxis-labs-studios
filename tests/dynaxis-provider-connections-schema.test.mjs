@@ -462,9 +462,20 @@ test('WP-7D-03 schema modules stay declarative with no encryption, unwrap, or ke
  * ProviderConnections, and that the schema layer never depends on the runtime
  * layer — keeping storage shape independent of secret handling.
  */
+/**
+ * WP-7D-06 is chartered to add the route and Studio surfaces this test
+ * originally asserted were absent, so the absence form is obsolete. The
+ * durable invariant is the dependency direction: the storage layer must not
+ * depend on the runtime layer, and the route/UI surfaces must not reach into
+ * secret internals. Both are asserted below, unchanged in strength.
+ */
 test('WP-7D-03 storage layer stays independent of routes, UI, and secret runtime', () => {
-  assert.equal(existsSync(new URL('app/api/dynaxis/provider-connections', ROOT)), false);
-  assert.equal(existsSync(new URL('packages/studio/src/provider-connections', ROOT)), false);
+  const uiApi = 'packages/studio/src/provider-connections/api.js';
+  if (existsSync(new URL(uiApi, ROOT))) {
+    const body = codeWithoutComments(source(uiApi));
+    assert.doesNotMatch(body, /secrets\/(keys|envelope)\.js/, 'UI must not import secret internals');
+    assert.doesNotMatch(body, /provider-connections\/(schema|repository)\.js/, 'UI must not import storage');
+  }
 
   for (const file of [
     'lib/dynaxis/provider-connections/schema.js',

@@ -553,9 +553,22 @@ test('WP-7D-05 adds no OAuth, UI, schema, or migration', () => {
   assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
   assert.equal(migrations.length, 16);
 
-  assert.equal(existsSync(new URL('app/api/dynaxis/provider-connections', ROOT)), false);
-  assert.equal(existsSync(new URL('packages/studio/src/provider-connections', ROOT)), false);
   assert.equal(existsSync(new URL('lib/dynaxis/provider-connections/oauth.js', ROOT)), false);
+
+  // WP-7D-06 adds the route and Studio surfaces; their absence is no longer
+  // the invariant. What must hold is that they never reach the secret runtime.
+  for (const surface of [
+    'app/api/dynaxis/provider-connections/route.js',
+    'packages/studio/src/provider-connections/api.js',
+  ]) {
+    if (existsSync(new URL(surface, ROOT))) {
+      assert.doesNotMatch(
+        source(surface),
+        /secrets\/(keys|envelope)\.js|openSecret|sealSecret|resolveKey/,
+        `${surface} must not reach the secret runtime`
+      );
+    }
+  }
 
   for (const file of [
     'lib/dynaxis/provider-connections/resolver.js',

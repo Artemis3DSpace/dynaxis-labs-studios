@@ -148,15 +148,15 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Scope note: no OAuth, no UI, no schema, and no migration were added; no existing route was rewired.
 - Serialization note: no Phase 7D migration owner is active. WP-7D-07 remains backlog until WP-7D-06 is integrated.
 
-## Later Wave 16 - Ready Phase 7D Connection Health Rotation UI and Audit
+## Later Wave 16 - Phase 7D Connection Health Rotation UI and Audit (in review)
 
 - Specification packages: -
 - Implementation packages: WP-7D-06
 - Review / integration gates: -
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-06
-- Dependency note: WP-7D-06 depends on WP-7D-04 and WP-7D-05 (both integrated) and is now the next ready Phase 7D implementation task. It is **ready but not started**; no branch exists.
-- Scope note: WP-7D-06 must enforce the WP-7D-02 browser redaction rules — no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD, ciphertext, or plaintext may reach a browser.
+- Dependency note: WP-7D-06 depends on WP-7D-04 and WP-7D-05 (both integrated). It is implemented and **in review** on `phase-7d/connection-health-rotation-ui-audit`; not yet integrated.
+- Scope note: WP-7D-06 adds the health surface, rotation/revoke/delete action boundaries, audit visibility, API routes under `app/api/dynaxis/provider-connections/**`, and a minimal Studio panel. Every browser-facing projection is allowlist-based; no `secretRef`, `keyRef`, envelope metadata, IV, authTag, AAD, ciphertext, or plaintext reaches a browser. No OAuth, no schema, no migration, and no provider adapter change.
 - Serialization note: WP-7D-07 remains backlog until WP-7D-06 is integrated.
 
 ## Later Wave 17
