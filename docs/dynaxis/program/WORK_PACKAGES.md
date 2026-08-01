@@ -38,7 +38,7 @@ This is the master index for the remaining Dynaxis roadmap Work Package catalogu
 | WP-7D-04 | 7D | Provider Connection Services and Permissions | implementation | claude | done | WP-7D-03 | no |
 | WP-7D-05 | 7D | MuAPI Credential Migration and Provider Resolver | implementation | claude | done | WP-7D-04 | no |
 | WP-7D-06 | 7D | Connection Health Rotation UI and Audit | implementation | claude | done | WP-7D-04, WP-7D-05 | no |
-| WP-7D-07 | 7D | Provider Connection Security Review | review | claude | ready | WP-7D-03, WP-7D-04, WP-7D-05, WP-7D-06 | no |
+| WP-7D-07 | 7D | Provider Connection Security Review | review | claude | review | WP-7D-03, WP-7D-04, WP-7D-05, WP-7D-06 | no |
 
 ## Phase 7E - Server Job / Event Engine
 

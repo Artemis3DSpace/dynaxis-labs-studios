@@ -10,8 +10,10 @@
  */
 
 import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
-import { getProviderConnectionService } from '@/lib/dynaxis/provider-connections/index.js';
-import { assertCanonicalPrincipal } from '../../route.js';
+import {
+  assertCanonicalPrincipal,
+  getProviderConnectionService,
+} from '@/lib/dynaxis/provider-connections/index.js';
 
 export async function POST(request, ctx) {
   return withAuthContextRoute(request, async (routeContext) => {

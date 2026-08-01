@@ -16,11 +16,11 @@
 
 import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
 import {
+  assertCanonicalPrincipal,
   getProviderConnectionService,
   PROVIDER_CONNECTION_ERROR_CODES,
   providerConnectionError,
 } from '@/lib/dynaxis/provider-connections/index.js';
-import { assertCanonicalPrincipal } from '../../route.js';
 
 /**
  * Clients may submit only the replacement credential. Envelope and key fields
