@@ -2,6 +2,22 @@
 
 Execution waves are derived from corrected Work Package dependencies and migration-owner serialization. READY specification packages may run now because they edit documentation only. Runtime implementation opens only after dependency integration, branch isolation, and migration ownership checks. No wave lists more than one migration owner as simultaneously executable.
 
+## Scaffold Waves S1-S4 - Completed Domain Contract Integration
+
+These four waves are **outside** the lettered/numbered Work Package waves below. They integrated contract-only scaffolds and completed **no** Work Package. They are recorded here so the wave history matches `main`.
+
+| Wave | `main` after | Tests | Domains landed | Migration owner |
+|---|---|---|---|---|
+| S1 | `39ba97531c1eb7a33835bcd30a0d75a2ee68f30a` | 570/570 | `SD-01` jobs, `SD-05` app-factory, `SD-07` composer | none |
+| S2 | `839590d8753a23ae04132199f502d026c7331190` | 603/603 | `SD-02` project-graph, `SD-03` capabilities, `SD-04` agents, `SD-06` build-runtime, `SD-08` layout | none |
+| S3 | `00c17ec07b793ea2781efb2f549314cd12b74560` | 638/638 | `SD-09` workspace-intelligence, `SD-10` design-system, `SD-11` template-library | none |
+| S4 | `204e5ff051ea7306c4133cbe64f3f7ac561cb239` | 664/664 | `SD-12` assets, `SD-13` publish | none |
+
+- Rule applied: contract files only under `lib/dynaxis/**`, matching `tests/dynaxis-*.test.mjs`, and one `docs/dynaxis/PHASE_*.md` per domain. Zero files under `drizzle/**`, `lib/dynaxis/provider-connections/**`, `lib/dynaxis/secrets/**`, `app/api/dynaxis/provider-connections/**`, or `packages/studio/src/provider-connections/**`. No `package.json` or `package-lock.json` change.
+- Status effect: **none**. Every Work Package in `WORK_PACKAGES.md` retains the status it had before S1.
+- `SD-09` - `SD-13` **require future work-package ownership**; their phase documents collide with the catalogue meanings of 7H, 8E, 8F, 8G, 8H, which are unchanged. See `SCAFFOLD_INVENTORY.md`.
+- Next reachable migration owner remains **`WP-7E-04`**, gated on `WP-7E-01` and `WP-7E-03`. `WP-7E-05` and `WP-7E-06` stay closed on residual risk **R1**.
+
 ## Wave A - Ready Specification Work That Can Run Now
 
 - Packages: WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01

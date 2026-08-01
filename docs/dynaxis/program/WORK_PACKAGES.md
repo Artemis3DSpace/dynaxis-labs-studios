@@ -2,6 +2,28 @@
 
 This is the master index for the remaining Dynaxis roadmap Work Package catalogue after the architecture-quality correction pass.
 
+## Scaffold code on main is not in this catalogue
+
+`main` (`204e5ff051ea7306c4133cbe64f3f7ac561cb239`, 664/664 passing) carries **thirteen scaffold / domain contract areas** under `lib/dynaxis/**` that Waves 1-4 integrated. They are **contract-only**: schemas, frozen constants, validators, and pure helpers, with no I/O, no persistence, and no runtime behaviour.
+
+**No Work Package below is `done` because of them.** Scaffold presence never implies persistence, workers, provider use, app generation, publishing, deployment, or storage. The only **implemented runtime** phases remain **7C and 7D**.
+
+The authoritative map of that code is **`SCAFFOLD_INVENTORY.md`**. Read it before planning any Phase 7E-9 work.
+
+### Phase-letter collision - catalogue meanings are unchanged
+
+Five scaffold phase **documents** reuse letters this catalogue already assigns to different subject matter. The meanings below are **authoritative and unchanged**; the collision is in scaffold document titles only.
+
+| Letter | Authoritative meaning in this catalogue | Colliding scaffold document title |
+|---|---|---|
+| 7H | **Character Identity Profiles** | "Phase 7H - Workspace Intelligence Domain Scaffold" |
+| 8E | **Skills** | "Phase 8E Design System / Component Library Scaffold" |
+| 8F | **Developer Platform** | "Phase 8F Template / Blueprint Library Scaffold" |
+| 8G | **Extension / Plugin Platform** | "Phase 8G Asset Library / Media Registry Scaffold" |
+| 8H | **Marketplace** | "Phase 8H Publish / Export Boundary Scaffold" |
+
+The five delivered domains (Workspace Intelligence, Design System, Template Library, Asset Library, Publish / Export) appear nowhere in this catalogue and cite no `WP-*` identifier. They are recorded as `SD-09` - `SD-13` in `SCAFFOLD_INVENTORY.md` and **require future work-package ownership**. Allocating them real phase letters is a programme decision, not an implementation task. Until it lands: contract edits only.
+
 ## Phase 7C - Identity / Organizations / Permissions
 
 | ID | Phase | Title | Type | Recommended Agent | Status | Depends On | Migration Owner |
