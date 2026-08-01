@@ -160,15 +160,16 @@ Execution waves are derived from corrected Work Package dependencies and migrati
 - Scope note: no OAuth implementation, no schema, no migration, and no provider adapter changes. `lib/dynaxis/providers/**` remains pure and imports neither ProviderConnection nor secret internals.
 - Serialization note: no Phase 7D migration owner is active.
 
-## Later Wave 17 - Ready Phase 7D Provider Connection Security Review
+## Later Wave 17 - Phase 7D Provider Connection Security Review (in review)
 
 - Specification packages: -
 - Implementation packages: -
 - Review / integration gates: WP-7D-07
 - Migration owner constraints: -
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7D-07
-- Dependency note: WP-7D-07 depends on WP-7D-03 through WP-7D-06 (all integrated) and is now the next ready Phase 7D task. It is **ready but not started**; no branch exists.
-- Scope note: WP-7D-07 is the Phase 7D security review gate and should work through the recorded Phase 7D follow-ups in `CURRENT_WORK.md`.
+- Dependency note: WP-7D-07 depends on WP-7D-03 through WP-7D-06 (all integrated). It is implemented and **in review** on `phase-7d/provider-connection-security-review`; not yet integrated.
+- Outcome note: 25-item security checklist completed, 18 negative tests added, three findings fixed (detail-endpoint enumeration oracle, route-guard placement, `algorithm` stripped from public audit), six residual risks accepted. No schema, no migration, no OAuth, no provider adapter change.
+- Serialization note: WP-7E-04 and WP-7G-02 remain backlog until WP-7D-07 integrates. **WP-7E-06 worker dispatch must not use ProviderConnections until an explicit, tested service-principal allowlist exists** (residual risk R1).
 
 ## Later Wave 18
 

@@ -39,7 +39,13 @@ Phase 7C complete. Phase 7D ready with parallel specification-only planning.
 
 ## In Review
 
-(none)
+- WP-7D-07 Provider Connection Security Review (branch:
+  `phase-7d/provider-connection-security-review`, base
+  `b3a3e1bb5947078cc713174a536d750cf10ff445`, migration owner: false) — not
+  integrated. Phase 7D security review gate: 25-item checklist, 18 negative
+  tests, three findings fixed, six residual risks accepted. No schema or
+  migration. See
+  `docs/dynaxis/program/handoffs/wp-7d-07-provider-connection-security-review.md`.
 
 ## In Progress
 
@@ -80,16 +86,31 @@ Specification-only Work Packages may continue in parallel under their documented
 
 ## Ready Runtime Implementation
 
-- WP-7D-07 Provider Connection Security Review — **ready, not started**
+(none)
 
-`WP-7D-07` is the Phase 7D security review gate over `WP-7D-03` through
-`WP-7D-06`. It should work through the recorded follow-ups below.
+`WP-7D-07` is implemented and in review on
+`phase-7d/provider-connection-security-review`, not yet integrated. It worked
+through all eleven recorded follow-ups: five fixed, six accepted as documented
+residual risks.
 
 ## Blocked Runtime Implementation
 
-(none)
+`WP-7E-04` and `WP-7G-02` remain backlog until `WP-7D-07` is integrated.
 
-## Phase 7D Follow-Ups (recorded, not addressed)
+**`WP-7E-06` worker dispatch must not use ProviderConnections** until an
+explicit, tested service-principal allowlist exists. Service principals are
+currently fail-closed at three layers; this is residual risk R1 in the WP-7D-07
+review.
+
+## Phase 7D Follow-Ups (addressed by WP-7D-07)
+
+All eleven were worked through by the WP-7D-07 security review: follow-ups 1,
+2, 4, 5, and 6 are **fixed**; 3, 7, 8, 9, 10, and 11 are **accepted residual
+risks** (R5, R1, R2, R3, R4, R6) with severity and blockers recorded in
+`docs/dynaxis/program/handoffs/wp-7d-07-provider-connection-security-review.md`.
+The list below is retained for traceability.
+
+
 
 - `WP-7D-07` should review whether detail endpoint responses should align
   `FORBIDDEN` vs `NOT_FOUND` to reduce enumeration differences.

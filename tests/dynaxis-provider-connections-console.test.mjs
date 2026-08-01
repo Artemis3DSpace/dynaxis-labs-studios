@@ -256,7 +256,10 @@ test('WP-7D-06 foreign owner cannot list or view connection health', async () =>
 
   await assert.rejects(
     getConnectionHealth(intruder, { service: harness.service, connectionId: created.id }),
-    (err) => err.code === PROVIDER_CONNECTION_ERROR_CODES.FORBIDDEN
+    // WP-7D-07 aligned this browser-facing surface to NOT_FOUND so "missing"
+    // and "not yours" are indistinguishable. Ownership is still enforced; only
+    // the enumeration oracle is removed.
+    (err) => err.code === PROVIDER_CONNECTION_ERROR_CODES.NOT_FOUND
   );
 });
 
@@ -279,6 +282,8 @@ test('WP-7D-06 legacy x-api-key gains no health, rotation, revoke, delete, or au
       [
         PROVIDER_CONNECTION_ERROR_CODES.FORBIDDEN,
         PROVIDER_CONNECTION_ERROR_CODES.OWNER_MISMATCH,
+        // getConnectionHealth reports NOT_FOUND since WP-7D-07 (anti-enumeration).
+        PROVIDER_CONNECTION_ERROR_CODES.NOT_FOUND,
       ].includes(err.code)
     );
   }

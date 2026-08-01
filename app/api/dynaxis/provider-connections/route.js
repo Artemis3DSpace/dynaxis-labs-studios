@@ -13,35 +13,11 @@
  */
 
 import { withAuthContextRoute, jsonOk, jsonError } from '@/lib/dynaxis/api';
-import { AUTH_CONTEXT_SUBJECT_TYPES } from '@/lib/dynaxis/auth/auth-context';
 import {
+  assertCanonicalPrincipal,
   getProviderConnectionService,
   listConnectionHealth,
-  PROVIDER_CONNECTION_ERROR_CODES,
-  providerConnectionError,
 } from '@/lib/dynaxis/provider-connections/index.js';
-
-/**
- * Legacy `x-api-key` is a server compatibility principal only and carries no
- * ProviderConnection authority. Rejected before any connection is loaded.
- */
-export function assertCanonicalPrincipal(authContext) {
-  if (authContext?.subject?.type === AUTH_CONTEXT_SUBJECT_TYPES.LEGACY) {
-    throw providerConnectionError(
-      PROVIDER_CONNECTION_ERROR_CODES.FORBIDDEN,
-      403,
-      'Legacy x-api-key compatibility does not grant ProviderConnection authority'
-    );
-  }
-  if (authContext?.subject?.type !== AUTH_CONTEXT_SUBJECT_TYPES.USER) {
-    throw providerConnectionError(
-      PROVIDER_CONNECTION_ERROR_CODES.FORBIDDEN,
-      403,
-      'A canonical session is required'
-    );
-  }
-  return true;
-}
 
 export async function GET(request) {
   return withAuthContextRoute(request, async (routeContext) => {
