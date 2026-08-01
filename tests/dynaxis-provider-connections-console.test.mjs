@@ -423,6 +423,77 @@ test('WP-7D-06 audit event projection drops nested and unknown structures', () =
   assert.ok(!JSON.stringify(projected).includes(RAW_SECRET));
 });
 
+test('WP-7D-06 seam: a real server audit event passes the Studio client guard', () => {
+  // Shaped exactly as the server emits for a rotation: this is the event that
+  // previously tripped the client guard and made the audit view unusable.
+  const serverEvent = toPublicAuditEvent({
+    event: 'provider_connection.rotated',
+    occurredAt: '2026-08-01T00:00:00Z',
+    createdAt: '2026-08-01T00:00:00Z',
+    properties: {
+      connectionId: 'c1',
+      providerId: 'muapi',
+      secretVersion: 3,
+      credentialFingerprint: 'sha256:abc123456789',
+      correlationId: 'corr-1',
+    },
+  });
+
+  // The client guard must accept it without throwing.
+  assert.doesNotThrow(() => assertNoForbiddenFields([serverEvent]));
+
+  // Key-management and envelope state are stripped.
+  assert.equal(Object.prototype.hasOwnProperty.call(serverEvent.properties, 'secretVersion'), false);
+  for (const forbidden of ['secretRef', 'keyRef', 'iv', 'authTag', 'aad', 'encryptedPayload', 'ciphertext', 'plaintext', 'apiKey']) {
+    assert.equal(Object.prototype.hasOwnProperty.call(serverEvent.properties, forbidden), false, forbidden);
+  }
+
+  // Safe audit fields survive.
+  assert.equal(serverEvent.event, 'provider_connection.rotated');
+  assert.equal(serverEvent.occurredAt, '2026-08-01T00:00:00Z');
+  assert.equal(serverEvent.properties.connectionId, 'c1');
+  assert.equal(serverEvent.properties.providerId, 'muapi');
+  assert.equal(serverEvent.properties.credentialFingerprint, 'sha256:abc123456789');
+  assert.equal(serverEvent.properties.correlationId, 'corr-1');
+
+  // A secret-status transition event is the same bug class and must also pass.
+  const statusEvent = toPublicAuditEvent({
+    event: 'provider_connection.secret_status.changed',
+    occurredAt: '2026-08-01T00:00:00Z',
+    properties: { connectionId: 'c1', providerId: 'muapi', previousSecretStatus: 'active', secretStatus: 'corrupted', correlationId: 'corr-2' },
+  });
+  assert.doesNotThrow(() => assertNoForbiddenFields([statusEvent]));
+  assert.equal(Object.prototype.hasOwnProperty.call(statusEvent.properties, 'secretStatus'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(statusEvent.properties, 'previousSecretStatus'), false);
+});
+
+test('WP-7D-06 seam invariant: nothing the audit projection can emit collides with the client guard', () => {
+  // Systematic rather than field-by-field: feed every property the WP-7D-04
+  // audit allowlist is capable of emitting through the public projection, and
+  // assert the survivors are all acceptable to the client. This is what
+  // catches the bug class if either allowlist drifts.
+  const everyServerProperty = {
+    connectionId: 'c1', providerId: 'muapi', ownerType: 'workspace',
+    ownerUserId: USER_ID, ownerWorkspaceId: ORG_ID, credentialKind: 'api_key',
+    credentialFingerprint: 'sha256:abc', status: 'active', secretStatus: 'active',
+    previousSecretStatus: 'active', secretVersion: 2, reasonCode: 'ALLOW',
+    errorCode: 'NONE', permission: 'provider_connection.use', projectId: 'p1',
+    workspaceId: ORG_ID, correlationId: 'corr', actorUserId: USER_ID,
+    outcome: 'ok', algorithm: 'aes-256-gcm', count: 1,
+  };
+  const projected = toPublicAuditEvent({
+    event: 'provider_connection.use.succeeded',
+    occurredAt: '2026-08-01T00:00:00Z',
+    properties: everyServerProperty,
+  });
+
+  const collisions = Object.keys(projected.properties).filter((key) =>
+    FORBIDDEN_CLIENT_FIELDS.includes(key)
+  );
+  assert.deepEqual(collisions, [], `audit projection emits client-forbidden keys: ${collisions.join(', ')}`);
+  assert.doesNotThrow(() => assertNoForbiddenFields([projected]));
+});
+
 test('WP-7D-06 client API fails closed if a response ever carries a forbidden field', () => {
   assert.doesNotThrow(() => assertNoForbiddenFields([{ id: 'c1', health: 'healthy' }]));
 
