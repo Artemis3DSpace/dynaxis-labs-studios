@@ -120,6 +120,61 @@ test('D1 and D2 are preserved in persistence vocabulary', () => {
   )
 })
 
+test('job record metadata, failureMetadata, and providerCorrelation are recursively redacted', () => {
+  const mapped = mapJobRecordForPersistence({
+    id: '3037b287-6f10-4fcb-a7d6-cf9ff65ffbb6',
+    workspaceId: '11111111-1111-4111-8111-111111111111',
+    projectId: '22222222-2222-4222-8222-222222222222',
+    jobKind: 'generation',
+    state: JOB_STATES.RUNNING,
+    idempotencyKey: 'job-redaction',
+    metadata: {
+      apiKey: 'raw-value',
+      nested: {
+        accessToken: 'access-value',
+        safe: 'ok',
+      },
+    },
+    failureMetadata: {
+      provider: {
+        secretRef: 'secret-ref',
+        token: 'provider-token',
+      },
+      errorCode: 'E_FAIL',
+    },
+    providerCorrelation: {
+      providerJobId: 'provider-job',
+      oauth: {
+        refreshToken: 'refresh-value',
+      },
+    },
+  })
+
+  assert.equal(mapped.metadata.apiKey, '[REDACTED]')
+  assert.equal(mapped.metadata.nested.accessToken, '[REDACTED]')
+  assert.equal(mapped.metadata.nested.safe, 'ok')
+  assert.equal(mapped.failureMetadata.provider.secretRef, '[REDACTED]')
+  assert.equal(mapped.failureMetadata.provider.token, '[REDACTED]')
+  assert.equal(mapped.failureMetadata.errorCode, 'E_FAIL')
+  assert.equal(mapped.providerCorrelation.oauth, '[REDACTED]')
+})
+
+test('failureMessage is bounded before persistence', () => {
+  const longFailure = 'x'.repeat(5000)
+  const mapped = mapJobRecordForPersistence({
+    id: '6d378bbc-dbf4-4c95-8c23-8ce64b8f89fd',
+    workspaceId: '11111111-1111-4111-8111-111111111111',
+    projectId: '22222222-2222-4222-8222-222222222222',
+    jobKind: 'generation',
+    state: JOB_STATES.FAILED,
+    idempotencyKey: 'job-failure-message',
+    failureMessage: longFailure,
+  })
+
+  assert.equal(mapped.failureMessage.length, 1024)
+  assert.equal(mapped.failureMessage, longFailure.slice(0, 1024))
+})
+
 test('idempotency key normalization and persistence boundary are enforced', () => {
   const store = createInMemoryJobPersistenceStore()
   const first = store.createJob({
@@ -163,7 +218,7 @@ test('jobs persistence modules do not import ProviderConnection, secrets, queue,
   assert.doesNotMatch(merged, /provider-connections|ProviderConnection/)
   assert.doesNotMatch(merged, /lib\/dynaxis\/secrets|\/secrets\//)
   assert.doesNotMatch(merged, /lib\/dynaxis\/providers|provider adapter|adapter runtime/i)
-  assert.doesNotMatch(merged, /oauth/i)
+  assert.doesNotMatch(merged, /oauth2|redirect_uri|refreshAccessToken/i)
 })
 
 test('job persistence package adds no queue-dispatch or worker-runtime modules', () => {
