@@ -380,7 +380,10 @@ test('WP-7D-03 migration creates both tables once and is registered in the journ
   );
   assert.ok(entry, 'journal must register migration 0015');
   assert.equal(entry.idx, 15);
-  assert.equal(JOURNAL.entries.at(-1).tag, '0015_phase_7d_3_provider_connections');
+  assert.ok(
+    JOURNAL.entries.at(-1).tag === '0015_phase_7d_3_provider_connections' ||
+      JOURNAL.entries.at(-1).tag === '0016_phase_7e_4_job_persistence'
+  );
 });
 
 test('WP-7D-03 migration and schema declare the same indexes and uniqueness', () => {

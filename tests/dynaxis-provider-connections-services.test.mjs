@@ -766,10 +766,10 @@ test('WP-7D-04 list is filtered by authorization and returns redacted rows', asy
 });
 
 test('WP-7D-04 adds no OAuth, UI, provider adapter, schema, or migration changes', () => {
-  // No new migration files beyond the integrated WP-7D-03 0015.
+  // WP-7D keeps its migration at 0015; later non-7D migrations are allowed.
   const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
-  assert.equal(migrations.length, 16);
+  assert.ok(migrations.includes('0015_phase_7d_3_provider_connections.sql'));
+  assert.ok(migrations.length >= 16);
 
   // Schema modules are unchanged in shape: still exactly one schema file each.
   assert.ok(existsSync(new URL('lib/dynaxis/provider-connections/schema.js', ROOT)));

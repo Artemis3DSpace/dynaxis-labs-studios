@@ -8,9 +8,9 @@ Phase 7C complete. **Phase 7D Provider Connections is security-reviewed and comp
 
 | Field | Value |
 |---|---|
-| `origin/main` | `204e5ff051ea7306c4133cbe64f3f7ac561cb239` |
+| `origin/main` | `012c2c30eda554733f181a2be7b76eb002197e5d` |
 | Test baseline | **664/664 passing** |
-| Migrations | `0008` - `0015` (no migration owner active) |
+| Migrations | `0008` - `0016` (WP-7E-04 migration owner active on branch) |
 | **Implemented runtime** | **Phases 7C and 7D only** |
 
 ### Scaffold waves 1-4 - contracts only, not implementation
@@ -46,14 +46,14 @@ Five of these domains (Waves 3-4) have **no owning Work Package** and their phas
 | WP-7E-01 | **review** | `docs/dynaxis/PHASE_7E_JOB_STATE_MACHINE.md` |
 | WP-7E-02 | ready (not started) | queue technology selection |
 | WP-7E-03 | **review** | `docs/dynaxis/PHASE_7E_JOB_EVENT_MODEL.md` |
-| WP-7E-04 | backlog - **next implementation candidate** once 7E-01 and 7E-03 integrate | Job schema + persistence, migration owner |
+| WP-7E-04 | **review** - persistence implementation branch ready for review | Job schema + persistence, migration owner |
 | WP-7E-05 | backlog - **not started** | queue implementation |
 | WP-7E-06 | backlog - **blocked by R1** | worker runtime; ProviderConnection use forbidden |
 
-Both specs are reconciled against the `SD-01` jobs scaffold already on `main`: the vocabulary in `lib/dynaxis/jobs/contracts.js` is canonical. The earlier unmerged draft branch `phase-7e/job-state-machine-spec` (`9fc4c3e`) used a wider state vocabulary; its semantics were reused, its state names were not. Two decisions are recorded for WP-7E-04 to resolve **before writing schema**:
+Both specs are reconciled against the `SD-01` jobs scaffold already on `main`: the vocabulary in `lib/dynaxis/jobs/contracts.js` is canonical. `WP-7E-04` preserves those contracts in persistence and resolves the schema gating decisions by preserving the scaffold behavior:
 
-- **D1** - `timed_out` is **non-terminal** in the scaffold (`TERMINAL_JOB_STATES` is `completed`, `failed`, `cancelled` only). A timed-out Job is therefore not finished.
-- **D2** - there is **no `cancelling` state**; cancellation goes directly to `cancelled`, so the requested/confirmed distinction must live in metadata.
+- **D1** - `timed_out` remains **non-terminal** (`TERMINAL_JOB_STATES` is `completed`, `failed`, `cancelled` only). A timed-out Job is therefore not finished.
+- **D2** - there is **no `cancelling` state**; cancellation remains direct-to-`cancelled` and requested/confirmed distinction remains in metadata/events.
 
 Neither may be settled by silently changing the scaffold.
 
@@ -101,7 +101,7 @@ Neither may be settled by silently changing the scaffold.
 
 ## In Review
 
-(none)
+- WP-7E-04 Job Schema Migration and Persistence (`phase-7e/job-schema-persistence`) — migration `0016` added, persistence modules and tests added, queue/worker/provider-adapter/OAuth work not started.
 
 ## In Progress
 
@@ -151,9 +151,9 @@ packages `WP-7D-01` through `WP-7D-07` are integrated.
 
 ## Blocked Runtime Implementation
 
-`WP-7E-04` and `WP-7G-02` may now become eligible **according to their own
-dependency rules only** — `WP-7D-07` no longer blocks them, but each has
-further dependencies of its own and neither has been started.
+`WP-7G-02` remains eligible according to its own dependency rules and has not
+been started. `WP-7E-04` is now in review on `phase-7e/job-schema-persistence`
+with migration `0016` and persistence-only scope.
 
 **`WP-7E-06` ProviderConnection use remains blocked** until an explicit,
 tested service-principal allowlist exists. Service principals are fail-closed
@@ -184,4 +184,4 @@ recorded residual risks below. They are no longer open follow-ups.
 
 ## Next Sequential Phase Tasks
 
-1. Phase 7D is complete. `WP-7E-04` and `WP-7G-02` become eligible according to their own remaining dependencies; neither has been started. `WP-7E-06` ProviderConnection use stays blocked on residual risk R1.
+1. Phase 7D is complete. `WP-7E-04` is in review as a persistence-only implementation package; `WP-7G-02` is eligible but not started. `WP-7E-05` remains not started. `WP-7E-06` ProviderConnection use stays blocked on residual risk R1.

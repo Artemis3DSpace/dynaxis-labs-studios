@@ -580,8 +580,8 @@ test('WP-7D-07 route guard lives in a shared server helper, not a route module',
 
 test('WP-7D-07 no schema, migration, OAuth, or provider adapter change was introduced', () => {
   const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.length, 16);
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
+  assert.ok(migrations.length >= 16);
+  assert.ok(migrations.includes('0015_phase_7d_3_provider_connections.sql'));
 
   for (const file of [
     'lib/dynaxis/provider-connections/health.js',
