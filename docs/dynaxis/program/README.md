@@ -8,6 +8,7 @@ Core documents:
 
 - `MASTER_PLAN.md` defines the engineering execution programme and references the canonical roadmap.
 - `CURRENT_WORK.md` records the current active programme state.
+- `CURRENT_ROADMAP_PIXOVID_MUAPI.md` records the current product-direction checkpoint for Pixovid/MuAPI creative-provider alignment.
 - `DEPENDENCY_GRAPH.md` records execution dependencies and parallelization boundaries.
 - `WORK_PACKAGE_SCHEMA.md` defines the required Work Package format.
 - `AGENT_RULES.md` defines agent operating rules.

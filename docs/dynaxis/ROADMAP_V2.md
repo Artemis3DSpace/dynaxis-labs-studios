@@ -3,6 +3,10 @@
 **Status:** Post-6I roadmap. Phase 7B and Phase 7C.1-7C.4 foundations are implemented and integrated. Phase 7C is not complete.
 **Rule:** Phases 1-6I are completed historical implementation. Do not rewrite them.
 
+Current checkpoint: see `program/CURRENT_ROADMAP_PIXOVID_MUAPI.md` for the
+product-goal correction that restores Pixovid/MuAPI creative-provider context
+without authorizing runtime implementation outside assigned Work Packages.
+
 ---
 
 ## 1. Completed Baseline

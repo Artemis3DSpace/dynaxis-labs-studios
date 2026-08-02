@@ -4,6 +4,10 @@
 
 Phase 7C complete. **Phase 7D Provider Connections is security-reviewed and complete.** Parallel specification-only planning continues.
 
+Roadmap checkpoint: see `CURRENT_ROADMAP_PIXOVID_MUAPI.md` for the current
+product-direction restoration toward Pixovid/MuAPI-style creative generation,
+including sequencing and safety constraints for provider execution.
+
 ### Baseline on main
 
 | Field | Value |
