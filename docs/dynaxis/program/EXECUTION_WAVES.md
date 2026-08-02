@@ -18,10 +18,23 @@ These four waves are **outside** the lettered/numbered Work Package waves below.
 - `SD-09` - `SD-13` **require future work-package ownership**; their phase documents collide with the catalogue meanings of 7H, 8E, 8F, 8G, 8H, which are unchanged. See `SCAFFOLD_INVENTORY.md`.
 - Next reachable migration owner remains **`WP-7E-04`**, gated on `WP-7E-01` and `WP-7E-03`. `WP-7E-05` and `WP-7E-06` stay closed on residual risk **R1**.
 
+## Phase 7E Specification Wave - WP-7E-01 and WP-7E-03 (in review)
+
+- Specification packages: **WP-7E-01** (`docs/dynaxis/PHASE_7E_JOB_STATE_MACHINE.md`), **WP-7E-03** (`docs/dynaxis/PHASE_7E_JOB_EVENT_MODEL.md`)
+- Implementation packages: -
+- Review / integration gates: -
+- Migration owner constraints: **none** - documentation only, no schema, no migration
+- Branch: `phase-7e/job-state-event-specs`, based on `b0b5555ab6a8b46100d19b19b58318220b3ec7b8`
+- Rule applied: docs only. Both specs are reconciled against the `SD-01` jobs scaffold on `main`; the scaffold vocabulary in `lib/dynaxis/jobs/contracts.js` is canonical and was not modified.
+- Unblocks on integration: **WP-7E-04** Job Schema Migration and Persistence, the sole reachable migration owner.
+- Still closed: **WP-7E-05** (queue implementation, not started) and **WP-7E-06** (worker runtime, **blocked by residual risk R1** - ProviderConnection use forbidden until an explicit tested service-principal allowlist exists).
+- Open decisions handed to WP-7E-04: **D1** `timed_out` is non-terminal in the scaffold; **D2** no `cancelling` state exists. Both must be resolved before schema is written.
+
 ## Wave A - Ready Specification Work That Can Run Now
 
-- Packages: WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
-- Specification packages: WP-7E-01, WP-7E-02, WP-7E-03, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Packages: WP-7E-02, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Specification packages: WP-7E-02, WP-7F-01, WP-7G-01, WP-7H-01, WP-7I-01, WP-8A-01, WP-8C-01, WP-8F-01, WP-8G-01, WP-8H-01, WP-9-01
+- Moved out: **WP-7E-01** and **WP-7E-03** are specification-complete and in review on `phase-7e/job-state-event-specs`. See the Phase 7E Specification Wave below.
 - Implementation packages: -
 - Review / integration gates: -
 - Migration owner constraints: -

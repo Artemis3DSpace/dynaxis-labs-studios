@@ -37,6 +37,26 @@ Five of these domains (Waves 3-4) have **no owning Work Package** and their phas
 | **spec only** | Specification Work Package `ready` or `done`; no code | 7E-01/02/03, 7F-01, 7G-01, 7H-01, 7I-01, 8A-01, 8C-01, 8F-01, 8G-01, 8H-01, 9-01 |
 | **requires future work-package ownership** | Scaffold on `main` with no owning Work Package | `SD-09` - `SD-13` |
 
+### Phase 7E specification status
+
+`WP-7E-01` Job State Machine and `WP-7E-03` Job Event Model are **specification complete and in review** on branch `phase-7e/job-state-event-specs`.
+
+| Package | Status | Deliverable |
+|---|---|---|
+| WP-7E-01 | **review** | `docs/dynaxis/PHASE_7E_JOB_STATE_MACHINE.md` |
+| WP-7E-02 | ready (not started) | queue technology selection |
+| WP-7E-03 | **review** | `docs/dynaxis/PHASE_7E_JOB_EVENT_MODEL.md` |
+| WP-7E-04 | backlog - **next implementation candidate** once 7E-01 and 7E-03 integrate | Job schema + persistence, migration owner |
+| WP-7E-05 | backlog - **not started** | queue implementation |
+| WP-7E-06 | backlog - **blocked by R1** | worker runtime; ProviderConnection use forbidden |
+
+Both specs are reconciled against the `SD-01` jobs scaffold already on `main`: the vocabulary in `lib/dynaxis/jobs/contracts.js` is canonical. The earlier unmerged draft branch `phase-7e/job-state-machine-spec` (`9fc4c3e`) used a wider state vocabulary; its semantics were reused, its state names were not. Two decisions are recorded for WP-7E-04 to resolve **before writing schema**:
+
+- **D1** - `timed_out` is **non-terminal** in the scaffold (`TERMINAL_JOB_STATES` is `completed`, `failed`, `cancelled` only). A timed-out Job is therefore not finished.
+- **D2** - there is **no `cancelling` state**; cancellation goes directly to `cancelled`, so the requested/confirmed distinction must live in metadata.
+
+Neither may be settled by silently changing the scaffold.
+
 ### Blocked - must not be touched yet
 
 - **`WP-7E-06` ProviderConnection worker use** — blocked by residual risk **R1** (no service-principal allowlist). Enforced in code: `assertWorkerProviderConnectionBlocked()` in `lib/dynaxis/jobs/contracts.js` throws `501` unconditionally.
@@ -108,9 +128,7 @@ Security posture recorded by the review: provider credentials are **not identity
 ## Ready Work Packages
 
 
-- WP-7E-01 Job State Machine Specification
 - WP-7E-02 Queue Abstraction and Selection
-- WP-7E-03 Job Event Model and Audit Timeline
 - WP-7F-01 Project Graph Ontology and Edge Taxonomy
 - WP-7G-01 Capability Taxonomy and Model Domain Specification
 - WP-7H-01 Identity Profile Domain and Consent Specification
