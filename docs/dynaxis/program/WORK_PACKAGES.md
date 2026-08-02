@@ -66,9 +66,9 @@ The five delivered domains (Workspace Intelligence, Design System, Template Libr
 
 | ID | Phase | Title | Type | Recommended Agent | Status | Depends On | Migration Owner |
 |---|---|---|---|---|---|---|---|
-| WP-7E-01 | 7E | Job State Machine Specification | specification | claude | ready | - | no |
+| WP-7E-01 | 7E | Job State Machine Specification | specification | claude | review | - | no |
 | WP-7E-02 | 7E | Queue Abstraction and Selection | specification | codex | ready | - | no |
-| WP-7E-03 | 7E | Job Event Model and Audit Timeline | specification | codex | ready | - | no |
+| WP-7E-03 | 7E | Job Event Model and Audit Timeline | specification | claude | review | WP-7E-01 | no |
 | WP-7E-04 | 7E | Job Schema Migration and Persistence | implementation | codex | backlog | WP-7D-07, WP-7E-01, WP-7E-03 | yes |
 | WP-7E-05 | 7E | Queue Implementation and Dispatcher | implementation | codex | backlog | WP-7E-02, WP-7E-04 | no |
 | WP-7E-06 | 7E | Worker Runtime and Provider Worker Adapter | implementation | codex | backlog | WP-7D-05, WP-7E-05 | no |
