@@ -44,6 +44,22 @@ import {
 const ROOT = new URL('..', import.meta.url);
 const source = (p) => readFileSync(new URL(p, ROOT), 'utf8');
 
+function assertProviderConnectionMigrationOwnership() {
+  const providerMigration = '0015_phase_7d_3_provider_connections.sql';
+  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
+  const providerTableNames = ['dynaxis_provider_connections', 'dynaxis_provider_secret_envelopes'];
+
+  assert.ok(migrations.includes(providerMigration), 'provider migration 0015 must exist');
+  for (const tableName of providerTableNames) {
+    const owners = migrations.filter((file) => source(`drizzle/${file}`).includes(tableName));
+    assert.deepEqual(
+      owners,
+      [providerMigration],
+      `${tableName} must only appear in ${providerMigration}`
+    );
+  }
+}
+
 const USER_A = '11111111-1111-4111-8111-111111111111';
 const USER_B = '99999999-9999-4999-8999-999999999999';
 const ORG_A = '22222222-2222-4222-8222-222222222222';
@@ -579,9 +595,7 @@ test('WP-7D-07 route guard lives in a shared server helper, not a route module',
 });
 
 test('WP-7D-07 no schema, migration, OAuth, or provider adapter change was introduced', () => {
-  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.length, 16);
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
+  assertProviderConnectionMigrationOwnership();
 
   for (const file of [
     'lib/dynaxis/provider-connections/health.js',

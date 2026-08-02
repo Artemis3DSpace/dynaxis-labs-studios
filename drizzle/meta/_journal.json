@@ -113,6 +113,13 @@
       "when": 1785657600000,
       "tag": "0015_phase_7d_3_provider_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785744000000,
+      "tag": "0016_phase_7e_4_job_persistence",
+      "breakpoints": true
     }
   ]
 }

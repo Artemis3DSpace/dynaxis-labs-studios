@@ -1,6 +1,7 @@
 # Dynaxis Jobs Scaffold (Phase 7E)
 
-This directory provides scaffold-only contracts for Phase 7E Job/Event Engine work.
+This directory now contains scaffold contracts plus WP-7E-04 persistence modules
+for job and job-event storage.
 
 ## Included
 
@@ -12,14 +13,15 @@ This directory provides scaffold-only contracts for Phase 7E Job/Event Engine wo
 - Idempotency key normalization contract
 - Correlation id contract
 - Explicit worker/ProviderConnection dispatch boundary blocker
+- Persistence schema and mapping helpers (`WP-7E-04`)
+- In-memory persistence store for boundary-focused tests (`WP-7E-04`)
 
 ## Excluded (intentional)
 
-- No database persistence (`WP-7E-04` owns this later)
 - No queue implementation or dispatcher loop (`WP-7E-05` owns this later)
 - No worker runtime (`WP-7E-06` owns this later)
 - No webhooks
-- No schema/migration changes
+- No queue dispatch implementation, provider adapter implementation, or OAuth
 
 ## ProviderConnection Worker Boundary
 

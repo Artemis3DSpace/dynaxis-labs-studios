@@ -30,6 +30,22 @@ function source(path) {
 const MIGRATION = source('drizzle/0015_phase_7d_3_provider_connections.sql');
 const JOURNAL = JSON.parse(source('drizzle/meta/_journal.json'));
 
+function assertProviderConnectionMigrationOwnership() {
+  const providerMigration = '0015_phase_7d_3_provider_connections.sql';
+  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
+  const providerTableNames = ['dynaxis_provider_connections', 'dynaxis_provider_secret_envelopes'];
+
+  assert.ok(migrations.includes(providerMigration), 'provider migration 0015 must exist');
+  for (const tableName of providerTableNames) {
+    const owners = migrations.filter((file) => source(`drizzle/${file}`).includes(tableName));
+    assert.deepEqual(
+      owners,
+      [providerMigration],
+      `${tableName} must only appear in ${providerMigration}`
+    );
+  }
+}
+
 function columnNames(table) {
   return Object.values(getTableColumns(table)).map((column) => column.name);
 }
@@ -374,13 +390,13 @@ test('WP-7D-03 migration creates both tables once and is registered in the journ
     (MIGRATION.match(/CREATE TABLE "dynaxis_provider_secret_envelopes"/g) || []).length,
     1
   );
+  assertProviderConnectionMigrationOwnership();
 
   const entry = JOURNAL.entries.find(
     (item) => item.tag === '0015_phase_7d_3_provider_connections'
   );
   assert.ok(entry, 'journal must register migration 0015');
   assert.equal(entry.idx, 15);
-  assert.equal(JOURNAL.entries.at(-1).tag, '0015_phase_7d_3_provider_connections');
 });
 
 test('WP-7D-03 migration and schema declare the same indexes and uniqueness', () => {

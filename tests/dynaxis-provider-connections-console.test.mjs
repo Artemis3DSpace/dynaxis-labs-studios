@@ -40,6 +40,22 @@ function source(path) {
   return readFileSync(new URL(path, ROOT), 'utf8');
 }
 
+function assertProviderConnectionMigrationOwnership() {
+  const providerMigration = '0015_phase_7d_3_provider_connections.sql';
+  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
+  const providerTableNames = ['dynaxis_provider_connections', 'dynaxis_provider_secret_envelopes'];
+
+  assert.ok(migrations.includes(providerMigration), 'provider migration 0015 must exist');
+  for (const tableName of providerTableNames) {
+    const owners = migrations.filter((file) => source(`drizzle/${file}`).includes(tableName));
+    assert.deepEqual(
+      owners,
+      [providerMigration],
+      `${tableName} must only appear in ${providerMigration}`
+    );
+  }
+}
+
 /**
  * Strips block comments and whole-line `//` comments so source assertions scan
  * code rather than documentation. These modules deliberately *describe* the
@@ -564,9 +580,7 @@ test('WP-7D-06 routes use AuthContext helpers, reject legacy, and never accept e
 });
 
 test('WP-7D-06 adds no OAuth, schema, migration, or provider adapter change', () => {
-  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
-  assert.equal(migrations.length, 16);
+  assertProviderConnectionMigrationOwnership();
 
   assert.equal(existsSync(new URL('lib/dynaxis/provider-connections/oauth.js', ROOT)), false);
 

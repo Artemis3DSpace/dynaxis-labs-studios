@@ -40,6 +40,22 @@ function source(path) {
   return readFileSync(new URL(path, ROOT), 'utf8');
 }
 
+function assertProviderConnectionMigrationOwnership() {
+  const providerMigration = '0015_phase_7d_3_provider_connections.sql';
+  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
+  const providerTableNames = ['dynaxis_provider_connections', 'dynaxis_provider_secret_envelopes'];
+
+  assert.ok(migrations.includes(providerMigration), 'provider migration 0015 must exist');
+  for (const tableName of providerTableNames) {
+    const owners = migrations.filter((file) => source(`drizzle/${file}`).includes(tableName));
+    assert.deepEqual(
+      owners,
+      [providerMigration],
+      `${tableName} must only appear in ${providerMigration}`
+    );
+  }
+}
+
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_USER_ID = '99999999-9999-4999-8999-999999999999';
 const ORG_ID = '22222222-2222-4222-8222-222222222222';
@@ -766,10 +782,7 @@ test('WP-7D-04 list is filtered by authorization and returns redacted rows', asy
 });
 
 test('WP-7D-04 adds no OAuth, UI, provider adapter, schema, or migration changes', () => {
-  // No new migration files beyond the integrated WP-7D-03 0015.
-  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
-  assert.equal(migrations.length, 16);
+  assertProviderConnectionMigrationOwnership();
 
   // Schema modules are unchanged in shape: still exactly one schema file each.
   assert.ok(existsSync(new URL('lib/dynaxis/provider-connections/schema.js', ROOT)));

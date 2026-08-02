@@ -16,7 +16,7 @@ These four waves are **outside** the lettered/numbered Work Package waves below.
 - Rule applied: contract files only under `lib/dynaxis/**`, matching `tests/dynaxis-*.test.mjs`, and one `docs/dynaxis/PHASE_*.md` per domain. Zero files under `drizzle/**`, `lib/dynaxis/provider-connections/**`, `lib/dynaxis/secrets/**`, `app/api/dynaxis/provider-connections/**`, or `packages/studio/src/provider-connections/**`. No `package.json` or `package-lock.json` change.
 - Status effect: **none**. Every Work Package in `WORK_PACKAGES.md` retains the status it had before S1.
 - `SD-09` - `SD-13` **require future work-package ownership**; their phase documents collide with the catalogue meanings of 7H, 8E, 8F, 8G, 8H, which are unchanged. See `SCAFFOLD_INVENTORY.md`.
-- Next reachable migration owner remains **`WP-7E-04`**, gated on `WP-7E-01` and `WP-7E-03`. `WP-7E-05` and `WP-7E-06` stay closed on residual risk **R1**.
+- `WP-7E-04` is now in review as the active migration owner (migration `0016`). `WP-7E-05` remains not started and `WP-7E-06` remains blocked on residual risk **R1**.
 
 ## Phase 7E Specification Wave - WP-7E-01 and WP-7E-03 (in review)
 
@@ -202,7 +202,7 @@ These four waves are **outside** the lettered/numbered Work Package waves below.
 - Serialization note: WP-7E-04 and WP-7G-02 may now become eligible **according to their own dependency rules only**; neither has been started. **WP-7E-06 ProviderConnection use remains blocked until an explicit, tested service-principal allowlist exists** (residual risk R1).
 - Residual risks recorded (not open follow-ups): R1 no service-principal allowlist (medium, blocks WP-7E-06), R2 Phase-7D-local permission vocabulary (low, fail-closed), R3 in-memory audit sink (medium), R4 unwired KMS (medium), R5 unexecuted route handlers (low), R6 un-migrated legacy routes (low).
 
-## Later Wave 18
+## Later Wave 18 - WP-7E-04 Persistence (in review)
 
 - Specification packages: -
 - Implementation packages: WP-7E-04
@@ -210,6 +210,9 @@ These four waves are **outside** the lettered/numbered Work Package waves below.
 - Migration owner constraints: WP-7E-04
 - Packages that may run simultaneously after dependencies and conflict checks: WP-7E-04
 - Serialization note: this wave has exactly one migration owner; any other ready migration owner waits for a later wave.
+- Rule: implemented on `phase-7e/job-schema-persistence` from `origin/main` `012c2c30eda554733f181a2be7b76eb002197e5d`. Migration `0016_phase_7e_4_job_persistence.sql` adds `dynaxis_job_records` and `dynaxis_job_events` plus journal registration. Scope is persistence-only: no queue dispatch, no worker runtime, no provider adapter implementation, no OAuth.
+- Decision note: D1 and D2 preserved in schema/tests (`timed_out` remains non-terminal, no `cancelling` state introduced).
+- Boundary note: **WP-7E-05 remains not started**, **WP-7E-06 remains not started and blocked by R1**, and Phase 7D residual risk **R3** remains separate (job-event persistence does not close provider-connection durable-audit risk).
 
 ## Later Wave 19
 

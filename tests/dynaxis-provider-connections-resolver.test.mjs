@@ -28,6 +28,22 @@ function source(path) {
   return readFileSync(new URL(path, ROOT), 'utf8');
 }
 
+function assertProviderConnectionMigrationOwnership() {
+  const providerMigration = '0015_phase_7d_3_provider_connections.sql';
+  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
+  const providerTableNames = ['dynaxis_provider_connections', 'dynaxis_provider_secret_envelopes'];
+
+  assert.ok(migrations.includes(providerMigration), 'provider migration 0015 must exist');
+  for (const tableName of providerTableNames) {
+    const owners = migrations.filter((file) => source(`drizzle/${file}`).includes(tableName));
+    assert.deepEqual(
+      owners,
+      [providerMigration],
+      `${tableName} must only appear in ${providerMigration}`
+    );
+  }
+}
+
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_USER_ID = '99999999-9999-4999-8999-999999999999';
 const ORG_ID = '22222222-2222-4222-8222-222222222222';
@@ -549,9 +565,7 @@ test('WP-7D-05 resolver uses the materialization boundary, not envelope or key i
 });
 
 test('WP-7D-05 adds no OAuth, UI, schema, or migration', () => {
-  const migrations = readdirSync(new URL('drizzle/', ROOT)).filter((f) => f.endsWith('.sql')).sort();
-  assert.equal(migrations.at(-1), '0015_phase_7d_3_provider_connections.sql');
-  assert.equal(migrations.length, 16);
+  assertProviderConnectionMigrationOwnership();
 
   assert.equal(existsSync(new URL('lib/dynaxis/provider-connections/oauth.js', ROOT)), false);
 
